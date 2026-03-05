@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useVendorStore } from "@/stores/vendorStore";
+import { useCustomerStore } from "@/stores/customerStore";
 import { EmptyState } from "@/components/EmptyState";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -9,15 +9,15 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Printer } from "lucide-react";
 import { toast } from "sonner";
-import { formatPKR, formatDate, getTodayISO } from "@/lib/formatters";
+import { formatPKR, formatDate, getTodayISO, generateId } from "@/lib/formatters";
 
-const VendorLedger = () => {
-  const { vendors, ledgerEntries, addLedgerEntry, getOutstanding } = useVendorStore();
-  const [selectedVendor, setSelectedVendor] = useState("");
+const CustomerLedger = () => {
+  const { customers, ledgerEntries, addLedgerEntry, getOutstanding } = useCustomerStore();
+  const [selectedCustomer, setSelectedCustomer] = useState("");
   const [open, setOpen] = useState(false);
 
-  const vendor = vendors.find(v => v.id === selectedVendor);
-  const entries = ledgerEntries[selectedVendor] || [];
+  const customer = customers.find(c => c.id === selectedCustomer);
+  const entries = ledgerEntries[selectedCustomer] || [];
 
   const totalDebit = entries.reduce((s, e) => s + e.debit, 0);
   const totalCredit = entries.reduce((s, e) => s + e.credit, 0);
@@ -27,12 +27,12 @@ const VendorLedger = () => {
     const fd = new FormData(e.currentTarget);
     const type = fd.get("type") as string;
     const amount = Number(fd.get("amount"));
-    addLedgerEntry(selectedVendor, {
+    addLedgerEntry(selectedCustomer, {
       date: fd.get("date") as string || getTodayISO(),
       type,
       description: fd.get("description") as string,
-      debit: type === "Purchase" || type === "Adjustment" ? amount : 0,
-      credit: type === "Payment Made" || type === "Cheque Issued" ? amount : 0,
+      debit: type === "Sale" || type === "Adjustment" ? amount : 0,
+      credit: type === "Payment Received" ? amount : 0,
     });
     setOpen(false);
     toast.success("Ledger entry added");
@@ -42,11 +42,11 @@ const VendorLedger = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-display font-bold">Vendor Ledger</h1>
-          <p className="text-sm text-muted-foreground">View vendor transaction history</p>
+          <h1 className="text-2xl font-display font-bold">Customer Ledger</h1>
+          <p className="text-sm text-muted-foreground">View customer transaction history</p>
         </div>
         <div className="flex gap-2">
-          {selectedVendor && (
+          {selectedCustomer && (
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
                 <Button><Plus className="h-4 w-4 mr-2" /> Add Entry</Button>
@@ -59,9 +59,7 @@ const VendorLedger = () => {
                     <Select name="type" required>
                       <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Purchase">Purchase</SelectItem>
-                        <SelectItem value="Payment Made">Payment Made</SelectItem>
-                        <SelectItem value="Cheque Issued">Cheque Issued</SelectItem>
+                        <SelectItem value="Payment Received">Payment Received</SelectItem>
                         <SelectItem value="Adjustment">Adjustment</SelectItem>
                       </SelectContent>
                     </Select>
@@ -78,33 +76,33 @@ const VendorLedger = () => {
         </div>
       </div>
 
-      <Select value={selectedVendor} onValueChange={setSelectedVendor}>
-        <SelectTrigger className="w-[300px]"><SelectValue placeholder="Select vendor" /></SelectTrigger>
+      <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
+        <SelectTrigger className="w-[300px]"><SelectValue placeholder="Select customer" /></SelectTrigger>
         <SelectContent>
-          {vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
+          {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
         </SelectContent>
       </Select>
 
-      {!selectedVendor ? (
-        <EmptyState title="Select a vendor" description="Choose a vendor from the dropdown to view their ledger." />
+      {!selectedCustomer ? (
+        <EmptyState title="Select a customer" description="Choose a customer from the dropdown to view their ledger." />
       ) : entries.length === 0 ? (
-        <EmptyState title="No transactions yet" description={`No ledger entries for ${vendor?.name}`} actionLabel="Add Entry" onAction={() => setOpen(true)} />
+        <EmptyState title="No transactions yet" description={`No ledger entries for ${customer?.name}`} actionLabel="Add Entry" onAction={() => setOpen(true)} />
       ) : (
         <>
-          {vendor && (
+          {customer && (
             <div className="grid grid-cols-3 gap-4">
               <div className="rounded-lg border bg-card p-4">
-                <p className="text-sm text-muted-foreground">Vendor</p>
-                <p className="font-semibold">{vendor.name}</p>
-                <p className="text-sm text-muted-foreground">{vendor.phone}</p>
+                <p className="text-sm text-muted-foreground">Customer</p>
+                <p className="font-semibold">{customer.name}</p>
+                <p className="text-sm text-muted-foreground">{customer.phone}</p>
               </div>
               <div className="rounded-lg border bg-card p-4">
-                <p className="text-sm text-muted-foreground">Total Purchases</p>
+                <p className="text-sm text-muted-foreground">Total Sales</p>
                 <p className="font-semibold">{formatPKR(totalDebit)}</p>
               </div>
               <div className="rounded-lg border bg-card p-4">
-                <p className="text-sm text-muted-foreground">Remaining Balance</p>
-                <p className={`font-semibold ${getOutstanding(selectedVendor) > 0 ? 'status-overdue' : 'status-healthy'}`}>{formatPKR(getOutstanding(selectedVendor))}</p>
+                <p className="text-sm text-muted-foreground">Outstanding</p>
+                <p className={`font-semibold ${getOutstanding(selectedCustomer) > 0 ? 'status-overdue' : 'status-healthy'}`}>{formatPKR(getOutstanding(selectedCustomer))}</p>
               </div>
             </div>
           )}
@@ -135,9 +133,9 @@ const VendorLedger = () => {
             </Table>
           </div>
           <div className="flex justify-end gap-8 text-sm border-t pt-4">
-            <span>Total Purchased: <strong>{formatPKR(totalDebit)}</strong></span>
+            <span>Total Sales: <strong>{formatPKR(totalDebit)}</strong></span>
             <span>Total Paid: <strong>{formatPKR(totalCredit)}</strong></span>
-            <span>Remaining: <strong className={getOutstanding(selectedVendor) > 0 ? 'status-overdue' : 'status-healthy'}>{formatPKR(getOutstanding(selectedVendor))}</strong></span>
+            <span>Outstanding: <strong className={getOutstanding(selectedCustomer) > 0 ? 'status-overdue' : 'status-healthy'}>{formatPKR(getOutstanding(selectedCustomer))}</strong></span>
           </div>
         </>
       )}
@@ -145,4 +143,4 @@ const VendorLedger = () => {
   );
 };
 
-export default VendorLedger;
+export default CustomerLedger;

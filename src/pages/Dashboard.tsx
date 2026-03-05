@@ -1,7 +1,37 @@
 import { KpiCard } from "@/components/KpiCard";
-import { Package, Cog, BoxSelect, Wallet, FileText, AlertTriangle } from "lucide-react";
+import { Wallet, Users, Landmark, FileText, Package, Calendar, AlertTriangle } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { EmptyState } from "@/components/EmptyState";
+import { useCashFlowStore } from "@/stores/cashFlowStore";
+import { useCustomerStore } from "@/stores/customerStore";
+import { useVendorStore } from "@/stores/vendorStore";
+import { useChequeStore } from "@/stores/chequeStore";
+import { useInventoryStore } from "@/stores/inventoryStore";
+import { useBookingStore } from "@/stores/bookingStore";
+import { useSalesStore } from "@/stores/salesStore";
+import { formatPKR, formatDate } from "@/lib/formatters";
+import { Badge } from "@/components/ui/badge";
 
 const Dashboard = () => {
+  const todayBalance = useCashFlowStore(s => s.getTodayBalance());
+  const totalReceivables = useCustomerStore(s => s.getTotalReceivables());
+  const totalPayables = useVendorStore(s => s.getTotalPayables());
+  const pendingCount = useChequeStore(s => s.getPendingCount());
+  const pendingTotal = useChequeStore(s => s.getPendingTotal());
+  const inventoryValue = useInventoryStore(s => s.getTotalStockValue());
+  const pendingDeliveries = useBookingStore(s => s.getPendingDeliveryCount());
+  const lowStockCount = useInventoryStore(s => s.getLowStockBatches().length);
+  const sales = useSalesStore(s => s.sales);
+  const upcomingBookings = useBookingStore(s => s.getUpcomingDeliveries(5));
+  const customers = useCustomerStore(s => s.customers);
+  const vendors = useVendorStore(s => s.vendors);
+  const batches = useInventoryStore(s => s.batches);
+
+  const recentSales = sales.slice(0, 5);
+
+  const getCustomerName = (id: string) => customers.find(c => c.id === id)?.name || 'Unknown';
+  const getVendorName = (id: string) => vendors.find(v => v.id === id)?.name || 'Unknown';
+
   return (
     <div className="space-y-6">
       <div>
@@ -9,52 +39,79 @@ const Dashboard = () => {
         <p className="text-sm text-muted-foreground">Overview of factory operations & finances</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <KpiCard title="Raw Stock" value="21,500 kg" subtitle="5 suppliers active" icon={Package} />
-        <KpiCard title="Processed Stock" value="10,800 kg" subtitle="70% high quality" icon={Cog} />
-        <KpiCard title="Packaged Inventory" value="1,950 packs" subtitle="1kg: 1300 | 2kg: 450 | 3kg: 200" icon={BoxSelect} />
-        <KpiCard title="Today's Cash Balance" value="Rs 46,500" subtitle="In: 62,000 | Out: 35,500" icon={Wallet} />
-        <KpiCard title="Pending Cheques" value="3" subtitle="Total: Rs 1,791,000" icon={FileText} variant="warning" />
-        <KpiCard title="Overdue Vendors" value="1" subtitle="Baloch Harvest Co." icon={AlertTriangle} variant="danger" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard title="Today's Cash Balance" value={formatPKR(todayBalance)} subtitle="Opening + In - Out" icon={Wallet} />
+        <KpiCard title="Total Receivables" value={formatPKR(totalReceivables)} subtitle="Outstanding from customers" icon={Users} />
+        <KpiCard title="Total Payables" value={formatPKR(totalPayables)} subtitle="Outstanding to vendors" icon={Landmark} />
+        <KpiCard title="Pending Cheques" value={String(pendingCount)} subtitle={formatPKR(pendingTotal)} icon={FileText} variant={pendingCount > 0 ? "warning" : undefined} />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <KpiCard title="Inventory Value" value={formatPKR(inventoryValue)} subtitle="Total stock value" icon={Package} />
+        <KpiCard title="Pending Deliveries" value={String(pendingDeliveries)} subtitle="Advance bookings" icon={Calendar} />
+        <KpiCard title="Low Stock Alerts" value={String(lowStockCount)} subtitle="Batches below 100 kg" icon={AlertTriangle} variant={lowStockCount > 0 ? "danger" : undefined} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-lg border bg-card p-4">
-          <h3 className="font-semibold text-sm mb-3">Recent Activity</h3>
-          <div className="space-y-3">
-            {[
-              { text: "Purchase recorded - 6,000kg from Islamabad Foods", time: "2 hours ago" },
-              { text: "Processing batch completed - 2,800kg input", time: "4 hours ago" },
-              { text: "Sale to Metro Superstore - Rs 54,000", time: "5 hours ago" },
-              { text: "Cheque CHQ-001248 bounced", time: "1 day ago" },
-            ].map((item, i) => (
-              <div key={i} className="flex items-center justify-between text-sm py-2 border-b last:border-0">
-                <span>{item.text}</span>
-                <span className="text-xs text-muted-foreground shrink-0 ml-4">{item.time}</span>
-              </div>
-            ))}
-          </div>
+          <h3 className="font-semibold text-sm mb-3">Recent Sales</h3>
+          {recentSales.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">No sales recorded yet</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentSales.map(s => (
+                  <TableRow key={s.id}>
+                    <TableCell>{formatDate(s.date)}</TableCell>
+                    <TableCell className="font-medium">{getCustomerName(s.customerId)}</TableCell>
+                    <TableCell className="text-right">{formatPKR(s.totalAmount)}</TableCell>
+                    <TableCell>
+                      <Badge variant={s.paymentStatus === 'Paid' ? 'default' : s.paymentStatus === 'Unpaid' ? 'destructive' : 'secondary'}>
+                        {s.paymentStatus}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </div>
         <div className="rounded-lg border bg-card p-4">
-          <h3 className="font-semibold text-sm mb-3">Upcoming Payments</h3>
-          <div className="space-y-3">
-            {[
-              { vendor: "Islamabad Foods", amount: "Rs 660,000", due: "Mar 7", status: "Due Soon" },
-              { vendor: "Khan Agro Supplies", amount: "Rs 600,000", due: "Mar 22", status: "On Time" },
-              { vendor: "Sindh Lentil Corp", amount: "Rs 531,000", due: "Apr 10", status: "On Time" },
-              { vendor: "Baloch Harvest Co.", amount: "Rs 341,600", due: "Mar 2", status: "Overdue" },
-            ].map((item, i) => (
-              <div key={i} className="flex items-center justify-between text-sm py-2 border-b last:border-0">
-                <div>
-                  <span className="font-medium">{item.vendor}</span>
-                  <span className="text-muted-foreground ml-2">{item.amount}</span>
-                </div>
-                <span className={item.status === "Overdue" ? "status-overdue text-xs" : item.status === "Due Soon" ? "status-due-soon text-xs" : "status-healthy text-xs"}>
-                  {item.status} · {item.due}
-                </span>
-              </div>
-            ))}
-          </div>
+          <h3 className="font-semibold text-sm mb-3">Upcoming Deliveries</h3>
+          {upcomingBookings.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">No pending deliveries</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Booking ID</TableHead>
+                  <TableHead>Vendor</TableHead>
+                  <TableHead>Delivery Date</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {upcomingBookings.map(b => (
+                  <TableRow key={b.id}>
+                    <TableCell className="font-mono text-sm">{b.id}</TableCell>
+                    <TableCell className="font-medium">{getVendorName(b.vendorId)}</TableCell>
+                    <TableCell>{formatDate(b.expectedDeliveryDate)}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{b.status}</Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </div>
       </div>
     </div>

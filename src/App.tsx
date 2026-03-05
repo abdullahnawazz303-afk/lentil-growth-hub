@@ -5,14 +5,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import Dashboard from "./pages/Dashboard";
-import RawInventory from "./pages/RawInventory";
-import Processing from "./pages/Processing";
-import Packaging from "./pages/Packaging";
+import Inventory from "./pages/Inventory";
 import Sales from "./pages/Sales";
-import Rokar from "./pages/Rokar";
-import BankCheques from "./pages/BankCheques";
+import Customers from "./pages/Customers";
+import CustomerLedger from "./pages/CustomerLedger";
+import Vendors from "./pages/Vendors";
 import VendorLedger from "./pages/VendorLedger";
-import AdvanceContracts from "./pages/AdvanceContracts";
+import AdvanceBookings from "./pages/AdvanceBookings";
+import BankCheques from "./pages/BankCheques";
+import Rokar from "./pages/Rokar";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
@@ -27,14 +28,15 @@ const App = () => (
         <AppLayout>
           <Routes>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/raw-inventory" element={<RawInventory />} />
-            <Route path="/processing" element={<Processing />} />
-            <Route path="/packaging" element={<Packaging />} />
+            <Route path="/inventory" element={<Inventory />} />
             <Route path="/sales" element={<Sales />} />
-            <Route path="/rokar" element={<Rokar />} />
-            <Route path="/bank-cheques" element={<BankCheques />} />
+            <Route path="/customers" element={<Customers />} />
+            <Route path="/customer-ledger" element={<CustomerLedger />} />
+            <Route path="/vendors" element={<Vendors />} />
             <Route path="/vendor-ledger" element={<VendorLedger />} />
-            <Route path="/advance-contracts" element={<AdvanceContracts />} />
+            <Route path="/advance-bookings" element={<AdvanceBookings />} />
+            <Route path="/bank-cheques" element={<BankCheques />} />
+            <Route path="/cash-flow" element={<Rokar />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

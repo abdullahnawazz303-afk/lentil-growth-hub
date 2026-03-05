@@ -1,98 +1,234 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { FileDown } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { EmptyState } from "@/components/EmptyState";
+import { Printer } from "lucide-react";
 import { toast } from "sonner";
-import { mockPurchases, mockProcessing, mockPackaging, mockSales, mockVendors, mockCheques, mockCashEntries } from "@/data/mockData";
+import { useSalesStore } from "@/stores/salesStore";
+import { useInventoryStore } from "@/stores/inventoryStore";
+import { useCustomerStore } from "@/stores/customerStore";
+import { useVendorStore } from "@/stores/vendorStore";
+import { useChequeStore } from "@/stores/chequeStore";
+import { useCashFlowStore } from "@/stores/cashFlowStore";
+import { formatPKR, formatKG, formatDate } from "@/lib/formatters";
+import { Badge } from "@/components/ui/badge";
 
 const Reports = () => {
-  const [dateFrom, setDateFrom] = useState("2026-02-01");
-  const [dateTo, setDateTo] = useState("2026-03-05");
-
-  const exportPdf = () => toast.info("PDF export coming soon");
+  const sales = useSalesStore(s => s.sales);
+  const batches = useInventoryStore(s => s.batches);
+  const customers = useCustomerStore(s => s.customers);
+  const vendors = useVendorStore(s => s.vendors);
+  const days = useCashFlowStore(s => s.days);
+  const getCustomerOutstanding = useCustomerStore(s => s.getOutstanding);
+  const getVendorOutstanding = useVendorStore(s => s.getOutstanding);
+  const getVendorName = (id: string) => vendors.find(v => v.id === id)?.name || 'Unknown';
+  const getCustomerName = (id: string) => customers.find(c => c.id === id)?.name || 'Unknown';
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-display font-bold">Reports</h1>
-        <p className="text-sm text-muted-foreground">Generate and export operational reports</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-display font-bold">Reports</h1>
+          <p className="text-sm text-muted-foreground">Financial and operational reports</p>
+        </div>
+        <Button variant="outline" onClick={() => toast.info("Print feature coming soon")}><Printer className="h-4 w-4 mr-2" /> Print</Button>
       </div>
 
-      <div className="flex items-end gap-4">
-        <div className="space-y-1"><Label className="text-xs">From</Label><Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-40" /></div>
-        <div className="space-y-1"><Label className="text-xs">To</Label><Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-40" /></div>
-        <Button variant="outline" size="sm" onClick={exportPdf}><FileDown className="h-4 w-4 mr-2" /> Export PDF</Button>
-      </div>
-
-      <Tabs defaultValue="raw" className="space-y-4">
-        <TabsList className="flex-wrap h-auto gap-1">
-          <TabsTrigger value="raw">Raw Inventory</TabsTrigger>
-          <TabsTrigger value="processing">Processing</TabsTrigger>
-          <TabsTrigger value="packaging">Packaging</TabsTrigger>
+      <Tabs defaultValue="sales">
+        <TabsList className="flex-wrap">
           <TabsTrigger value="sales">Sales</TabsTrigger>
-          <TabsTrigger value="vendors">Vendor Outstanding</TabsTrigger>
-          <TabsTrigger value="cheques">Cheque Status</TabsTrigger>
-          <TabsTrigger value="cash">Cash Summary</TabsTrigger>
+          <TabsTrigger value="purchases">Purchases</TabsTrigger>
+          <TabsTrigger value="inventory">Inventory</TabsTrigger>
+          <TabsTrigger value="cashflow">Cash Flow</TabsTrigger>
+          <TabsTrigger value="vendorBalance">Vendor Balances</TabsTrigger>
+          <TabsTrigger value="customerBalance">Customer Balances</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="raw" className="rounded-lg border">
-          <Table>
-            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Supplier</TableHead><TableHead className="text-right">Qty (kg)</TableHead><TableHead className="text-right">Rate</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader>
-            <TableBody>
-              {mockPurchases.map(p => (
-                <TableRow key={p.id}><TableCell>{p.date}</TableCell><TableCell>{p.supplier}</TableCell><TableCell className="text-right">{p.quantity.toLocaleString()}</TableCell><TableCell className="text-right">{p.costPerKg}</TableCell><TableCell className="text-right">Rs {(p.quantity * p.costPerKg).toLocaleString()}</TableCell></TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <TabsContent value="sales" className="space-y-4">
+          <h3 className="font-semibold">Sales Report</h3>
+          {sales.length === 0 ? <EmptyState title="No sales data" description="Sales will appear here once recorded." /> : (
+            <div className="rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Sale ID</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-right">Paid</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sales.map(s => (
+                    <TableRow key={s.id}>
+                      <TableCell className="font-mono text-sm">{s.id}</TableCell>
+                      <TableCell>{formatDate(s.date)}</TableCell>
+                      <TableCell>{getCustomerName(s.customerId)}</TableCell>
+                      <TableCell className="text-right">{formatPKR(s.totalAmount)}</TableCell>
+                      <TableCell className="text-right">{formatPKR(s.amountPaid)}</TableCell>
+                      <TableCell><Badge variant={s.paymentStatus === 'Paid' ? 'default' : 'destructive'}>{s.paymentStatus}</Badge></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </TabsContent>
 
-        <TabsContent value="processing" className="rounded-lg border">
-          <Table>
-            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead className="text-right">Input</TableHead><TableHead className="text-right">HQ</TableHead><TableHead className="text-right">LQ</TableHead><TableHead className="text-right">Waste</TableHead><TableHead className="text-right">Efficiency</TableHead></TableRow></TableHeader>
-            <TableBody>
-              {mockProcessing.map(r => (
-                <TableRow key={r.id}><TableCell>{r.date}</TableCell><TableCell className="text-right">{r.rawInput}</TableCell><TableCell className="text-right">{r.highQuality}</TableCell><TableCell className="text-right">{r.lowQuality}</TableCell><TableCell className="text-right">{r.waste}</TableCell><TableCell className="text-right">{((r.highQuality + r.lowQuality) / r.rawInput * 100).toFixed(1)}%</TableCell></TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <TabsContent value="purchases" className="space-y-4">
+          <h3 className="font-semibold">Purchase / Inventory Batches</h3>
+          {batches.length === 0 ? <EmptyState title="No purchase data" description="Inventory batches will appear here." /> : (
+            <div className="rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Batch</TableHead>
+                    <TableHead>Item</TableHead>
+                    <TableHead>Grade</TableHead>
+                    <TableHead>Vendor</TableHead>
+                    <TableHead className="text-right">Qty</TableHead>
+                    <TableHead className="text-right">Price/kg</TableHead>
+                    <TableHead>Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {batches.map(b => (
+                    <TableRow key={b.id}>
+                      <TableCell className="font-mono text-sm">{b.batchRef}</TableCell>
+                      <TableCell>{b.itemName}</TableCell>
+                      <TableCell>{b.grade}</TableCell>
+                      <TableCell>{getVendorName(b.vendorId)}</TableCell>
+                      <TableCell className="text-right">{formatKG(b.quantity)}</TableCell>
+                      <TableCell className="text-right">{formatPKR(b.purchasePrice)}</TableCell>
+                      <TableCell>{formatDate(b.purchaseDate)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </TabsContent>
 
-        <TabsContent value="packaging" className="rounded-lg border">
-          <Table>
-            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Type</TableHead><TableHead className="text-right">Quantity</TableHead></TableRow></TableHeader>
-            <TableBody>{mockPackaging.map(r => (<TableRow key={r.id}><TableCell>{r.date}</TableCell><TableCell>{r.packageType}</TableCell><TableCell className="text-right">{r.quantity}</TableCell></TableRow>))}</TableBody>
-          </Table>
+        <TabsContent value="inventory" className="space-y-4">
+          <h3 className="font-semibold">Current Stock</h3>
+          {batches.filter(b => b.remainingQuantity > 0).length === 0 ? <EmptyState title="No stock" description="No items in stock." /> : (
+            <div className="rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Item</TableHead>
+                    <TableHead>Grade</TableHead>
+                    <TableHead>Vendor</TableHead>
+                    <TableHead className="text-right">Remaining</TableHead>
+                    <TableHead className="text-right">Value</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {batches.filter(b => b.remainingQuantity > 0).map(b => (
+                    <TableRow key={b.id}>
+                      <TableCell>{b.itemName}</TableCell>
+                      <TableCell>{b.grade}</TableCell>
+                      <TableCell>{getVendorName(b.vendorId)}</TableCell>
+                      <TableCell className={`text-right ${b.remainingQuantity < 100 ? 'status-overdue' : ''}`}>{formatKG(b.remainingQuantity)}</TableCell>
+                      <TableCell className="text-right">{formatPKR(b.remainingQuantity * b.purchasePrice)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </TabsContent>
 
-        <TabsContent value="sales" className="rounded-lg border">
-          <Table>
-            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Customer</TableHead><TableHead>Product</TableHead><TableHead>Payment</TableHead><TableHead className="text-right">Amount</TableHead><TableHead className="text-right">Outstanding</TableHead></TableRow></TableHeader>
-            <TableBody>{mockSales.map(r => (<TableRow key={r.id}><TableCell>{r.date}</TableCell><TableCell>{r.customer}</TableCell><TableCell>{r.product}</TableCell><TableCell>{r.paymentMethod}</TableCell><TableCell className="text-right">Rs {r.amount.toLocaleString()}</TableCell><TableCell className="text-right">Rs {r.outstanding.toLocaleString()}</TableCell></TableRow>))}</TableBody>
-          </Table>
+        <TabsContent value="cashflow" className="space-y-4">
+          <h3 className="font-semibold">Cash Flow Summary</h3>
+          {Object.keys(days).length === 0 ? <EmptyState title="No cash flow data" description="Cash entries will appear here." /> : (
+            <div className="rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Opening</TableHead>
+                    <TableHead className="text-right">Cash In</TableHead>
+                    <TableHead className="text-right">Cash Out</TableHead>
+                    <TableHead className="text-right">Closing</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Object.values(days).sort((a, b) => b.date.localeCompare(a.date)).map(d => {
+                    const tIn = d.entries.filter(e => e.type === 'in').reduce((s, e) => s + e.amount, 0);
+                    const tOut = d.entries.filter(e => e.type === 'out').reduce((s, e) => s + e.amount, 0);
+                    return (
+                      <TableRow key={d.date}>
+                        <TableCell>{formatDate(d.date)}</TableCell>
+                        <TableCell className="text-right">{formatPKR(d.openingBalance)}</TableCell>
+                        <TableCell className="text-right status-healthy">{formatPKR(tIn)}</TableCell>
+                        <TableCell className="text-right status-overdue">{formatPKR(tOut)}</TableCell>
+                        <TableCell className="text-right font-medium">{formatPKR(d.isClosed ? d.closingBalance! : d.openingBalance + tIn - tOut)}</TableCell>
+                        <TableCell><Badge variant={d.isClosed ? 'default' : 'secondary'}>{d.isClosed ? 'Closed' : 'Open'}</Badge></TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </TabsContent>
 
-        <TabsContent value="vendors" className="rounded-lg border">
-          <Table>
-            <TableHeader><TableRow><TableHead>Vendor</TableHead><TableHead className="text-right">Outstanding</TableHead><TableHead>Due Date</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
-            <TableBody>{mockVendors.map(v => (<TableRow key={v.id}><TableCell>{v.name}</TableCell><TableCell className="text-right">Rs {v.outstanding.toLocaleString()}</TableCell><TableCell>{v.dueDate}</TableCell><TableCell className={v.status === "Overdue" ? "status-overdue" : v.status === "Due Soon" ? "status-due-soon" : "status-healthy"}>{v.status}</TableCell></TableRow>))}</TableBody>
-          </Table>
+        <TabsContent value="vendorBalance" className="space-y-4">
+          <h3 className="font-semibold">Vendor Outstanding Balances</h3>
+          {vendors.length === 0 ? <EmptyState title="No vendors" description="Add vendors to see balances." /> : (
+            <div className="rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Vendor</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Credit Days</TableHead>
+                    <TableHead className="text-right">Outstanding</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {[...vendors].sort((a, b) => getVendorOutstanding(b.id) - getVendorOutstanding(a.id)).map(v => (
+                    <TableRow key={v.id}>
+                      <TableCell className="font-medium">{v.name}</TableCell>
+                      <TableCell>{v.phone}</TableCell>
+                      <TableCell>{v.creditDays} days</TableCell>
+                      <TableCell className={`text-right font-medium ${getVendorOutstanding(v.id) > 0 ? 'status-overdue' : 'status-healthy'}`}>{formatPKR(getVendorOutstanding(v.id))}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </TabsContent>
 
-        <TabsContent value="cheques" className="rounded-lg border">
-          <Table>
-            <TableHeader><TableRow><TableHead>Cheque No</TableHead><TableHead>Vendor</TableHead><TableHead className="text-right">Amount</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
-            <TableBody>{mockCheques.map(c => (<TableRow key={c.id}><TableCell className="font-mono">{c.chequeNo}</TableCell><TableCell>{c.vendor}</TableCell><TableCell className="text-right">Rs {c.amount.toLocaleString()}</TableCell><TableCell className={c.status === "Bounced" ? "status-overdue" : c.status === "Pending" ? "status-due-soon" : "status-healthy"}>{c.status}</TableCell></TableRow>))}</TableBody>
-          </Table>
-        </TabsContent>
-
-        <TabsContent value="cash" className="rounded-lg border">
-          <Table>
-            <TableHeader><TableRow><TableHead>Description</TableHead><TableHead>Type</TableHead><TableHead className="text-right">Amount</TableHead></TableRow></TableHeader>
-            <TableBody>{mockCashEntries.map(e => (<TableRow key={e.id}><TableCell>{e.description}</TableCell><TableCell>{e.type === "in" ? "Cash In" : "Cash Out"}</TableCell><TableCell className={`text-right ${e.type === "in" ? "status-healthy" : "status-overdue"}`}>Rs {e.amount.toLocaleString()}</TableCell></TableRow>))}</TableBody>
-          </Table>
+        <TabsContent value="customerBalance" className="space-y-4">
+          <h3 className="font-semibold">Customer Outstanding Balances</h3>
+          {customers.length === 0 ? <EmptyState title="No customers" description="Add customers to see balances." /> : (
+            <div className="rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead className="text-right">Outstanding</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {[...customers].sort((a, b) => getCustomerOutstanding(b.id) - getCustomerOutstanding(a.id)).map(c => (
+                    <TableRow key={c.id}>
+                      <TableCell className="font-medium">{c.name}</TableCell>
+                      <TableCell>{c.phone}</TableCell>
+                      <TableCell className={`text-right font-medium ${getCustomerOutstanding(c.id) > 0 ? 'status-overdue' : 'status-healthy'}`}>{formatPKR(getCustomerOutstanding(c.id))}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

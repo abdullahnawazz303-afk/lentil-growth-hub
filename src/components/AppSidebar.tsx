@@ -1,25 +1,26 @@
 import {
-  LayoutDashboard, Package, Cog, BoxSelect, ShoppingCart,
-  Wallet, Landmark, Users, FileText, BarChart3, Leaf
+  LayoutDashboard, Package, ShoppingCart, Users, BookOpen,
+  Wallet, Landmark, FileText, BarChart3, Leaf, Store, CreditCard
 } from "lucide-react";
-import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
   SidebarHeader, useSidebar,
 } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Raw Inventory", url: "/raw-inventory", icon: Package },
-  { title: "Processing", url: "/processing", icon: Cog },
-  { title: "Packaging", url: "/packaging", icon: BoxSelect },
+  { title: "Inventory", url: "/inventory", icon: Package },
   { title: "Sales", url: "/sales", icon: ShoppingCart },
-  { title: "Rokar (Cash)", url: "/rokar", icon: Wallet },
-  { title: "Bank & Cheques", url: "/bank-cheques", icon: Landmark },
-  { title: "Vendor Ledger", url: "/vendor-ledger", icon: Users },
-  { title: "Advance Contracts", url: "/advance-contracts", icon: FileText },
+  { title: "Customers", url: "/customers", icon: Users },
+  { title: "Customer Ledger", url: "/customer-ledger", icon: BookOpen },
+  { title: "Vendors", url: "/vendors", icon: Store },
+  { title: "Vendor Ledger", url: "/vendor-ledger", icon: BookOpen },
+  { title: "Advance Bookings", url: "/advance-bookings", icon: FileText },
+  { title: "Bank & Cheques", url: "/bank-cheques", icon: CreditCard },
+  { title: "Daily Cash Flow", url: "/cash-flow", icon: Wallet },
   { title: "Reports", url: "/reports", icon: BarChart3 },
 ];
 
@@ -37,8 +38,8 @@ export function AppSidebar() {
           </div>
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="font-display font-bold text-sm text-sidebar-primary">LFO-FCMS</span>
-              <span className="text-[10px] text-sidebar-foreground/60">Lentil Factory Ops</span>
+              <span className="font-display font-bold text-sm text-sidebar-primary">FFCMS</span>
+              <span className="text-[10px] text-sidebar-foreground/60">Factory Financial & Credit</span>
             </div>
           )}
         </div>
@@ -48,16 +49,19 @@ export function AppSidebar() {
           <SidebarGroupLabel>Operations</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.slice(0, 5).map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end={item.url === "/"} activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                      <item.icon className="h-4 w-4 mr-2 shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {navItems.slice(0, 5).map((item) => {
+                const isActive = item.url === "/" ? location.pathname === "/" : location.pathname.startsWith(item.url);
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <Link to={item.url} className={cn(isActive && "bg-sidebar-accent text-sidebar-primary font-medium")}>
+                        <item.icon className="h-4 w-4 mr-2 shrink-0" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -65,16 +69,19 @@ export function AppSidebar() {
           <SidebarGroupLabel>Finance</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.slice(5).map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                      <item.icon className="h-4 w-4 mr-2 shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {navItems.slice(5).map((item) => {
+                const isActive = location.pathname.startsWith(item.url);
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <Link to={item.url} className={cn(isActive && "bg-sidebar-accent text-sidebar-primary font-medium")}>
+                        <item.icon className="h-4 w-4 mr-2 shrink-0" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
