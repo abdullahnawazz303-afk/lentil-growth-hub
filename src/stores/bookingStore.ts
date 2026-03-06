@@ -44,7 +44,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
           advancePaid: b.advancePaid + amount,
           remainingBalance: newRemaining,
           payments: [...b.payments, payment],
-          status: newRemaining <= 0 ? 'Completed' : 'Partially Paid',
+          status: newRemaining <= 0 ? 'Fully Paid' : 'Partially Paid',
         };
       }),
     }));
