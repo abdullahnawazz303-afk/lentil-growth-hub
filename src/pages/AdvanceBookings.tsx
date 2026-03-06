@@ -238,9 +238,12 @@ const AdvanceBookings = () => {
                         <Button size="sm" variant="outline" onClick={() => setDetailId(b.id)}><Eye className="h-3 w-3" /></Button>
                         {(b.status === 'Booked' || b.status === 'Partially Paid') && (
                           <>
-                            <Button size="sm" variant="outline" onClick={() => { setDetailId(b.id); setPayOpen(true); }}><CreditCard className="h-3 w-3" /></Button>
-                            <Button size="sm" variant="outline" onClick={() => handleDeliver(b.id)}><Truck className="h-3 w-3" /></Button>
+                            <Button size="sm" variant="outline" onClick={() => { setDetailId(b.id); setPayOpen(true); }} title="Record Payment"><CreditCard className="h-3 w-3" /></Button>
+                            <Button size="sm" variant="outline" onClick={() => handleDeliver(b.id)} title="Mark Delivered"><Truck className="h-3 w-3" /></Button>
                           </>
+                        )}
+                        {b.status === 'Delivered' && (
+                          <Button size="sm" variant="outline" onClick={() => handlePushToInventory(b.id)} title="Push to Inventory"><PackagePlus className="h-3 w-3" /></Button>
                         )}
                       </div>
                     </TableCell>
