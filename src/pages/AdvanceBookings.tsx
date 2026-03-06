@@ -314,7 +314,7 @@ const AdvanceBookings = () => {
         <DialogContent>
           <DialogHeader><DialogTitle>Record Payment</DialogTitle></DialogHeader>
           <form onSubmit={handlePayment} className="space-y-4">
-            <div className="space-y-2"><Label>Amount (PKR)</Label><Input name="amount" type="number" required /></div>
+            <div className="space-y-2"><Label>Amount (PKR)</Label><Input name="amount" type="number" min="0.01" max={detailBooking?.remainingBalance ?? undefined} step="0.01" required /></div>
             <div className="space-y-2"><Label>Notes</Label><Input name="notes" /></div>
             <Button type="submit" className="w-full">Record Payment</Button>
           </form>
