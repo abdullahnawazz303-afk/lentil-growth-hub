@@ -244,14 +244,14 @@ const AdvanceBookings = () => {
                     <TableCell>
                       <div className="flex gap-1">
                         <Button size="sm" variant="outline" onClick={() => setDetailId(b.id)}><Eye className="h-3 w-3" /></Button>
+                        {(b.status === 'Booked' || b.status === 'Partially Paid' || b.status === 'Fully Paid' || b.status === 'Delivered') && b.remainingBalance > 0 && (
+                          <Button size="sm" variant="outline" onClick={() => { setDetailId(b.id); setPayOpen(true); }} title="Record Payment"><CreditCard className="h-3 w-3" /></Button>
+                        )}
                         {(b.status === 'Booked' || b.status === 'Partially Paid' || b.status === 'Fully Paid') && (
-                          <>
-                            <Button size="sm" variant="outline" onClick={() => { setDetailId(b.id); setPayOpen(true); }} title="Record Payment"><CreditCard className="h-3 w-3" /></Button>
-                            <Button size="sm" variant="outline" onClick={() => handleDeliver(b.id)} title="Mark Delivered"><Truck className="h-3 w-3" /></Button>
-                          </>
+                          <Button size="sm" variant="outline" onClick={() => handleDeliver(b.id)} title="Mark Delivered"><Truck className="h-3 w-3" /></Button>
                         )}
                         {b.status === 'Delivered' && (
-                          <Button size="sm" variant="outline" onClick={() => handlePushToInventory(b.id)} title="Push to Inventory"><PackagePlus className="h-3 w-3" /></Button>
+                          <Button size="sm" variant="outline" disabled={b.remainingBalance > 0} onClick={() => handlePushToInventory(b.id)} title={b.remainingBalance > 0 ? "Pay full remaining first" : "Push to Inventory"}><PackagePlus className="h-3 w-3" /></Button>
                         )}
                       </div>
                     </TableCell>
