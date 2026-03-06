@@ -13,19 +13,26 @@ import { formatPKR, formatDate } from "@/lib/formatters";
 import { Badge } from "@/components/ui/badge";
 
 const Dashboard = () => {
-  const todayBalance = useCashFlowStore(s => s.getTodayBalance());
-  const totalReceivables = useCustomerStore(s => s.getTotalReceivables());
-  const totalPayables = useVendorStore(s => s.getTotalPayables());
-  const pendingCount = useChequeStore(s => s.getPendingCount());
-  const pendingTotal = useChequeStore(s => s.getPendingTotal());
-  const inventoryValue = useInventoryStore(s => s.getTotalStockValue());
-  const pendingDeliveries = useBookingStore(s => s.getPendingDeliveryCount());
-  const lowStockCount = useInventoryStore(s => s.getLowStockBatches().length);
-  const sales = useSalesStore(s => s.sales);
-  const upcomingBookings = useBookingStore(s => s.getUpcomingDeliveries(5));
-  const customers = useCustomerStore(s => s.customers);
-  const vendors = useVendorStore(s => s.vendors);
-  const batches = useInventoryStore(s => s.batches);
+  const cashFlowStore = useCashFlowStore();
+  const customerStore = useCustomerStore();
+  const vendorStore = useVendorStore();
+  const chequeStore = useChequeStore();
+  const inventoryStore = useInventoryStore();
+  const bookingStore = useBookingStore();
+  const salesStore = useSalesStore();
+
+  const todayBalance = cashFlowStore.getTodayBalance();
+  const totalReceivables = customerStore.getTotalReceivables();
+  const totalPayables = vendorStore.getTotalPayables();
+  const pendingCount = chequeStore.getPendingCount();
+  const pendingTotal = chequeStore.getPendingTotal();
+  const inventoryValue = inventoryStore.getTotalStockValue();
+  const pendingDeliveries = bookingStore.getPendingDeliveryCount();
+  const lowStockCount = inventoryStore.getLowStockBatches().length;
+  const sales = salesStore.sales;
+  const upcomingBookings = bookingStore.getUpcomingDeliveries(5);
+  const customers = customerStore.customers;
+  const vendors = vendorStore.vendors;
 
   const recentSales = sales.slice(0, 5);
 
