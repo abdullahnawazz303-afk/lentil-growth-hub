@@ -24,6 +24,7 @@ const statusVariant = (s: BookingStatus) => {
   switch (s) {
     case 'Booked': return 'secondary';
     case 'Partially Paid': return 'secondary';
+    case 'Fully Paid': return 'default';
     case 'Delivered': return 'secondary';
     case 'Completed': return 'default';
     case 'Cancelled': return 'destructive';
@@ -236,7 +237,7 @@ const AdvanceBookings = () => {
                     <TableCell>
                       <div className="flex gap-1">
                         <Button size="sm" variant="outline" onClick={() => setDetailId(b.id)}><Eye className="h-3 w-3" /></Button>
-                        {(b.status === 'Booked' || b.status === 'Partially Paid') && (
+                        {(b.status === 'Booked' || b.status === 'Partially Paid' || b.status === 'Fully Paid') && (
                           <>
                             <Button size="sm" variant="outline" onClick={() => { setDetailId(b.id); setPayOpen(true); }} title="Record Payment"><CreditCard className="h-3 w-3" /></Button>
                             <Button size="sm" variant="outline" onClick={() => handleDeliver(b.id)} title="Mark Delivered"><Truck className="h-3 w-3" /></Button>

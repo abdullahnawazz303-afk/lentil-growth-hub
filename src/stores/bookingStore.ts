@@ -44,7 +44,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
           advancePaid: b.advancePaid + amount,
           remainingBalance: newRemaining,
           payments: [...b.payments, payment],
-          status: newRemaining <= 0 ? 'Completed' : 'Partially Paid',
+          status: newRemaining <= 0 ? 'Fully Paid' : 'Partially Paid',
         };
       }),
     }));
@@ -57,12 +57,12 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   },
 
   getPendingDeliveryCount: () => {
-    return get().bookings.filter(b => b.status === 'Booked' || b.status === 'Partially Paid').length;
+    return get().bookings.filter(b => b.status === 'Booked' || b.status === 'Partially Paid' || b.status === 'Fully Paid').length;
   },
 
   getUpcomingDeliveries: (limit) => {
     return get().bookings
-      .filter(b => b.status === 'Booked' || b.status === 'Partially Paid')
+      .filter(b => b.status === 'Booked' || b.status === 'Partially Paid' || b.status === 'Fully Paid')
       .sort((a, b) => a.expectedDeliveryDate.localeCompare(b.expectedDeliveryDate))
       .slice(0, limit);
   },
