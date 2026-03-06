@@ -4,7 +4,7 @@
 
 export type Grade = 'A+' | 'A' | 'B' | 'C';
 
-export type BookingStatus = 'Booked' | 'Partially Paid' | 'Delivered' | 'Completed' | 'Cancelled';
+export type BookingStatus = 'Booked' | 'Partially Paid' | 'Fully Paid' | 'Delivered' | 'Completed' | 'Cancelled';
 export type ChequeStatus = 'Pending' | 'Cleared' | 'Bounced';
 export type PaymentStatus = 'Paid' | 'Partially Paid' | 'Unpaid';
 export type CashEntryType = 'in' | 'out';
