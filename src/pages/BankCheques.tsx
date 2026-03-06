@@ -23,8 +23,7 @@ const BankCheques = () => {
   const pageSize = 10;
 
   const getVendorName = (id: string) => vendors.find(v => v.id === id)?.name || 'Unknown';
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const vendorId = fd.get("vendorId") as string;
@@ -39,8 +38,14 @@ const BankCheques = () => {
       status: 'Pending',
       notes: fd.get("notes") as string || "",
     });
-    // Add to vendor ledger as cheque issued
-    addLedgerEntry(vendorId, { date: getTodayISO(), type: "Cheque Issued", description: `Cheque ${fd.get("chequeNumber")}`, debit: 0, credit: amount });
+    // Cheque is a payment to vendor — debit reduces what we owe them
+    addLedgerEntry(vendorId, {
+      date: getTodayISO(),
+      type: "Cheque Issued",
+      description: `Cheque ${fd.get("chequeNumber")}`,
+      debit: amount,   // ← was: debit: 0, credit: amount (WRONG — was adding to payables)
+      credit: 0,
+    });
     setOpen(false);
     toast.success("Cheque issued");
   };
@@ -48,15 +53,18 @@ const BankCheques = () => {
   const handleStatusChange = (id: string, status: 'Cleared' | 'Bounced') => {
     const cheque = updateStatus(id, status);
     if (cheque && status === 'Bounced') {
-      // Reverse the cheque in vendor ledger
+      // Cheque bounced — payment failed, so liability is restored
       addLedgerEntry(cheque.vendorId, {
-        date: getTodayISO(), type: "Adjustment",
+        date: getTodayISO(),
+        type: "Cheque Bounced",
         description: `Cheque bounced: ${cheque.chequeNumber}`,
-        debit: cheque.amount, credit: 0,
+        debit: 0,
+        credit: cheque.amount,  // ← restores the liability since payment didn't go through
       });
       toast.error("Cheque bounced — vendor balance restored");
     } else {
-      toast.success(`Cheque marked as ${status}`);
+      // Cleared — no ledger entry needed, debit on issue already reduced the balance
+      toast.success("Cheque marked as Cleared");
     }
   };
 

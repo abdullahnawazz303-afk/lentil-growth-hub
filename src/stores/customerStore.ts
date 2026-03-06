@@ -17,9 +17,24 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
 
   addCustomer: (c) => {
     const id = generateId('C');
+    const openingBalance = (c as any).openingBalance ?? 0;
+
+    const initialEntries: LedgerEntry[] = [];
+    if (openingBalance > 0) {
+      initialEntries.push({
+        id: generateId('CL'),
+        date: getTodayISO(),
+        type: 'Opening Balance',
+        description: 'Opening balance at time of registration',
+        debit: openingBalance,
+        credit: 0,
+        balance: openingBalance,
+      });
+    }
+
     set((s) => ({
       customers: [...s.customers, { ...c, id, createdAt: getTodayISO() }],
-      ledgerEntries: { ...s.ledgerEntries, [id]: [] },
+      ledgerEntries: { ...s.ledgerEntries, [id]: initialEntries },
     }));
     return id;
   },

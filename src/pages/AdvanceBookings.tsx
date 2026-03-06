@@ -69,6 +69,7 @@ const AdvanceBookings = () => {
     const fd = new FormData(e.currentTarget);
     const vendorId = fd.get("vendorId") as string;
     const advancePaid = Number(fd.get("advancePaid"));
+    const totalValue = items.reduce((s, i) => s + i.subtotal, 0);
 
     const bookingId = addBooking({
       bookingDate: fd.get("bookingDate") as string || getTodayISO(),
@@ -80,9 +81,32 @@ const AdvanceBookings = () => {
       notes: fd.get("notes") as string || "",
     });
 
+    // Record full purchase liability first (vendor gave us a contract — we owe them)
+    // credit = we owe vendor (liability increases)
+    addLedgerEntry(vendorId, {
+      date: getTodayISO(),
+      type: "Purchase",
+      description: `Advance booking ${bookingId} — total value`,
+      debit: 0,
+      credit: totalValue,
+    });
+
+    // If advance was paid, reduce liability immediately
+    // debit = we paid vendor (liability decreases)
     if (advancePaid > 0) {
-      addLedgerEntry(vendorId, { date: getTodayISO(), type: "Purchase", description: `Advance for booking ${bookingId}`, debit: advancePaid, credit: 0 });
-      addCashEntry(getTodayISO(), { type: 'out', category: 'Vendor Payment', amount: advancePaid, description: `Advance: ${bookingId}` });
+      addLedgerEntry(vendorId, {
+        date: getTodayISO(),
+        type: "Payment Made",
+        description: `Advance payment for booking ${bookingId}`,
+        debit: advancePaid,
+        credit: 0,
+      });
+      addCashEntry(getTodayISO(), {
+        type: 'out',
+        category: 'Vendor Payment',
+        amount: advancePaid,
+        description: `Advance: ${bookingId}`,
+      });
     }
 
     setItems([]);
@@ -94,11 +118,7 @@ const AdvanceBookings = () => {
     const booking = bookings.find(b => b.id === bookingId);
     if (!booking) return;
     updateStatus(bookingId, 'Delivered');
-    addLedgerEntry(booking.vendorId, {
-      date: getTodayISO(), type: "Purchase",
-      description: `Delivery received: ${bookingId}`,
-      debit: booking.totalValue - booking.advancePaid, credit: 0,
-    });
+    // No ledger entry here — purchase was already recorded when booking was created
     toast.success("Delivery marked — use 'Push to Inventory' to add stock");
   };
 
@@ -136,8 +156,22 @@ const AdvanceBookings = () => {
     if (amount > booking.remainingBalance) { toast.error("Payment cannot exceed remaining balance"); return; }
 
     addPayment(detailId, amount, fd.get("notes") as string || "");
-    addLedgerEntry(booking.vendorId, { date: getTodayISO(), type: "Payment Made", description: `Payment: ${detailId}`, debit: 0, credit: amount });
-    addCashEntry(getTodayISO(), { type: 'out', category: 'Vendor Payment', amount, description: `Booking payment: ${detailId}` });
+
+    // debit = we paid vendor (liability decreases)
+    addLedgerEntry(booking.vendorId, {
+      date: getTodayISO(),
+      type: "Payment Made",
+      description: `Payment for booking ${detailId}`,
+      debit: amount,
+      credit: 0,
+    });
+
+    addCashEntry(getTodayISO(), {
+      type: 'out',
+      category: 'Vendor Payment',
+      amount,
+      description: `Booking payment: ${detailId}`,
+    });
 
     setPayOpen(false);
     toast.success("Payment recorded");
@@ -203,7 +237,11 @@ const AdvanceBookings = () => {
                 {items.length > 0 && <div className="text-right font-semibold">Total: {formatPKR(items.reduce((s, i) => s + i.subtotal, 0))}</div>}
               </div>
 
-              <div className="space-y-2"><Label>Advance Paid (PKR)</Label><Input name="advancePaid" type="number" defaultValue="0" required /></div>
+              <div className="space-y-2">
+                <Label>Advance Paid (PKR)</Label>
+                <Input name="advancePaid" type="number" defaultValue="0" required />
+                <p className="text-xs text-muted-foreground">Enter 0 if no advance paid yet. You can record payments later.</p>
+              </div>
               <div className="space-y-2"><Label>Notes</Label><Textarea name="notes" /></div>
               <Button type="submit" className="w-full">Create Booking</Button>
             </form>
@@ -313,11 +351,32 @@ const AdvanceBookings = () => {
       <Dialog open={payOpen} onOpenChange={setPayOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Record Payment</DialogTitle></DialogHeader>
-          <form onSubmit={handlePayment} className="space-y-4">
-            <div className="space-y-2"><Label>Amount (PKR)</Label><Input name="amount" type="number" min="0.01" max={detailBooking?.remainingBalance ?? undefined} step="0.01" required /></div>
-            <div className="space-y-2"><Label>Notes</Label><Input name="notes" /></div>
-            <Button type="submit" className="w-full">Record Payment</Button>
-          </form>
+          {detailBooking && (
+            <div className="space-y-4">
+              <div className="rounded-lg bg-muted p-3 text-sm space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Vendor</span>
+                  <span className="font-medium">{getVendorName(detailBooking.vendorId)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Booking ID</span>
+                  <span className="font-mono">{detailBooking.id}</span>
+                </div>
+                <div className="flex justify-between font-semibold border-t pt-1 mt-1">
+                  <span>Remaining Balance</span>
+                  <span className="status-overdue">{formatPKR(detailBooking.remainingBalance)}</span>
+                </div>
+              </div>
+              <form onSubmit={handlePayment} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Amount (PKR)</Label>
+                  <Input name="amount" type="number" min="0.01" max={detailBooking.remainingBalance} step="0.01" required />
+                </div>
+                <div className="space-y-2"><Label>Notes</Label><Input name="notes" /></div>
+                <Button type="submit" className="w-full">Record Payment</Button>
+              </form>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

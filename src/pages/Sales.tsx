@@ -11,27 +11,34 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { formatPKR, formatKG, formatDate, getTodayISO } from "@/lib/formatters";
 import type { SaleItem } from "@/types";
 
 const Sales = () => {
-  const { sales, addSale } = useSalesStore();
+  const { sales, addSale, addPayment } = useSalesStore();
   const { customers } = useCustomerStore();
   const { batches, deductFromBatch } = useInventoryStore();
   const { addEntry: addCashEntry } = useCashFlowStore();
   const { addLedgerEntry } = useCustomerStore();
+
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const pageSize = 10;
 
+  // new sale items state
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [currentBatch, setCurrentBatch] = useState("");
   const [currentQty, setCurrentQty] = useState("");
   const [currentPrice, setCurrentPrice] = useState("");
+
+  // payment dialog state
+  const [payOpen, setPayOpen] = useState(false);
+  const [payingSaleId, setPayingSaleId] = useState<string | null>(null);
+  const [payAmount, setPayAmount] = useState("");
 
   const availableBatches = batches.filter(b => b.remainingQuantity > 0);
   const getCustomerName = (id: string) => customers.find(c => c.id === id)?.name || 'Unknown';
@@ -61,7 +68,6 @@ const Sales = () => {
     const amountPaid = Number(fd.get("amountPaid"));
     const totalAmount = saleItems.reduce((s, i) => s + i.subtotal, 0);
 
-    // Deduct from batches
     for (const item of saleItems) {
       const ok = deductFromBatch(item.batchId, item.quantity);
       if (!ok) { toast.error("Insufficient stock for one of the items"); return; }
@@ -76,19 +82,74 @@ const Sales = () => {
       notes: fd.get("notes") as string || "",
     });
 
-    // Add to customer ledger
-    const outstanding = totalAmount - amountPaid;
-    addLedgerEntry(customerId, { date: getTodayISO(), type: "Sale", description: `Sale ${saleId}`, debit: totalAmount, credit: amountPaid });
+    addLedgerEntry(customerId, {
+      date: getTodayISO(),
+      type: "Sale",
+      description: `Sale ${saleId}`,
+      debit: totalAmount,
+      credit: amountPaid,
+    });
 
-    // Record cash if paid
     if (amountPaid > 0) {
-      addCashEntry(getTodayISO(), { type: 'in', category: 'Sale Revenue', amount: amountPaid, description: `Payment for sale ${saleId}` });
+      addCashEntry(getTodayISO(), {
+        type: 'in',
+        category: 'Sale Revenue',
+        amount: amountPaid,
+        description: `Payment for sale ${saleId}`,
+      });
     }
 
     setSaleItems([]);
     setOpen(false);
     toast.success("Sale recorded successfully");
   };
+
+  // open the payment dialog for a specific sale
+  const openPayDialog = (saleId: string) => {
+    setPayingSaleId(saleId);
+    setPayAmount("");
+    setPayOpen(true);
+  };
+
+  const handlePayment = () => {
+    if (!payingSaleId) return;
+    const amount = Number(payAmount);
+    if (amount <= 0) { toast.error("Enter a valid amount"); return; }
+
+    const sale = sales.find(s => s.id === payingSaleId);
+    if (!sale) return;
+    if (amount > sale.outstanding) {
+      toast.error(`Cannot exceed outstanding amount of ${formatPKR(sale.outstanding)}`);
+      return;
+    }
+
+    // update sale record
+    addPayment(payingSaleId, amount);
+
+    // add to customer ledger as payment received
+    addLedgerEntry(sale.customerId, {
+      date: getTodayISO(),
+      type: "Payment Received",
+      description: `Payment for sale ${payingSaleId}`,
+      debit: 0,
+      credit: amount,
+    });
+
+    // record in daily cash
+    addCashEntry(getTodayISO(), {
+      type: 'in',
+      category: 'Customer Payment',
+      amount,
+      description: `Payment for sale ${payingSaleId}`,
+    });
+
+    setPayOpen(false);
+    setPayingSaleId(null);
+    setPayAmount("");
+    toast.success(`PKR ${amount.toLocaleString()} payment recorded`);
+  };
+
+  const payingSale = sales.find(s => s.id === payingSaleId);
 
   const filtered = sales.filter(s => {
     if (!search) return true;
@@ -156,7 +217,11 @@ const Sales = () => {
                 )}
               </div>
 
-              <div className="space-y-2"><Label>Amount Paid (PKR)</Label><Input name="amountPaid" type="number" defaultValue="0" required /></div>
+              <div className="space-y-2">
+                <Label>Amount Paid Now (PKR)</Label>
+                <Input name="amountPaid" type="number" defaultValue="0" required />
+                <p className="text-xs text-muted-foreground">Enter 0 if customer has not paid anything yet. You can record payments later.</p>
+              </div>
               <div className="space-y-2"><Label>Notes</Label><Textarea name="notes" /></div>
               <Button type="submit" className="w-full">Save Sale</Button>
             </form>
@@ -164,7 +229,12 @@ const Sales = () => {
         </Dialog>
       </div>
 
-      <Input placeholder="Search by customer or sale ID..." value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} className="max-w-xs" />
+      <Input
+        placeholder="Search by customer or sale ID..."
+        value={search}
+        onChange={e => { setSearch(e.target.value); setPage(0); }}
+        className="max-w-xs"
+      />
 
       {sales.length === 0 ? (
         <EmptyState title="No sales yet" description="Record your first sale to get started." actionLabel="Record First Sale" onAction={() => setOpen(true)} />
@@ -181,6 +251,7 @@ const Sales = () => {
                   <TableHead className="text-right">Paid</TableHead>
                   <TableHead className="text-right">Outstanding</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Payment</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -191,15 +262,32 @@ const Sales = () => {
                     <TableCell className="font-medium">{getCustomerName(s.customerId)}</TableCell>
                     <TableCell className="text-right">{formatPKR(s.totalAmount)}</TableCell>
                     <TableCell className="text-right">{formatPKR(s.amountPaid)}</TableCell>
-                    <TableCell className={`text-right font-medium ${s.outstanding > 0 ? 'status-overdue' : 'status-healthy'}`}>{formatPKR(s.outstanding)}</TableCell>
+                    <TableCell className={`text-right font-medium ${s.outstanding > 0 ? 'status-overdue' : 'status-healthy'}`}>
+                      {formatPKR(s.outstanding)}
+                    </TableCell>
                     <TableCell>
-                      <Badge variant={s.paymentStatus === 'Paid' ? 'default' : s.paymentStatus === 'Unpaid' ? 'destructive' : 'secondary'}>{s.paymentStatus}</Badge>
+                      <Badge variant={s.paymentStatus === 'Paid' ? 'default' : s.paymentStatus === 'Unpaid' ? 'destructive' : 'secondary'}>
+                        {s.paymentStatus}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {s.outstanding > 0 && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openPayDialog(s.id)}
+                          title="Record Payment"
+                        >
+                          <CreditCard className="h-3 w-3 mr-1" /> Pay
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
+
           {totalPages > 1 && (
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">Page {page + 1} of {totalPages}</p>
@@ -211,6 +299,66 @@ const Sales = () => {
           )}
         </>
       )}
+
+      {/* Record Payment Dialog */}
+      <Dialog open={payOpen} onOpenChange={(v) => { setPayOpen(v); if (!v) { setPayingSaleId(null); setPayAmount(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Record Payment</DialogTitle>
+          </DialogHeader>
+          {payingSale && (
+            <div className="space-y-4">
+              <div className="rounded-lg bg-muted p-3 text-sm space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Customer</span>
+                  <span className="font-medium">{getCustomerName(payingSale.customerId)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Sale ID</span>
+                  <span className="font-mono">{payingSale.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Total Amount</span>
+                  <span>{formatPKR(payingSale.totalAmount)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Already Paid</span>
+                  <span className="status-healthy">{formatPKR(payingSale.amountPaid)}</span>
+                </div>
+                <div className="flex justify-between font-semibold border-t pt-1 mt-1">
+                  <span>Outstanding</span>
+                  <span className="status-overdue">{formatPKR(payingSale.outstanding)}</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Amount Being Paid Now (PKR)</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max={payingSale.outstanding}
+                  value={payAmount}
+                  onChange={e => setPayAmount(e.target.value)}
+                  placeholder={`Max: ${formatPKR(payingSale.outstanding)}`}
+                  autoFocus
+                />
+                <p className="text-xs text-muted-foreground">
+                  Outstanding after this payment: {formatPKR(Math.max(0, payingSale.outstanding - Number(payAmount || 0)))}
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => { setPayOpen(false); setPayingSaleId(null); setPayAmount(""); }}>
+                  Cancel
+                </Button>
+                <Button className="flex-1" onClick={handlePayment}>
+                  Record Payment
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

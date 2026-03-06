@@ -24,7 +24,8 @@ const Customers = () => {
       name: fd.get("name") as string,
       phone: fd.get("phone") as string,
       address: fd.get("address") as string,
-    });
+      openingBalance: Number(fd.get("openingBalance")) || 0,
+    } as any);
     setOpen(false);
     toast.success("Customer added");
   };
@@ -54,6 +55,19 @@ const Customers = () => {
               <div className="space-y-2"><Label>Name</Label><Input name="name" required /></div>
               <div className="space-y-2"><Label>Phone</Label><Input name="phone" required /></div>
               <div className="space-y-2"><Label>Address</Label><Input name="address" /></div>
+              <div className="space-y-2">
+                <Label>Opening Balance (PKR)</Label>
+                <Input
+                  name="openingBalance"
+                  type="number"
+                  min="0"
+                  defaultValue="0"
+                  placeholder="0 if no outstanding"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Enter the amount this customer already owes you before today, if any.
+                </p>
+              </div>
               <Button type="submit" className="w-full">Add Customer</Button>
             </form>
           </DialogContent>

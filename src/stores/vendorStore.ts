@@ -4,7 +4,7 @@ import { generateId, getTodayISO } from '@/lib/formatters';
 
 interface VendorState {
   vendors: Vendor[];
-  ledgerEntries: Record<string, LedgerEntry[]>; // vendorId -> entries
+  ledgerEntries: Record<string, LedgerEntry[]>;
   addVendor: (v: Omit<Vendor, 'id' | 'createdAt'>) => string;
   addLedgerEntry: (vendorId: string, entry: Omit<LedgerEntry, 'id' | 'balance'>) => void;
   getOutstanding: (vendorId: string) => number;
@@ -28,14 +28,19 @@ export const useVendorStore = create<VendorState>((set, get) => ({
     set((s) => {
       const existing = s.ledgerEntries[vendorId] || [];
       const lastBalance = existing.length > 0 ? existing[existing.length - 1].balance : 0;
-      const newBalance = lastBalance + entry.debit - entry.credit;
+      // credit = vendor gave us goods = we OWE more = balance goes UP
+      // debit  = we paid vendor     = we OWE less  = balance goes DOWN
+      const newBalance = lastBalance + entry.credit - entry.debit;
       const newEntry: LedgerEntry = {
         ...entry,
         id: generateId('VL'),
         balance: newBalance,
       };
       return {
-        ledgerEntries: { ...s.ledgerEntries, [vendorId]: [...existing, newEntry] },
+        ledgerEntries: {
+          ...s.ledgerEntries,
+          [vendorId]: [...existing, newEntry],
+        },
       };
     });
   },
