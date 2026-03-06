@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Truck, CreditCard, Eye } from "lucide-react";
+import { Plus, Trash2, Truck, CreditCard, Eye, PackagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { formatPKR, formatKG, formatDate, getTodayISO } from "@/lib/formatters";
@@ -92,7 +92,18 @@ const AdvanceBookings = () => {
   const handleDeliver = (bookingId: string) => {
     const booking = bookings.find(b => b.id === bookingId);
     if (!booking) return;
-    // Add all items to inventory
+    updateStatus(bookingId, 'Delivered');
+    addLedgerEntry(booking.vendorId, {
+      date: getTodayISO(), type: "Purchase",
+      description: `Delivery received: ${bookingId}`,
+      debit: booking.totalValue - booking.advancePaid, credit: 0,
+    });
+    toast.success("Delivery marked — use 'Push to Inventory' to add stock");
+  };
+
+  const handlePushToInventory = (bookingId: string) => {
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) return;
     for (const item of booking.items) {
       addBatch({
         itemName: item.itemName,
@@ -104,13 +115,8 @@ const AdvanceBookings = () => {
         notes: `From booking ${bookingId}`,
       });
     }
-    updateStatus(bookingId, 'Delivered');
-    addLedgerEntry(booking.vendorId, {
-      date: getTodayISO(), type: "Purchase",
-      description: `Delivery received: ${bookingId}`,
-      debit: booking.totalValue - booking.advancePaid, credit: 0,
-    });
-    toast.success("Delivery marked — inventory updated");
+    updateStatus(bookingId, 'Completed');
+    toast.success("Stock pushed to main inventory");
   };
 
   const handlePayment = (e: React.FormEvent<HTMLFormElement>) => {
@@ -232,9 +238,12 @@ const AdvanceBookings = () => {
                         <Button size="sm" variant="outline" onClick={() => setDetailId(b.id)}><Eye className="h-3 w-3" /></Button>
                         {(b.status === 'Booked' || b.status === 'Partially Paid') && (
                           <>
-                            <Button size="sm" variant="outline" onClick={() => { setDetailId(b.id); setPayOpen(true); }}><CreditCard className="h-3 w-3" /></Button>
-                            <Button size="sm" variant="outline" onClick={() => handleDeliver(b.id)}><Truck className="h-3 w-3" /></Button>
+                            <Button size="sm" variant="outline" onClick={() => { setDetailId(b.id); setPayOpen(true); }} title="Record Payment"><CreditCard className="h-3 w-3" /></Button>
+                            <Button size="sm" variant="outline" onClick={() => handleDeliver(b.id)} title="Mark Delivered"><Truck className="h-3 w-3" /></Button>
                           </>
+                        )}
+                        {b.status === 'Delivered' && (
+                          <Button size="sm" variant="outline" onClick={() => handlePushToInventory(b.id)} title="Push to Inventory"><PackagePlus className="h-3 w-3" /></Button>
                         )}
                       </div>
                     </TableCell>
