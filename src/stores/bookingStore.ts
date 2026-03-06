@@ -37,14 +37,22 @@ export const useBookingStore = create<BookingState>((set, get) => ({
     set((s) => ({
       bookings: s.bookings.map(b => {
         if (b.id !== bookingId) return b;
-        const payment: BookingPayment = { id: generateId('BP'), date: getTodayISO(), amount, notes };
-        const newRemaining = b.remainingBalance - amount;
+
+        const appliedAmount = Math.min(Math.max(amount, 0), b.remainingBalance);
+        if (appliedAmount === 0) return b;
+
+        const payment: BookingPayment = { id: generateId('BP'), date: getTodayISO(), amount: appliedAmount, notes };
+        const newRemaining = b.remainingBalance - appliedAmount;
+        const nextStatus = (b.status === 'Delivered' || b.status === 'Completed')
+          ? b.status
+          : (newRemaining <= 0 ? 'Fully Paid' : 'Partially Paid');
+
         return {
           ...b,
-          advancePaid: b.advancePaid + amount,
+          advancePaid: b.advancePaid + appliedAmount,
           remainingBalance: newRemaining,
           payments: [...b.payments, payment],
-          status: newRemaining <= 0 ? 'Fully Paid' : 'Partially Paid',
+          status: nextStatus,
         };
       }),
     }));

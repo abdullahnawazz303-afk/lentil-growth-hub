@@ -105,6 +105,11 @@ const AdvanceBookings = () => {
   const handlePushToInventory = (bookingId: string) => {
     const booking = bookings.find(b => b.id === bookingId);
     if (!booking) return;
+    if (booking.remainingBalance > 0) {
+      toast.error("Clear remaining payment before pushing to inventory");
+      return;
+    }
+
     for (const item of booking.items) {
       addBatch({
         itemName: item.itemName,
@@ -127,6 +132,8 @@ const AdvanceBookings = () => {
     const amount = Number(fd.get("amount"));
     const booking = bookings.find(b => b.id === detailId);
     if (!booking) return;
+    if (amount <= 0) { toast.error("Payment must be greater than zero"); return; }
+    if (amount > booking.remainingBalance) { toast.error("Payment cannot exceed remaining balance"); return; }
 
     addPayment(detailId, amount, fd.get("notes") as string || "");
     addLedgerEntry(booking.vendorId, { date: getTodayISO(), type: "Payment Made", description: `Payment: ${detailId}`, debit: 0, credit: amount });
@@ -237,14 +244,14 @@ const AdvanceBookings = () => {
                     <TableCell>
                       <div className="flex gap-1">
                         <Button size="sm" variant="outline" onClick={() => setDetailId(b.id)}><Eye className="h-3 w-3" /></Button>
+                        {(b.status === 'Booked' || b.status === 'Partially Paid' || b.status === 'Fully Paid' || b.status === 'Delivered') && b.remainingBalance > 0 && (
+                          <Button size="sm" variant="outline" onClick={() => { setDetailId(b.id); setPayOpen(true); }} title="Record Payment"><CreditCard className="h-3 w-3" /></Button>
+                        )}
                         {(b.status === 'Booked' || b.status === 'Partially Paid' || b.status === 'Fully Paid') && (
-                          <>
-                            <Button size="sm" variant="outline" onClick={() => { setDetailId(b.id); setPayOpen(true); }} title="Record Payment"><CreditCard className="h-3 w-3" /></Button>
-                            <Button size="sm" variant="outline" onClick={() => handleDeliver(b.id)} title="Mark Delivered"><Truck className="h-3 w-3" /></Button>
-                          </>
+                          <Button size="sm" variant="outline" onClick={() => handleDeliver(b.id)} title="Mark Delivered"><Truck className="h-3 w-3" /></Button>
                         )}
                         {b.status === 'Delivered' && (
-                          <Button size="sm" variant="outline" onClick={() => handlePushToInventory(b.id)} title="Push to Inventory"><PackagePlus className="h-3 w-3" /></Button>
+                          <Button size="sm" variant="outline" disabled={b.remainingBalance > 0} onClick={() => handlePushToInventory(b.id)} title={b.remainingBalance > 0 ? "Pay full remaining first" : "Push to Inventory"}><PackagePlus className="h-3 w-3" /></Button>
                         )}
                       </div>
                     </TableCell>
@@ -307,7 +314,7 @@ const AdvanceBookings = () => {
         <DialogContent>
           <DialogHeader><DialogTitle>Record Payment</DialogTitle></DialogHeader>
           <form onSubmit={handlePayment} className="space-y-4">
-            <div className="space-y-2"><Label>Amount (PKR)</Label><Input name="amount" type="number" required /></div>
+            <div className="space-y-2"><Label>Amount (PKR)</Label><Input name="amount" type="number" min="0.01" max={detailBooking?.remainingBalance ?? undefined} step="0.01" required /></div>
             <div className="space-y-2"><Label>Notes</Label><Input name="notes" /></div>
             <Button type="submit" className="w-full">Record Payment</Button>
           </form>
