@@ -27,7 +27,7 @@ export function seedAllData() {
 
   // ── Vendors ──
   const v1 = vendorStore.addVendor({ name: 'بشیر ملک', phone: '0301-1234567', address: 'فیصل آباد', creditDays: 30 });
-  const v2 = vendorStore.addVendor({ name: 'علی الیاس', phone: '0321-9876543', address: 'آگری منڈی', creditDays: 45 });
+  const v2 = vendorStore.addVendor({ name: 'علی الیاس', phone: '0321-9876543', address: 'اکبری منڈی', creditDays: 45 });
 
   // ── Customers (Markets / Buyers) ──
   const c1 = customerStore.addCustomer({ name: 'Euro Store', phone: '0300-1112233' , address: 'لاہور' });
