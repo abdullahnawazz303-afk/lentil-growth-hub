@@ -22,7 +22,7 @@ const Dashboard = () => {
   const inventoryStore = useInventoryStore();
   const bookingStore = useBookingStore();
   const salesStore = useSalesStore();
-
+  const companyBalanceStore = useCompanyBalanceStore();
   const todayBalance = cashFlowStore.getTodayBalance();
   const totalReceivables = customerStore.getTotalReceivables();
   const totalPayables = vendorStore.getTotalPayables();
