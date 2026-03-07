@@ -90,7 +90,7 @@ export function seedAllData() {
 
   salesData.forEach(s => {
     const batchId = batchIds[s.batchIdx];
-    const batch = inventoryStore.batches.find(b => b.id === batchId);
+    const batch = useInventoryStore.getState().batches.find(b => b.id === batchId);
     if (!batch) return;
 
     // Deduct from inventory
