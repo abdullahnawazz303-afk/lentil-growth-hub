@@ -16,8 +16,12 @@ import BankCheques from "./pages/BankCheques";
 import Rokar from "./pages/Rokar";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
+import { seedAllData } from "@/lib/seedData";
 
 const queryClient = new QueryClient();
+
+// Seed dummy data on app start
+seedAllData();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
