@@ -75,6 +75,7 @@ export function seedAllData() {
   vendorStore.addLedgerEntry(v2, { date: '2026-01-05', type: 'خریداری', description: 'دال ماش 300 کلو', debit: 0, credit: 135000 });
   vendorStore.addLedgerEntry(v2, { date: '2026-01-15', type: 'خریداری', description: 'دال مسور 600 کلو', debit: 0, credit: 156000 });
   vendorStore.addLedgerEntry(v2, { date: '2026-01-20', type: 'ادائیگی', description: 'نقد ادائیگی', debit: 150000, credit: 0 });
+  companyBalanceStore.addVendorPayment(150000);
   vendorStore.addLedgerEntry(v2, { date: '2026-02-01', type: 'خریداری', description: 'دال چنا 700 کلو', debit: 0, credit: 140000 });
   vendorStore.addLedgerEntry(v2, { date: '2026-02-20', type: 'خریداری', description: 'دال مونگ 450 کلو', debit: 0, credit: 171000 });
 
