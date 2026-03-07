@@ -1,5 +1,5 @@
 import { KpiCard } from "@/components/KpiCard";
-import { Wallet, Users, Landmark, FileText, Package, Calendar, AlertTriangle } from "lucide-react";
+import { Wallet, Users, Landmark, FileText, Package, Calendar, AlertTriangle, Building2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState } from "@/components/EmptyState";
 import { useCashFlowStore } from "@/stores/cashFlowStore";
@@ -9,8 +9,10 @@ import { useChequeStore } from "@/stores/chequeStore";
 import { useInventoryStore } from "@/stores/inventoryStore";
 import { useBookingStore } from "@/stores/bookingStore";
 import { useSalesStore } from "@/stores/salesStore";
+import { useCompanyBalanceStore } from "@/stores/companyBalanceStore";
 import { formatPKR, formatDate } from "@/lib/formatters";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 
 const Dashboard = () => {
   const cashFlowStore = useCashFlowStore();
