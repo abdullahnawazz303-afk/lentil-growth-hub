@@ -49,6 +49,26 @@ const Dashboard = () => {
         <p className="text-sm text-muted-foreground">Overview of factory operations & finances</p>
       </div>
 
+      {/* Company Total Cash — Prominent Hero Card */}
+      <Card className="border-2 border-primary bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Company Total Cash</p>
+              <p className="text-4xl font-bold font-display mt-2 text-primary">{formatPKR(companyBalance)}</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Sales Income: <span className="text-success font-medium">+{formatPKR(companyBalanceStore.totalSalesIncome)}</span>
+                {' · '}
+                Vendor Payments: <span className="text-destructive font-medium">-{formatPKR(companyBalanceStore.totalVendorPayments)}</span>
+              </p>
+            </div>
+            <div className="h-14 w-14 rounded-xl bg-primary/15 flex items-center justify-center">
+              <Building2 className="h-7 w-7 text-primary" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard title="Today's Cash Balance" value={formatPKR(todayBalance)} subtitle="Opening + In - Out" icon={Wallet} />
         <KpiCard title="Total Receivables" value={formatPKR(totalReceivables)} subtitle="Outstanding from customers" icon={Users} />
