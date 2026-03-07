@@ -31,6 +31,7 @@ const Dashboard = () => {
   const inventoryValue = inventoryStore.getTotalStockValue();
   const pendingDeliveries = bookingStore.getPendingDeliveryCount();
   const lowStockCount = inventoryStore.getLowStockBatches().length;
+  const companyBalance = companyBalanceStore.getCompanyBalance();
   const sales = salesStore.sales;
   const upcomingBookings = bookingStore.getUpcomingDeliveries(5);
   const customers = customerStore.customers;
