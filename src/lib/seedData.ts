@@ -127,6 +127,9 @@ export function seedAllData() {
         credit: s.amountPaid,
       });
     }
+
+    // Track sales income in company balance
+    companyBalanceStore.addSalesIncome(s.amountPaid);
   });
 
   // ── Advance Bookings (6 records) ──
