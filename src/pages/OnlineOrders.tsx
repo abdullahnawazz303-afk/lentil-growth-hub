@@ -75,7 +75,7 @@ const OnlineOrders = () => {
       </div>
 
       {orderStore.orders.length === 0 ? (
-        <EmptyState title="No online orders yet" description="When customers place orders from the portal, they will appear here." icon={Globe} />
+        <EmptyState title="No online orders yet" description="When customers place orders from the portal, they will appear here." />
       ) : (
         <Card>
           <CardContent className="p-0">
