@@ -31,7 +31,7 @@ export function PublicFooter() {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>📍 Industrial Area, Lahore, Pakistan</li>
               <li>📞 +92 300 0000000</li>
-              <li>✉️ info@ffcmslentils.com</li>
+              <li>✉️ info@qaisfoods.com</li>
             </ul>
           </div>
         </div>
