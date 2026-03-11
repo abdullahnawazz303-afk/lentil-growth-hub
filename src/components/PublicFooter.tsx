@@ -11,7 +11,7 @@ export function PublicFooter() {
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
                 <Leaf className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="font-bold text-foreground">FFCMS Lentils</span>
+              <span className="font-bold text-foreground">Qais Foods</span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Premium quality lentils and pulses, sourced from the finest farms across Pakistan. 
@@ -31,12 +31,12 @@ export function PublicFooter() {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>📍 Industrial Area, Lahore, Pakistan</li>
               <li>📞 +92 300 0000000</li>
-              <li>✉️ info@ffcmslentils.com</li>
+              <li>✉️ info@qaisfoods.com</li>
             </ul>
           </div>
         </div>
         <div className="mt-8 pt-8 border-t text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} FFCMS Lentils. All rights reserved.
+          © {new Date().getFullYear()} Qais Foods. All rights reserved.
         </div>
       </div>
     </footer>

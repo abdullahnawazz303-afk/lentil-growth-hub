@@ -99,7 +99,7 @@ export default function Contact() {
               {[
                 { icon: MapPin, label: "Address", value: "Industrial Area, GT Road, Lahore, Pakistan" },
                 { icon: Phone, label: "Phone", value: "+92 300 0000000" },
-                { icon: Mail, label: "Email", value: "info@ffcmslentils.com" },
+                { icon: Mail, label: "Email", value: "info@qaisfoods.com" },
                 { icon: Clock, label: "Business Hours", value: "Mon–Sat: 9:00 AM – 6:00 PM" },
               ].map((item) => (
                 <div key={item.label} className="flex items-start gap-4">

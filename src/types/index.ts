@@ -139,3 +139,24 @@ export interface DayRecord {
   isClosed: boolean;
   closingBalance?: number;
 }
+
+export type OnlineOrderStatus = 'Pending' | 'Confirmed' | 'Rejected' | 'Delivered';
+
+export interface OnlineOrderItem {
+  itemName: string;
+  grade: Grade;
+  quantity: number;
+  notes: string;
+}
+
+export interface OnlineOrder {
+  id: string;
+  date: string;
+  customerEmail: string;
+  customerName: string;
+  customerPhone: string;
+  customerCity: string;
+  items: OnlineOrderItem[];
+  status: OnlineOrderStatus;
+  adminNotes: string;
+}

@@ -27,7 +27,8 @@ export default function Login() {
     setLoading(false);
     if (ok) {
       toast.success("Welcome back!");
-      navigate("/dashboard");
+      const role = email.toLowerCase().includes('customer') ? 'customer' : 'admin';
+      navigate(role === 'customer' ? '/portal' : '/dashboard');
     } else {
       toast.error("Invalid credentials");
     }
@@ -81,7 +82,8 @@ export default function Login() {
             </Button>
           </form>
           <p className="text-xs text-muted-foreground text-center mt-6">
-            Enter any email and password to access the system.
+            <strong>Admin:</strong> any email without "customer" → Management System<br />
+            <strong>Customer:</strong> email with "customer" (e.g. customer1@gmail.com) → Customer Portal
           </p>
         </CardContent>
       </Card>

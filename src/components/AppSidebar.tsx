@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Package, ShoppingCart, Users, BookOpen,
-  Wallet, Landmark, FileText, BarChart3, Leaf, Store, CreditCard
+  Wallet, Landmark, FileText, BarChart3, Leaf, Store, CreditCard, Globe
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -21,6 +21,7 @@ const navItems = [
   { title: "Advance Bookings", url: "/advance-bookings", icon: FileText },
   { title: "Bank & Cheques", url: "/bank-cheques", icon: CreditCard },
   { title: "Daily Cash Flow", url: "/cash-flow", icon: Wallet },
+  { title: "Online Orders", url: "/online-orders", icon: Globe },
   { title: "Reports", url: "/reports", icon: BarChart3 },
 ];
 
@@ -38,8 +39,8 @@ export function AppSidebar() {
           </div>
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="font-display font-bold text-sm text-sidebar-primary">FFCMS</span>
-              <span className="text-[10px] text-sidebar-foreground/60">Factory Financial & Credit</span>
+              <span className="font-display font-bold text-sm text-sidebar-primary">Qais Foods</span>
+              <span className="text-[10px] text-sidebar-foreground/60">Management System</span>
             </div>
           )}
         </div>
