@@ -10,7 +10,7 @@ interface KpiCardProps {
   variant?: "default" | "warning" | "danger";
 }
 
-export function KpiCard({ title, value, subtitle, icon: Icon, variant = "default" }: KpiCardProps) {
+export const KpiCard = ({ title, value, subtitle, icon: Icon, variant = "default" }: KpiCardProps) => {
   const borderColor = variant === "danger" ? "border-l-destructive" : variant === "warning" ? "border-l-warning" : "border-l-primary";
 
   return (
@@ -29,4 +29,4 @@ export function KpiCard({ title, value, subtitle, icon: Icon, variant = "default
       </CardContent>
     </Card>
   );
-}
+};
