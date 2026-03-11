@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { Leaf, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -12,16 +12,35 @@ const navLinks = [
 
 export function PublicNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
 
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+    <header
+      className={cn(
+        "sticky top-0 z-50 transition-all duration-300",
+        scrolled
+          ? "bg-card/95 backdrop-blur-md shadow-sm border-b border-border"
+          : "bg-transparent border-b border-transparent"
+      )}
+    >
       <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 md:px-8">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
+        <Link to="/" className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center shadow-sm">
             <Leaf className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="font-bold text-lg text-foreground">Qais Foods</span>
+          <span className={cn(
+            "font-bold text-lg transition-colors",
+            scrolled ? "text-foreground" : "text-white"
+          )}>
+            Qais Foods
+          </span>
         </Link>
 
         {/* Desktop nav */}
@@ -31,34 +50,42 @@ export function PublicNavbar() {
               key={l.to}
               to={l.to}
               className={cn(
-                "text-sm font-medium transition-colors hover:text-primary",
-                location.pathname === l.to ? "text-primary" : "text-muted-foreground"
+                "text-sm font-medium transition-colors",
+                location.pathname === l.to
+                  ? "text-primary"
+                  : scrolled
+                    ? "text-muted-foreground hover:text-primary"
+                    : "text-white/80 hover:text-white"
               )}
             >
               {l.label}
             </Link>
           ))}
           <Link to="/login">
-            <Button size="sm">Login</Button>
+            <Button size="sm" className="shadow-sm">Login</Button>
           </Link>
         </nav>
 
         {/* Mobile toggle */}
         <button className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
-          {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          {mobileOpen ? (
+            <X className={cn("h-6 w-6", scrolled ? "text-foreground" : "text-white")} />
+          ) : (
+            <Menu className={cn("h-6 w-6", scrolled ? "text-foreground" : "text-white")} />
+          )}
         </button>
       </div>
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t bg-card px-4 pb-4 pt-2 space-y-2">
+        <div className="md:hidden bg-card border-t border-border px-4 pb-4 pt-2 space-y-2 shadow-lg">
           {navLinks.map((l) => (
             <Link
               key={l.to}
               to={l.to}
               onClick={() => setMobileOpen(false)}
               className={cn(
-                "block py-2 text-sm font-medium transition-colors",
+                "block py-2.5 text-sm font-medium transition-colors",
                 location.pathname === l.to ? "text-primary" : "text-muted-foreground"
               )}
             >
