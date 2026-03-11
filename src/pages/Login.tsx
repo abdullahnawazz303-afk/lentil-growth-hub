@@ -27,7 +27,8 @@ export default function Login() {
     setLoading(false);
     if (ok) {
       toast.success("Welcome back!");
-      navigate("/dashboard");
+      const role = email.toLowerCase().includes('customer') ? 'customer' : 'admin';
+      navigate(role === 'customer' ? '/portal' : '/dashboard');
     } else {
       toast.error("Invalid credentials");
     }
