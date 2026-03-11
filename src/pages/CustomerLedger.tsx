@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Printer } from "lucide-react";
 import { toast } from "sonner";
-import { formatPKR, formatDate, getTodayISO, generateId } from "@/lib/formatters";
+import { formatPKR, formatDate, getTodayISO } from "@/lib/formatters";
 
 const CustomerLedger = () => {
   const { customers, ledgerEntries, addLedgerEntry, getOutstanding } = useCustomerStore();
@@ -36,6 +36,21 @@ const CustomerLedger = () => {
     });
     setOpen(false);
     toast.success("Ledger entry added");
+  };
+
+  const handlePrint = () => window.print();
+
+  const exportCSV = () => {
+    if (entries.length === 0) return;
+    const headers = "Date,Type,Description,Debit,Credit,Balance\n";
+    const rows = entries.map(e => `${e.date},${e.type},${e.description},${e.debit},${e.credit},${e.balance}`).join("\n");
+    const blob = new Blob([headers + rows], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `customer-ledger-${customer?.name || 'export'}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -72,7 +87,10 @@ const CustomerLedger = () => {
               </DialogContent>
             </Dialog>
           )}
-          <Button variant="outline" onClick={() => toast.info("Print feature coming soon")}><Printer className="h-4 w-4 mr-2" /> Print</Button>
+          <Button variant="outline" onClick={handlePrint}><Printer className="h-4 w-4 mr-2" /> Print</Button>
+          {entries.length > 0 && (
+            <Button variant="outline" onClick={exportCSV}>Export CSV</Button>
+          )}
         </div>
       </div>
 
@@ -86,7 +104,7 @@ const CustomerLedger = () => {
       {!selectedCustomer ? (
         <EmptyState title="Select a customer" description="Choose a customer from the dropdown to view their ledger." />
       ) : entries.length === 0 ? (
-        <EmptyState title="No transactions yet" description={`No ledger entries for ${customer?.name}`} actionLabel="Add Entry" onAction={() => setOpen(true)} />
+        <EmptyState title="No transactions yet" description={`No ledger entries for ${customer?.name}. Add your first entry to get started.`} actionLabel="Add Entry" onAction={() => setOpen(true)} />
       ) : (
         <>
           {customer && (
@@ -133,9 +151,9 @@ const CustomerLedger = () => {
             </Table>
           </div>
           <div className="flex justify-end gap-8 text-sm border-t pt-4">
-            <span>Total Sales: <strong>{formatPKR(totalDebit)}</strong></span>
-            <span>Total Paid: <strong>{formatPKR(totalCredit)}</strong></span>
-            <span>Outstanding: <strong className={getOutstanding(selectedCustomer) > 0 ? 'status-overdue' : 'status-healthy'}>{formatPKR(getOutstanding(selectedCustomer))}</strong></span>
+            <span>Total Debits: <strong>{formatPKR(totalDebit)}</strong></span>
+            <span>Total Credits: <strong>{formatPKR(totalCredit)}</strong></span>
+            <span>Final Balance: <strong className={getOutstanding(selectedCustomer) > 0 ? 'status-overdue' : 'status-healthy'}>{formatPKR(getOutstanding(selectedCustomer))}</strong></span>
           </div>
         </>
       )}

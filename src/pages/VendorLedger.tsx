@@ -19,23 +19,41 @@ const VendorLedger = () => {
   const vendor = vendors.find(v => v.id === selectedVendor);
   const entries = ledgerEntries[selectedVendor] || [];
 
-  const totalDebit = entries.reduce((s, e) => s + e.debit, 0);
   const totalCredit = entries.reduce((s, e) => s + e.credit, 0);
+  const totalDebit = entries.reduce((s, e) => s + e.debit, 0);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const type = fd.get("type") as string;
     const amount = Number(fd.get("amount"));
+    // Vendor ledger: credit = we owe more, debit = we owe less
     addLedgerEntry(selectedVendor, {
       date: fd.get("date") as string || getTodayISO(),
       type,
       description: fd.get("description") as string,
-      debit: type === "Purchase" || type === "Adjustment" ? amount : 0,
-      credit: type === "Payment Made" || type === "Cheque Issued" ? amount : 0,
+      debit: (type === "Payment Made" || type === "Cheque Issued") ? amount : 0,
+      credit: (type === "Purchase" || type === "Cheque Bounced" || type === "Adjustment") ? amount : 0,
     });
     setOpen(false);
     toast.success("Ledger entry added");
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const exportCSV = () => {
+    if (entries.length === 0) return;
+    const headers = "Date,Type,Description,Debit,Credit,Balance\n";
+    const rows = entries.map(e => `${e.date},${e.type},${e.description},${e.debit},${e.credit},${e.balance}`).join("\n");
+    const blob = new Blob([headers + rows], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `vendor-ledger-${vendor?.name || 'export'}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -62,6 +80,7 @@ const VendorLedger = () => {
                         <SelectItem value="Purchase">Purchase</SelectItem>
                         <SelectItem value="Payment Made">Payment Made</SelectItem>
                         <SelectItem value="Cheque Issued">Cheque Issued</SelectItem>
+                        <SelectItem value="Cheque Bounced">Cheque Bounced</SelectItem>
                         <SelectItem value="Adjustment">Adjustment</SelectItem>
                       </SelectContent>
                     </Select>
@@ -74,7 +93,10 @@ const VendorLedger = () => {
               </DialogContent>
             </Dialog>
           )}
-          <Button variant="outline" onClick={() => toast.info("Print feature coming soon")}><Printer className="h-4 w-4 mr-2" /> Print</Button>
+          <Button variant="outline" onClick={handlePrint}><Printer className="h-4 w-4 mr-2" /> Print</Button>
+          {entries.length > 0 && (
+            <Button variant="outline" onClick={exportCSV}>Export CSV</Button>
+          )}
         </div>
       </div>
 
@@ -88,7 +110,7 @@ const VendorLedger = () => {
       {!selectedVendor ? (
         <EmptyState title="Select a vendor" description="Choose a vendor from the dropdown to view their ledger." />
       ) : entries.length === 0 ? (
-        <EmptyState title="No transactions yet" description={`No ledger entries for ${vendor?.name}`} actionLabel="Add Entry" onAction={() => setOpen(true)} />
+        <EmptyState title="No transactions yet" description={`No ledger entries for ${vendor?.name}. Add your first entry to get started.`} actionLabel="Add Entry" onAction={() => setOpen(true)} />
       ) : (
         <>
           {vendor && (
@@ -99,11 +121,11 @@ const VendorLedger = () => {
                 <p className="text-sm text-muted-foreground">{vendor.phone}</p>
               </div>
               <div className="rounded-lg border bg-card p-4">
-                <p className="text-sm text-muted-foreground">Total Purchases</p>
-                <p className="font-semibold">{formatPKR(totalDebit)}</p>
+                <p className="text-sm text-muted-foreground">Total Purchased</p>
+                <p className="font-semibold">{formatPKR(totalCredit)}</p>
               </div>
               <div className="rounded-lg border bg-card p-4">
-                <p className="text-sm text-muted-foreground">Remaining Balance</p>
+                <p className="text-sm text-muted-foreground">We Owe Them</p>
                 <p className={`font-semibold ${getOutstanding(selectedVendor) > 0 ? 'status-overdue' : 'status-healthy'}`}>{formatPKR(getOutstanding(selectedVendor))}</p>
               </div>
             </div>
@@ -135,8 +157,8 @@ const VendorLedger = () => {
             </Table>
           </div>
           <div className="flex justify-end gap-8 text-sm border-t pt-4">
-            <span>Total Purchased: <strong>{formatPKR(totalDebit)}</strong></span>
-            <span>Total Paid: <strong>{formatPKR(totalCredit)}</strong></span>
+            <span>Total Purchased: <strong>{formatPKR(totalCredit)}</strong></span>
+            <span>Total Paid: <strong>{formatPKR(totalDebit)}</strong></span>
             <span>Remaining: <strong className={getOutstanding(selectedVendor) > 0 ? 'status-overdue' : 'status-healthy'}>{formatPKR(getOutstanding(selectedVendor))}</strong></span>
           </div>
         </>

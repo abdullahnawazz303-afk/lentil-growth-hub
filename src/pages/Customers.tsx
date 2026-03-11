@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { formatPKR, formatDate } from "@/lib/formatters";
 
 const Customers = () => {
@@ -22,10 +24,15 @@ const Customers = () => {
     const fd = new FormData(e.currentTarget);
     addCustomer({
       name: fd.get("name") as string,
+      contactPerson: fd.get("contactPerson") as string || "",
       phone: fd.get("phone") as string,
-      address: fd.get("address") as string,
+      city: fd.get("city") as string || "",
+      address: fd.get("address") as string || "",
       openingBalance: Number(fd.get("openingBalance")) || 0,
-    } as any);
+      creditLimit: Number(fd.get("creditLimit")) || 0,
+      notes: fd.get("notes") as string || "",
+      isActive: true,
+    });
     setOpen(false);
     toast.success("Customer added");
   };
@@ -49,25 +56,30 @@ const Customers = () => {
           <DialogTrigger asChild>
             <Button><Plus className="h-4 w-4 mr-2" /> Add Customer</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-lg">
             <DialogHeader><DialogTitle>Add Customer</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2"><Label>Name</Label><Input name="name" required /></div>
-              <div className="space-y-2"><Label>Phone</Label><Input name="phone" required /></div>
-              <div className="space-y-2"><Label>Address</Label><Input name="address" /></div>
-              <div className="space-y-2">
-                <Label>Opening Balance (PKR)</Label>
-                <Input
-                  name="openingBalance"
-                  type="number"
-                  min="0"
-                  defaultValue="0"
-                  placeholder="0 if no outstanding"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Enter the amount this customer already owes you before today, if any.
-                </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>Name *</Label><Input name="name" required /></div>
+                <div className="space-y-2"><Label>Contact Person</Label><Input name="contactPerson" /></div>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>Phone *</Label><Input name="phone" required /></div>
+                <div className="space-y-2"><Label>City</Label><Input name="city" /></div>
+              </div>
+              <div className="space-y-2"><Label>Address</Label><Input name="address" /></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Opening Balance (PKR)</Label>
+                  <Input name="openingBalance" type="number" min="0" defaultValue="0" />
+                  <p className="text-xs text-muted-foreground">Amount this customer already owes you.</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Credit Limit (PKR)</Label>
+                  <Input name="creditLimit" type="number" min="0" defaultValue="0" />
+                </div>
+              </div>
+              <div className="space-y-2"><Label>Notes</Label><Textarea name="notes" /></div>
               <Button type="submit" className="w-full">Add Customer</Button>
             </form>
           </DialogContent>
@@ -77,7 +89,7 @@ const Customers = () => {
       <Input placeholder="Search customers..." value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} className="max-w-xs" />
 
       {customers.length === 0 ? (
-        <EmptyState title="No customers yet" description="Add your first customer to get started." actionLabel="Add First Customer" onAction={() => setOpen(true)} />
+        <EmptyState title="No customers yet" description="No records found. Add your first customer to get started." actionLabel="Add First Customer" onAction={() => setOpen(true)} />
       ) : (
         <>
           <div className="rounded-lg border">
@@ -86,9 +98,9 @@ const Customers = () => {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Phone</TableHead>
-                  <TableHead>Address</TableHead>
+                  <TableHead>City</TableHead>
                   <TableHead className="text-right">Outstanding</TableHead>
-                  <TableHead>Added</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -96,9 +108,11 @@ const Customers = () => {
                   <TableRow key={c.id}>
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell>{c.phone}</TableCell>
-                    <TableCell>{c.address}</TableCell>
+                    <TableCell>{c.city}</TableCell>
                     <TableCell className={`text-right font-medium ${getOutstanding(c.id) > 0 ? 'status-overdue' : 'status-healthy'}`}>{formatPKR(getOutstanding(c.id))}</TableCell>
-                    <TableCell>{formatDate(c.createdAt)}</TableCell>
+                    <TableCell>
+                      <Badge variant={c.isActive ? 'default' : 'secondary'}>{c.isActive ? 'Active' : 'Inactive'}</Badge>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

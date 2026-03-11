@@ -3,6 +3,7 @@ import { useBookingStore } from "@/stores/bookingStore";
 import { useVendorStore } from "@/stores/vendorStore";
 import { useInventoryStore } from "@/stores/inventoryStore";
 import { useCashFlowStore } from "@/stores/cashFlowStore";
+import { useCompanyBalanceStore } from "@/stores/companyBalanceStore";
 import { EmptyState } from "@/components/EmptyState";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -20,24 +21,24 @@ import type { BookingItem, Grade, BookingStatus } from "@/types";
 const ITEM_OPTIONS = ["دال ماش", "دال چنا", "دال مونگ", "چاول", "چنے", "دال مسور", "ماش کی دال"];
 const GRADE_OPTIONS: Grade[] = ['A+', 'A', 'B', 'C'];
 
-const statusVariant = (s: BookingStatus) => {
+const statusColor = (s: BookingStatus) => {
   switch (s) {
-    case 'Booked': return 'secondary';
-    case 'Partially Paid': return 'secondary';
-    case 'Fully Paid': return 'default';
-    case 'Delivered': return 'secondary';
-    case 'Completed': return 'default';
-    case 'Cancelled': return 'destructive';
-    default: return 'secondary';
+    case 'Booked': return 'bg-blue-100 text-blue-800 border-blue-200';
+    case 'Partially Paid': return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'Fully Paid': return 'bg-green-100 text-green-800 border-green-200';
+    case 'Delivered': return 'bg-purple-100 text-purple-800 border-purple-200';
+    case 'Completed': return 'bg-teal-100 text-teal-800 border-teal-200';
+    case 'Cancelled': return 'bg-red-100 text-red-800 border-red-200';
+    default: return '';
   }
 };
 
 const AdvanceBookings = () => {
   const { bookings, addBooking, addPayment, updateStatus } = useBookingStore();
-  const { vendors } = useVendorStore();
+  const { vendors, addLedgerEntry } = useVendorStore();
   const { addBatch } = useInventoryStore();
   const { addEntry: addCashEntry } = useCashFlowStore();
-  const { addLedgerEntry } = useVendorStore();
+  const companyBalance = useCompanyBalanceStore();
   const [open, setOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [payOpen, setPayOpen] = useState(false);
@@ -77,12 +78,11 @@ const AdvanceBookings = () => {
       expectedDeliveryDate: fd.get("expectedDeliveryDate") as string,
       items,
       advancePaid,
-      status: advancePaid > 0 ? 'Partially Paid' : 'Booked',
+      status: advancePaid >= totalValue ? 'Fully Paid' : advancePaid > 0 ? 'Partially Paid' : 'Booked',
       notes: fd.get("notes") as string || "",
     });
 
-    // Record full purchase liability first (vendor gave us a contract — we owe them)
-    // credit = we owe vendor (liability increases)
+    // Credit = we owe vendor (purchase liability)
     addLedgerEntry(vendorId, {
       date: getTodayISO(),
       type: "Purchase",
@@ -91,8 +91,7 @@ const AdvanceBookings = () => {
       credit: totalValue,
     });
 
-    // If advance was paid, reduce liability immediately
-    // debit = we paid vendor (liability decreases)
+    // Debit = we paid vendor (advance)
     if (advancePaid > 0) {
       addLedgerEntry(vendorId, {
         date: getTodayISO(),
@@ -107,6 +106,7 @@ const AdvanceBookings = () => {
         amount: advancePaid,
         description: `Advance: ${bookingId}`,
       });
+      companyBalance.addVendorPayment(advancePaid);
     }
 
     setItems([]);
@@ -115,10 +115,7 @@ const AdvanceBookings = () => {
   };
 
   const handleDeliver = (bookingId: string) => {
-    const booking = bookings.find(b => b.id === bookingId);
-    if (!booking) return;
     updateStatus(bookingId, 'Delivered');
-    // No ledger entry here — purchase was already recorded when booking was created
     toast.success("Delivery marked — use 'Push to Inventory' to add stock");
   };
 
@@ -126,7 +123,7 @@ const AdvanceBookings = () => {
     const booking = bookings.find(b => b.id === bookingId);
     if (!booking) return;
     if (booking.remainingBalance > 0) {
-      toast.error("Clear remaining payment before pushing to inventory");
+      toast.error("Clear full payment before pushing to inventory");
       return;
     }
 
@@ -157,7 +154,6 @@ const AdvanceBookings = () => {
 
     addPayment(detailId, amount, fd.get("notes") as string || "");
 
-    // debit = we paid vendor (liability decreases)
     addLedgerEntry(booking.vendorId, {
       date: getTodayISO(),
       type: "Payment Made",
@@ -172,6 +168,8 @@ const AdvanceBookings = () => {
       amount,
       description: `Booking payment: ${detailId}`,
     });
+
+    companyBalance.addVendorPayment(amount);
 
     setPayOpen(false);
     toast.success("Payment recorded");
@@ -205,7 +203,7 @@ const AdvanceBookings = () => {
                   <Label>Vendor</Label>
                   <Select name="vendorId" required>
                     <SelectTrigger><SelectValue placeholder="Select vendor" /></SelectTrigger>
-                    <SelectContent>{vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}</SelectContent>
+                    <SelectContent>{vendors.filter(v => v.isActive).map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2"><Label>Booking Date</Label><Input name="bookingDate" type="date" defaultValue={getTodayISO()} required /></div>
@@ -240,7 +238,7 @@ const AdvanceBookings = () => {
               <div className="space-y-2">
                 <Label>Advance Paid (PKR)</Label>
                 <Input name="advancePaid" type="number" defaultValue="0" required />
-                <p className="text-xs text-muted-foreground">Enter 0 if no advance paid yet. You can record payments later.</p>
+                <p className="text-xs text-muted-foreground">Enter 0 if no advance paid yet.</p>
               </div>
               <div className="space-y-2"><Label>Notes</Label><Textarea name="notes" /></div>
               <Button type="submit" className="w-full">Create Booking</Button>
@@ -252,7 +250,7 @@ const AdvanceBookings = () => {
       <Input placeholder="Search bookings..." value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} className="max-w-xs" />
 
       {bookings.length === 0 ? (
-        <EmptyState title="No bookings yet" description="Create your first advance booking." actionLabel="Create Booking" onAction={() => setOpen(true)} />
+        <EmptyState title="No bookings yet" description="No records found. Create your first advance booking to get started." actionLabel="Create Booking" onAction={() => setOpen(true)} />
       ) : (
         <>
           <div className="rounded-lg border">
@@ -278,18 +276,20 @@ const AdvanceBookings = () => {
                     <TableCell className="text-right">{formatPKR(b.totalValue)}</TableCell>
                     <TableCell className="text-right">{formatPKR(b.advancePaid)}</TableCell>
                     <TableCell className="text-right">{formatPKR(b.remainingBalance)}</TableCell>
-                    <TableCell><Badge variant={statusVariant(b.status)}>{b.status}</Badge></TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${statusColor(b.status)}`}>{b.status}</span>
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button size="sm" variant="outline" onClick={() => setDetailId(b.id)}><Eye className="h-3 w-3" /></Button>
-                        {(b.status === 'Booked' || b.status === 'Partially Paid' || b.status === 'Fully Paid' || b.status === 'Delivered') && b.remainingBalance > 0 && (
+                        <Button size="sm" variant="outline" onClick={() => setDetailId(b.id)} title="View Details"><Eye className="h-3 w-3" /></Button>
+                        {b.remainingBalance > 0 && b.status !== 'Cancelled' && b.status !== 'Completed' && (
                           <Button size="sm" variant="outline" onClick={() => { setDetailId(b.id); setPayOpen(true); }} title="Record Payment"><CreditCard className="h-3 w-3" /></Button>
                         )}
                         {(b.status === 'Booked' || b.status === 'Partially Paid' || b.status === 'Fully Paid') && (
                           <Button size="sm" variant="outline" onClick={() => handleDeliver(b.id)} title="Mark Delivered"><Truck className="h-3 w-3" /></Button>
                         )}
                         {b.status === 'Delivered' && (
-                          <Button size="sm" variant="outline" disabled={b.remainingBalance > 0} onClick={() => handlePushToInventory(b.id)} title={b.remainingBalance > 0 ? "Pay full remaining first" : "Push to Inventory"}><PackagePlus className="h-3 w-3" /></Button>
+                          <Button size="sm" variant="outline" disabled={b.remainingBalance > 0} onClick={() => handlePushToInventory(b.id)} title={b.remainingBalance > 0 ? "Clear full payment first" : "Push to Inventory"}><PackagePlus className="h-3 w-3" /></Button>
                         )}
                       </div>
                     </TableCell>
@@ -369,11 +369,14 @@ const AdvanceBookings = () => {
               </div>
               <form onSubmit={handlePayment} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Amount (PKR)</Label>
-                  <Input name="amount" type="number" min="0.01" max={detailBooking.remainingBalance} step="0.01" required />
+                  <Label>Payment Amount (PKR)</Label>
+                  <Input name="amount" type="number" min="1" max={detailBooking.remainingBalance} required autoFocus placeholder={`Max: ${formatPKR(detailBooking.remainingBalance)}`} />
                 </div>
                 <div className="space-y-2"><Label>Notes</Label><Input name="notes" /></div>
-                <Button type="submit" className="w-full">Record Payment</Button>
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" className="flex-1" onClick={() => setPayOpen(false)}>Cancel</Button>
+                  <Button type="submit" className="flex-1">Record Payment</Button>
+                </div>
               </form>
             </div>
           )}

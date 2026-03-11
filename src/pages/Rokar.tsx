@@ -16,7 +16,7 @@ import type { CashEntryType, CashInCategory, CashOutCategory } from "@/types";
 import { KpiCard } from "@/components/KpiCard";
 
 const CASH_IN_CATS: CashInCategory[] = ['Customer Payment', 'Sale Revenue', 'Other Income'];
-const CASH_OUT_CATS: CashOutCategory[] = ['Salary', 'Transport', 'Utilities', 'Vendor Payment', 'Miscellaneous'];
+const CASH_OUT_CATS: CashOutCategory[] = ['Salary', 'Transport', 'Utilities', 'Vendor Payment', 'Cheque Payment', 'Miscellaneous'];
 
 const Rokar = () => {
   const { getOrCreateDay, addEntry, closeDay } = useCashFlowStore();
@@ -125,7 +125,7 @@ const Rokar = () => {
       </div>
 
       {day.entries.length === 0 ? (
-        <EmptyState title="No entries for this day" description="Add your first cash entry." actionLabel={day.isClosed ? undefined : "Add Entry"} onAction={day.isClosed ? undefined : () => setOpen(true)} />
+        <EmptyState title="No entries for this day" description="No records found. Add your first cash entry to get started." actionLabel={day.isClosed ? undefined : "Add Entry"} onAction={day.isClosed ? undefined : () => setOpen(true)} />
       ) : (
         <div className="rounded-lg border">
           <Table>

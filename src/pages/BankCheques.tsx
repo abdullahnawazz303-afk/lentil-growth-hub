@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useChequeStore } from "@/stores/chequeStore";
 import { useVendorStore } from "@/stores/vendorStore";
+import { useCashFlowStore } from "@/stores/cashFlowStore";
 import { EmptyState } from "@/components/EmptyState";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -17,19 +18,22 @@ import { formatPKR, formatDate, getTodayISO } from "@/lib/formatters";
 const BankCheques = () => {
   const { cheques, addCheque, updateStatus } = useChequeStore();
   const { vendors, addLedgerEntry } = useVendorStore();
+  const { addEntry: addCashEntry } = useCashFlowStore();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const pageSize = 10;
 
   const getVendorName = (id: string) => vendors.find(v => v.id === id)?.name || 'Unknown';
-const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const vendorId = fd.get("vendorId") as string;
     const amount = Number(fd.get("amount"));
-    const chequeId = addCheque({
-      chequeNumber: fd.get("chequeNumber") as string,
+    const chequeNumber = fd.get("chequeNumber") as string;
+    addCheque({
+      chequeNumber,
       vendorId,
       amount,
       issueDate: fd.get("issueDate") as string || getTodayISO(),
@@ -38,12 +42,12 @@ const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
       status: 'Pending',
       notes: fd.get("notes") as string || "",
     });
-    // Cheque is a payment to vendor — debit reduces what we owe them
+    // Cheque issued = debit (reduces what we owe)
     addLedgerEntry(vendorId, {
       date: getTodayISO(),
       type: "Cheque Issued",
-      description: `Cheque ${fd.get("chequeNumber")}`,
-      debit: amount,   // ← was: debit: 0, credit: amount (WRONG — was adding to payables)
+      description: `Cheque ${chequeNumber}`,
+      debit: amount,
       credit: 0,
     });
     setOpen(false);
@@ -53,17 +57,23 @@ const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
   const handleStatusChange = (id: string, status: 'Cleared' | 'Bounced') => {
     const cheque = updateStatus(id, status);
     if (cheque && status === 'Bounced') {
-      // Cheque bounced — payment failed, so liability is restored
+      // Bounced — restore liability
       addLedgerEntry(cheque.vendorId, {
         date: getTodayISO(),
         type: "Cheque Bounced",
         description: `Cheque bounced: ${cheque.chequeNumber}`,
         debit: 0,
-        credit: cheque.amount,  // ← restores the liability since payment didn't go through
+        credit: cheque.amount,
       });
       toast.error("Cheque bounced — vendor balance restored");
-    } else {
-      // Cleared — no ledger entry needed, debit on issue already reduced the balance
+    } else if (cheque && status === 'Cleared') {
+      // Cleared — record actual cash outflow
+      addCashEntry(getTodayISO(), {
+        type: 'out',
+        category: 'Cheque Payment',
+        amount: cheque.amount,
+        description: `Cheque cleared: ${cheque.chequeNumber} — ${getVendorName(cheque.vendorId)}`,
+      });
       toast.success("Cheque marked as Cleared");
     }
   };
@@ -119,7 +129,7 @@ const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
       <Input placeholder="Search by vendor or cheque number..." value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} className="max-w-xs" />
 
       {cheques.length === 0 ? (
-        <EmptyState title="No cheques yet" description="Issue your first cheque to get started." actionLabel="Issue First Cheque" onAction={() => setOpen(true)} />
+        <EmptyState title="No cheques yet" description="No records found. Issue your first cheque to get started." actionLabel="Issue First Cheque" onAction={() => setOpen(true)} />
       ) : (
         <>
           <div className="rounded-lg border">
@@ -149,8 +159,8 @@ const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
                     <TableCell>
                       {c.status === "Pending" && (
                         <div className="flex gap-1">
-                          <Button size="sm" variant="outline" onClick={() => handleStatusChange(c.id, "Cleared")}><Check className="h-3 w-3" /></Button>
-                          <Button size="sm" variant="outline" onClick={() => handleStatusChange(c.id, "Bounced")}><X className="h-3 w-3" /></Button>
+                          <Button size="sm" variant="outline" onClick={() => handleStatusChange(c.id, "Cleared")} title="Mark Cleared"><Check className="h-3 w-3" /></Button>
+                          <Button size="sm" variant="outline" onClick={() => handleStatusChange(c.id, "Bounced")} title="Mark Bounced"><X className="h-3 w-3" /></Button>
                         </div>
                       )}
                     </TableCell>

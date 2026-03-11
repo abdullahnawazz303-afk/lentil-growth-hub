@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { formatPKR, formatDate } from "@/lib/formatters";
 
 const Vendors = () => {
@@ -22,9 +24,13 @@ const Vendors = () => {
     const fd = new FormData(e.currentTarget);
     addVendor({
       name: fd.get("name") as string,
+      contactPerson: fd.get("contactPerson") as string || "",
       phone: fd.get("phone") as string,
-      address: fd.get("address") as string,
-      creditDays: Number(fd.get("creditDays")) || 30,
+      city: fd.get("city") as string || "",
+      address: fd.get("address") as string || "",
+      openingBalance: Number(fd.get("openingBalance")) || 0,
+      notes: fd.get("notes") as string || "",
+      isActive: true,
     });
     setOpen(false);
     toast.success("Vendor added");
@@ -45,13 +51,24 @@ const Vendors = () => {
           <DialogTrigger asChild>
             <Button><Plus className="h-4 w-4 mr-2" /> Add Vendor</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-lg">
             <DialogHeader><DialogTitle>Add Vendor</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2"><Label>Name</Label><Input name="name" required /></div>
-              <div className="space-y-2"><Label>Phone</Label><Input name="phone" required /></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>Name *</Label><Input name="name" required /></div>
+                <div className="space-y-2"><Label>Contact Person</Label><Input name="contactPerson" /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>Phone *</Label><Input name="phone" required /></div>
+                <div className="space-y-2"><Label>City</Label><Input name="city" /></div>
+              </div>
               <div className="space-y-2"><Label>Address</Label><Input name="address" /></div>
-              <div className="space-y-2"><Label>Credit Days</Label><Input name="creditDays" type="number" defaultValue="30" /></div>
+              <div className="space-y-2">
+                <Label>Opening Balance (PKR)</Label>
+                <Input name="openingBalance" type="number" min="0" defaultValue="0" />
+                <p className="text-xs text-muted-foreground">Amount you already owe this vendor before today.</p>
+              </div>
+              <div className="space-y-2"><Label>Notes</Label><Textarea name="notes" /></div>
               <Button type="submit" className="w-full">Add Vendor</Button>
             </form>
           </DialogContent>
@@ -61,7 +78,7 @@ const Vendors = () => {
       <Input placeholder="Search vendors..." value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} className="max-w-xs" />
 
       {vendors.length === 0 ? (
-        <EmptyState title="No vendors yet" description="Add your first vendor to get started." actionLabel="Add First Vendor" onAction={() => setOpen(true)} />
+        <EmptyState title="No vendors yet" description="No records found. Add your first vendor to get started." actionLabel="Add First Vendor" onAction={() => setOpen(true)} />
       ) : (
         <>
           <div className="rounded-lg border">
@@ -70,10 +87,9 @@ const Vendors = () => {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Phone</TableHead>
-                  <TableHead>Address</TableHead>
-                  <TableHead>Credit Days</TableHead>
+                  <TableHead>City</TableHead>
                   <TableHead className="text-right">Outstanding</TableHead>
-                  <TableHead>Added</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -81,10 +97,11 @@ const Vendors = () => {
                   <TableRow key={v.id}>
                     <TableCell className="font-medium">{v.name}</TableCell>
                     <TableCell>{v.phone}</TableCell>
-                    <TableCell>{v.address}</TableCell>
-                    <TableCell>{v.creditDays} days</TableCell>
+                    <TableCell>{v.city}</TableCell>
                     <TableCell className={`text-right font-medium ${getOutstanding(v.id) > 0 ? 'status-overdue' : 'status-healthy'}`}>{formatPKR(getOutstanding(v.id))}</TableCell>
-                    <TableCell>{formatDate(v.createdAt)}</TableCell>
+                    <TableCell>
+                      <Badge variant={v.isActive ? 'default' : 'secondary'}>{v.isActive ? 'Active' : 'Inactive'}</Badge>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

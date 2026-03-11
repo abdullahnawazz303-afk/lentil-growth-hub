@@ -3,6 +3,7 @@ import { useSalesStore } from "@/stores/salesStore";
 import { useCustomerStore } from "@/stores/customerStore";
 import { useInventoryStore } from "@/stores/inventoryStore";
 import { useCashFlowStore } from "@/stores/cashFlowStore";
+import { useCompanyBalanceStore } from "@/stores/companyBalanceStore";
 import { EmptyState } from "@/components/EmptyState";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -19,29 +20,31 @@ import type { SaleItem } from "@/types";
 
 const Sales = () => {
   const { sales, addSale, addPayment } = useSalesStore();
-  const { customers } = useCustomerStore();
+  const { customers, addLedgerEntry } = useCustomerStore();
   const { batches, deductFromBatch } = useInventoryStore();
   const { addEntry: addCashEntry } = useCashFlowStore();
-  const { addLedgerEntry } = useCustomerStore();
+  const companyBalance = useCompanyBalanceStore();
 
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const pageSize = 10;
 
-  // new sale items state
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [currentBatch, setCurrentBatch] = useState("");
   const [currentQty, setCurrentQty] = useState("");
   const [currentPrice, setCurrentPrice] = useState("");
 
-  // payment dialog state
   const [payOpen, setPayOpen] = useState(false);
   const [payingSaleId, setPayingSaleId] = useState<string | null>(null);
   const [payAmount, setPayAmount] = useState("");
 
   const availableBatches = batches.filter(b => b.remainingQuantity > 0);
   const getCustomerName = (id: string) => customers.find(c => c.id === id)?.name || 'Unknown';
+  const getVendorName = (id: string) => {
+    const batch = batches.find(b => b.vendorId === id);
+    return batch ? id : 'Unknown';
+  };
 
   const addSaleItem = () => {
     const batch = batches.find(b => b.id === currentBatch);
@@ -49,7 +52,7 @@ const Sales = () => {
     const qty = Number(currentQty);
     const price = Number(currentPrice);
     if (qty <= 0 || price <= 0 || qty > batch.remainingQuantity) {
-      toast.error("Invalid quantity or price");
+      toast.error("Invalid quantity or price. Quantity cannot exceed available stock.");
       return;
     }
     setSaleItems(prev => [...prev, { batchId: currentBatch, quantity: qty, salePrice: price, subtotal: qty * price }]);
@@ -82,21 +85,31 @@ const Sales = () => {
       notes: fd.get("notes") as string || "",
     });
 
+    // Customer ledger: debit for sale
     addLedgerEntry(customerId, {
       date: getTodayISO(),
       type: "Sale",
       description: `Sale ${saleId}`,
       debit: totalAmount,
-      credit: amountPaid,
+      credit: 0,
     });
 
+    // Customer ledger: credit for payment
     if (amountPaid > 0) {
+      addLedgerEntry(customerId, {
+        date: getTodayISO(),
+        type: "Payment Received",
+        description: `Payment for sale ${saleId}`,
+        debit: 0,
+        credit: amountPaid,
+      });
       addCashEntry(getTodayISO(), {
         type: 'in',
         category: 'Sale Revenue',
         amount: amountPaid,
         description: `Payment for sale ${saleId}`,
       });
+      companyBalance.addSalesIncome(amountPaid);
     }
 
     setSaleItems([]);
@@ -104,7 +117,6 @@ const Sales = () => {
     toast.success("Sale recorded successfully");
   };
 
-  // open the payment dialog for a specific sale
   const openPayDialog = (saleId: string) => {
     setPayingSaleId(saleId);
     setPayAmount("");
@@ -123,10 +135,8 @@ const Sales = () => {
       return;
     }
 
-    // update sale record
     addPayment(payingSaleId, amount);
 
-    // add to customer ledger as payment received
     addLedgerEntry(sale.customerId, {
       date: getTodayISO(),
       type: "Payment Received",
@@ -135,13 +145,14 @@ const Sales = () => {
       credit: amount,
     });
 
-    // record in daily cash
     addCashEntry(getTodayISO(), {
       type: 'in',
       category: 'Customer Payment',
       amount,
       description: `Payment for sale ${payingSaleId}`,
     });
+
+    companyBalance.addSalesIncome(amount);
 
     setPayOpen(false);
     setPayingSaleId(null);
@@ -180,7 +191,7 @@ const Sales = () => {
                   <Select name="customerId" required>
                     <SelectTrigger><SelectValue placeholder="Select customer" /></SelectTrigger>
                     <SelectContent>
-                      {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                      {customers.filter(c => c.isActive).map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -201,10 +212,10 @@ const Sales = () => {
                 })}
                 <div className="grid grid-cols-4 gap-2">
                   <Select value={currentBatch} onValueChange={setCurrentBatch}>
-                    <SelectTrigger><SelectValue placeholder="Batch" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Select Batch" /></SelectTrigger>
                     <SelectContent>
                       {availableBatches.map(b => (
-                        <SelectItem key={b.id} value={b.id}>{b.itemName} {b.grade} — {formatKG(b.remainingQuantity)}</SelectItem>
+                        <SelectItem key={b.id} value={b.id}>{b.itemName} {b.grade} — {formatKG(b.remainingQuantity)} avail</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -220,7 +231,7 @@ const Sales = () => {
               <div className="space-y-2">
                 <Label>Amount Paid Now (PKR)</Label>
                 <Input name="amountPaid" type="number" defaultValue="0" required />
-                <p className="text-xs text-muted-foreground">Enter 0 if customer has not paid anything yet. You can record payments later.</p>
+                <p className="text-xs text-muted-foreground">Enter 0 if customer has not paid anything yet.</p>
               </div>
               <div className="space-y-2"><Label>Notes</Label><Textarea name="notes" /></div>
               <Button type="submit" className="w-full">Save Sale</Button>
@@ -237,7 +248,7 @@ const Sales = () => {
       />
 
       {sales.length === 0 ? (
-        <EmptyState title="No sales yet" description="Record your first sale to get started." actionLabel="Record First Sale" onAction={() => setOpen(true)} />
+        <EmptyState title="No sales yet" description="No records found. Record your first sale to get started." actionLabel="Record First Sale" onAction={() => setOpen(true)} />
       ) : (
         <>
           <div className="rounded-lg border">
@@ -272,12 +283,7 @@ const Sales = () => {
                     </TableCell>
                     <TableCell>
                       {s.outstanding > 0 && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openPayDialog(s.id)}
-                          title="Record Payment"
-                        >
+                        <Button size="sm" variant="outline" onClick={() => openPayDialog(s.id)} title="Record Payment">
                           <CreditCard className="h-3 w-3 mr-1" /> Pay
                         </Button>
                       )}
