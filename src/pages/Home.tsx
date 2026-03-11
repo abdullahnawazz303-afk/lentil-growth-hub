@@ -38,7 +38,7 @@ export default function Home() {
         <div className="relative max-w-7xl mx-auto px-4 md:px-8 py-24 md:py-40">
           <div className="max-w-2xl">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
-              Premium Lentils &amp; Pulses from Pakistan
+              Qais Foods — Premium Lentils &amp; Pulses
             </h1>
             <p className="text-lg md:text-xl text-white/80 mb-8 leading-relaxed">
               Sourced from the finest farms, cleaned, graded, and packaged to deliver

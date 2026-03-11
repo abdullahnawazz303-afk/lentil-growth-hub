@@ -21,13 +21,25 @@ import AdvanceBookings from "./pages/AdvanceBookings";
 import BankCheques from "./pages/BankCheques";
 import Rokar from "./pages/Rokar";
 import Reports from "./pages/Reports";
+import OnlineOrders from "./pages/OnlineOrders";
+import CustomerPortal from "./pages/CustomerPortal";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const userRole = useAuthStore((s) => s.userRole);
   if (!isLoggedIn) return <Navigate to="/login" replace />;
+  if (userRole === 'customer') return <Navigate to="/portal" replace />;
+  return <>{children}</>;
+}
+
+function CustomerRoute({ children }: { children: React.ReactNode }) {
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const userRole = useAuthStore((s) => s.userRole);
+  if (!isLoggedIn) return <Navigate to="/login" replace />;
+  if (userRole !== 'customer') return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
 
@@ -46,51 +58,22 @@ const App = () => (
           </Route>
           <Route path="/login" element={<Login />} />
 
+          {/* Customer Portal */}
+          <Route path="/portal" element={<CustomerRoute><CustomerPortal /></CustomerRoute>} />
+
           {/* Protected ERP */}
-          <Route
-            path="/dashboard"
-            element={<ProtectedRoute><AppLayout><Dashboard /></AppLayout></ProtectedRoute>}
-          />
-          <Route
-            path="/inventory"
-            element={<ProtectedRoute><AppLayout><Inventory /></AppLayout></ProtectedRoute>}
-          />
-          <Route
-            path="/sales"
-            element={<ProtectedRoute><AppLayout><Sales /></AppLayout></ProtectedRoute>}
-          />
-          <Route
-            path="/customers"
-            element={<ProtectedRoute><AppLayout><Customers /></AppLayout></ProtectedRoute>}
-          />
-          <Route
-            path="/customer-ledger"
-            element={<ProtectedRoute><AppLayout><CustomerLedger /></AppLayout></ProtectedRoute>}
-          />
-          <Route
-            path="/vendors"
-            element={<ProtectedRoute><AppLayout><Vendors /></AppLayout></ProtectedRoute>}
-          />
-          <Route
-            path="/vendor-ledger"
-            element={<ProtectedRoute><AppLayout><VendorLedger /></AppLayout></ProtectedRoute>}
-          />
-          <Route
-            path="/advance-bookings"
-            element={<ProtectedRoute><AppLayout><AdvanceBookings /></AppLayout></ProtectedRoute>}
-          />
-          <Route
-            path="/bank-cheques"
-            element={<ProtectedRoute><AppLayout><BankCheques /></AppLayout></ProtectedRoute>}
-          />
-          <Route
-            path="/cash-flow"
-            element={<ProtectedRoute><AppLayout><Rokar /></AppLayout></ProtectedRoute>}
-          />
-          <Route
-            path="/reports"
-            element={<ProtectedRoute><AppLayout><Reports /></AppLayout></ProtectedRoute>}
-          />
+          <Route path="/dashboard" element={<ProtectedRoute><AppLayout><Dashboard /></AppLayout></ProtectedRoute>} />
+          <Route path="/inventory" element={<ProtectedRoute><AppLayout><Inventory /></AppLayout></ProtectedRoute>} />
+          <Route path="/sales" element={<ProtectedRoute><AppLayout><Sales /></AppLayout></ProtectedRoute>} />
+          <Route path="/customers" element={<ProtectedRoute><AppLayout><Customers /></AppLayout></ProtectedRoute>} />
+          <Route path="/customer-ledger" element={<ProtectedRoute><AppLayout><CustomerLedger /></AppLayout></ProtectedRoute>} />
+          <Route path="/vendors" element={<ProtectedRoute><AppLayout><Vendors /></AppLayout></ProtectedRoute>} />
+          <Route path="/vendor-ledger" element={<ProtectedRoute><AppLayout><VendorLedger /></AppLayout></ProtectedRoute>} />
+          <Route path="/advance-bookings" element={<ProtectedRoute><AppLayout><AdvanceBookings /></AppLayout></ProtectedRoute>} />
+          <Route path="/bank-cheques" element={<ProtectedRoute><AppLayout><BankCheques /></AppLayout></ProtectedRoute>} />
+          <Route path="/cash-flow" element={<ProtectedRoute><AppLayout><Rokar /></AppLayout></ProtectedRoute>} />
+          <Route path="/online-orders" element={<ProtectedRoute><AppLayout><OnlineOrders /></AppLayout></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute><AppLayout><Reports /></AppLayout></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
