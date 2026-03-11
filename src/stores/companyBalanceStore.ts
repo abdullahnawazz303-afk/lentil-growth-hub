@@ -10,7 +10,7 @@ interface CompanyBalanceState {
 }
 
 export const useCompanyBalanceStore = create<CompanyBalanceState>((set, get) => ({
-  initialBalance: 5000000, // 50 lakh PKR starting balance
+  initialBalance: 0,
   totalSalesIncome: 0,
   totalVendorPayments: 0,
 
