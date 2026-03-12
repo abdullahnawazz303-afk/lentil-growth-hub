@@ -35,12 +35,12 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="overflow-hidden">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
-        <div className="flex items-center gap-2">
-          <img src={qfLogo} alt="QF Logo" className="w-8 h-8 object-contain shrink-0" />
+        <div className="flex items-center gap-3">
+          <img src={qfLogo} alt="QF Logo" className="w-10 h-10 object-contain shrink-0" />
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="font-display font-bold text-sm text-sidebar-primary">Qais Food</span>
-              <span className="text-[10px] text-sidebar-foreground/60">Pulses &amp; Rice</span>
+              <span className="font-display font-bold text-base text-sidebar-primary">Qais Food</span>
+              <span className="text-[11px] font-medium text-sidebar-foreground/60">Pulses &amp; Rice</span>
             </div>
           )}
         </div>

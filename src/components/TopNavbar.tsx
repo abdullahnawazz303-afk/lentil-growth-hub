@@ -15,10 +15,10 @@ export function TopNavbar() {
   };
 
   return (
-    <header className="h-14 border-b flex items-center px-4 gap-4 bg-card shrink-0">
+    <header className="h-16 border-b flex items-center px-4 gap-4 bg-card shrink-0">
       <SidebarTrigger />
-      <img src={qfLogo} alt="QF" className="w-6 h-6 object-contain" />
-      <span className="font-display font-semibold text-sm text-primary">Qais Food</span>
+      <img src={qfLogo} alt="QF" className="w-9 h-9 object-contain" />
+      <span className="font-display font-bold text-lg text-primary">Qais Food</span>
       <div className="flex-1" />
       <Button variant="ghost" size="icon" className="relative">
         <Bell className="h-4 w-4" />
