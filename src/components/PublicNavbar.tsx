@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
-import { Leaf, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import qfLogo from "@/assets/qf-logo.png";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
