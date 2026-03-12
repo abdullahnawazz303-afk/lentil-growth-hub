@@ -74,7 +74,7 @@ export default function Home() {
               <span className="text-xs font-medium tracking-wide text-white/90 uppercase">Established Quality Since 2010</span>
             </motion.div>
             <motion.div variants={fadeUp} custom={0.5} className="flex items-center gap-3 mb-4">
-              <img src={qfLogo} alt="QF Logo" className="w-20 h-20 md:w-24 md:h-24 object-contain" />
+              <img src={qfLogo} alt="QF Logo" className="w-28 h-28 md:w-36 md:h-36 object-contain" />
             </motion.div>
             <motion.h1 variants={fadeUp} custom={1} className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-[1.1] tracking-tight">
               Pakistan's Trusted

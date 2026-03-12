@@ -31,14 +31,14 @@ export function PublicNavbar() {
           : "bg-transparent border-b border-transparent"
       )}
     >
-      <div className="max-w-7xl mx-auto flex h-20 items-center justify-between px-4 md:px-8">
-        <Link to="/" className="flex items-center gap-3">
-          <img src={qfLogo} alt="QF Logo" className="w-12 h-12 md:w-14 md:h-14 object-contain" />
+      <div className="max-w-7xl mx-auto flex h-24 items-center justify-between px-4 md:px-8">
+        <Link to="/" className="flex items-center gap-3.5">
+          <img src={qfLogo} alt="QF Logo" className="w-14 h-14 md:w-16 md:h-16 object-contain" />
           <div className="flex flex-col leading-tight">
             <span className="font-extrabold text-2xl md:text-3xl text-primary transition-colors">
               Qais Food
             </span>
-            <span className="text-[10px] md:text-xs font-semibold tracking-wider text-primary/70 uppercase">
+            <span className="text-xs md:text-sm font-bold tracking-wider text-primary/70 uppercase">
               Deals In: Pulses &amp; Rice
             </span>
           </div>
@@ -68,9 +68,9 @@ export function PublicNavbar() {
         {/* Mobile toggle */}
         <button className="md:hidden p-1" onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? (
-            <X className={cn("h-7 w-7", scrolled ? "text-foreground" : "text-white")} />
+            <X className="h-8 w-8 text-foreground" />
           ) : (
-            <Menu className={cn("h-7 w-7", scrolled ? "text-foreground" : "text-white")} />
+            <Menu className="h-8 w-8 text-foreground" />
           )}
         </button>
       </div>
