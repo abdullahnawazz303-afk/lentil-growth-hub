@@ -106,45 +106,69 @@ const Inventory = () => {
           <DialogTrigger asChild>
             <Button><Plus className="h-4 w-4 mr-2" /> Add Batch</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Add Inventory Batch</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label>Item Name</Label>
-                <Select name="itemName" required>
-                  <SelectTrigger><SelectValue placeholder="Select item" /></SelectTrigger>
-                  <SelectContent>
-                    {ITEM_OPTIONS.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Grade</Label>
-                  <Select name="grade" required>
-                    <SelectTrigger><SelectValue placeholder="Grade" /></SelectTrigger>
-                    <SelectContent>
-                      {GRADE_OPTIONS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
                   <Label>Vendor</Label>
-                  <Select name="vendorId" required>
+                  <Select value={vendorId} onValueChange={setVendorId} required>
                     <SelectTrigger><SelectValue placeholder="Select vendor" /></SelectTrigger>
                     <SelectContent>
                       {vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <Label>Purchase Date</Label>
+                  <Input type="date" value={purchaseDate} onChange={e => setPurchaseDate(e.target.value)} required />
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Purchase Price (PKR/kg)</Label><Input name="purchasePrice" type="number" required /></div>
-                <div className="space-y-2"><Label>Quantity (kg)</Label><Input name="quantity" type="number" required /></div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-semibold">Items</Label>
+                  <Button type="button" variant="outline" size="sm" onClick={addLine}>
+                    <Plus className="h-3 w-3 mr-1" /> Add Item
+                  </Button>
+                </div>
+                {lines.map((line, i) => (
+                  <div key={i} className="grid grid-cols-[1fr_80px_1fr_1fr_32px] gap-2 items-end rounded-md border p-3 bg-muted/30">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Item</Label>
+                      <Select value={line.itemName} onValueChange={v => updateLine(i, "itemName", v)}>
+                        <SelectTrigger className="h-9"><SelectValue placeholder="Item" /></SelectTrigger>
+                        <SelectContent>
+                          {ITEM_OPTIONS.map(it => <SelectItem key={it} value={it}>{it}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Grade</Label>
+                      <Select value={line.grade} onValueChange={v => updateLine(i, "grade", v)}>
+                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {GRADE_OPTIONS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Price/kg</Label>
+                      <Input type="number" className="h-9" value={line.purchasePrice || ""} onChange={e => updateLine(i, "purchasePrice", Number(e.target.value))} placeholder="PKR" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Qty (kg)</Label>
+                      <Input type="number" className="h-9" value={line.quantity || ""} onChange={e => updateLine(i, "quantity", Number(e.target.value))} placeholder="kg" />
+                    </div>
+                    <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-destructive" onClick={() => removeLine(i)} disabled={lines.length === 1}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
               </div>
-              <div className="space-y-2"><Label>Purchase Date</Label><Input name="purchaseDate" type="date" required /></div>
-              <div className="space-y-2"><Label>Notes (optional)</Label><Textarea name="notes" /></div>
-              <Button type="submit" className="w-full">Add Batch</Button>
+
+              <div className="space-y-2"><Label>Notes (optional)</Label><Textarea value={notes} onChange={e => setNotes(e.target.value)} /></div>
+              <Button type="submit" className="w-full">Add {lines.length > 1 ? `${lines.length} Items` : "Batch"}</Button>
             </form>
           </DialogContent>
         </Dialog>

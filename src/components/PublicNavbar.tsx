@@ -47,12 +47,10 @@ export function PublicNavbar() {
               key={l.to}
               to={l.to}
               className={cn(
-                "text-sm font-medium transition-colors",
+                "text-sm font-bold transition-colors",
                 location.pathname === l.to
                   ? "text-primary"
-                  : scrolled
-                    ? "text-muted-foreground hover:text-primary"
-                    : "text-white/80 hover:text-white"
+                  : "text-primary/80 hover:text-primary"
               )}
             >
               {l.label}
