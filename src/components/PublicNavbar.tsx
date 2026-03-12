@@ -35,10 +35,7 @@ export function PublicNavbar() {
           <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center shadow-sm">
             <Leaf className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className={cn(
-            "font-bold text-lg transition-colors",
-            scrolled ? "text-foreground" : "text-white"
-          )}>
+          <span className="font-extrabold text-xl text-primary transition-colors">
             Qais Foods
           </span>
         </Link>
@@ -50,12 +47,10 @@ export function PublicNavbar() {
               key={l.to}
               to={l.to}
               className={cn(
-                "text-sm font-medium transition-colors",
+                "text-sm font-bold transition-colors",
                 location.pathname === l.to
                   ? "text-primary"
-                  : scrolled
-                    ? "text-muted-foreground hover:text-primary"
-                    : "text-white/80 hover:text-white"
+                  : "text-primary/80 hover:text-primary"
               )}
             >
               {l.label}
