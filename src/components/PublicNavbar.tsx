@@ -35,10 +35,7 @@ export function PublicNavbar() {
           <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center shadow-sm">
             <Leaf className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className={cn(
-            "font-bold text-lg transition-colors",
-            scrolled ? "text-foreground" : "text-white"
-          )}>
+          <span className="font-extrabold text-xl text-primary transition-colors">
             Qais Foods
           </span>
         </Link>
