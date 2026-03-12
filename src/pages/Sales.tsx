@@ -39,7 +39,12 @@ const Sales = () => {
   const [payingSaleId, setPayingSaleId] = useState<string | null>(null);
   const [payAmount, setPayAmount] = useState("");
 
-  const availableBatches = batches.filter(b => b.remainingQuantity > 0);
+  const availableBatches = batches
+    .map(b => {
+      const usedInSale = saleItems.filter(i => i.batchId === b.id).reduce((sum, i) => sum + i.quantity, 0);
+      return { ...b, remainingQuantity: b.remainingQuantity - usedInSale };
+    })
+    .filter(b => b.remainingQuantity > 0);
   const getCustomerName = (id: string) => customers.find(c => c.id === id)?.name || 'Unknown';
   const getVendorName = (id: string) => {
     const batch = batches.find(b => b.vendorId === id);
