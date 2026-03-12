@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
-import { Leaf, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import qfLogo from "@/assets/qf-logo.png";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -32,12 +33,15 @@ export function PublicNavbar() {
     >
       <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 md:px-8">
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center shadow-sm">
-            <Leaf className="h-5 w-5 text-primary-foreground" />
+          <img src={qfLogo} alt="QF Logo" className="w-9 h-9 object-contain" />
+          <div className="flex flex-col leading-tight">
+            <span className="font-extrabold text-xl text-primary transition-colors">
+              Qais Food
+            </span>
+            <span className="text-[9px] font-semibold tracking-wider text-primary/70 uppercase">
+              Deals In: Pulses &amp; Rice
+            </span>
           </div>
-          <span className="font-extrabold text-xl text-primary transition-colors">
-            Qais Foods
-          </span>
         </Link>
 
         {/* Desktop nav */}

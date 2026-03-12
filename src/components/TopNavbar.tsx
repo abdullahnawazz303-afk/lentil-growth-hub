@@ -1,5 +1,6 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Bell, User, LogOut } from "lucide-react";
+import qfLogo from "@/assets/qf-logo.png";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/authStore";
 import { useNavigate } from "react-router-dom";
@@ -16,7 +17,8 @@ export function TopNavbar() {
   return (
     <header className="h-14 border-b flex items-center px-4 gap-4 bg-card shrink-0">
       <SidebarTrigger />
-      <span className="font-display font-semibold text-sm text-primary">Qais Foods</span>
+      <img src={qfLogo} alt="QF" className="w-6 h-6 object-contain" />
+      <span className="font-display font-semibold text-sm text-primary">Qais Food</span>
       <div className="flex-1" />
       <Button variant="ghost" size="icon" className="relative">
         <Bell className="h-4 w-4" />

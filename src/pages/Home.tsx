@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, Truck, Award, Leaf, ArrowRight, ChevronRight } from "lucide-react";
+import qfLogo from "@/assets/qf-logo.png";
 import { motion } from "framer-motion";
 import heroImg from "@/assets/hero-lentils.jpg";
 import masoor from "@/assets/product-masoor.jpg";
@@ -72,10 +73,13 @@ export default function Home() {
               <Leaf className="h-3.5 w-3.5 text-primary-foreground" />
               <span className="text-xs font-medium tracking-wide text-white/90 uppercase">Established Quality Since 2010</span>
             </motion.div>
+            <motion.div variants={fadeUp} custom={0.5} className="flex items-center gap-3 mb-4">
+              <img src={qfLogo} alt="QF Logo" className="w-16 h-16 object-contain rounded-lg bg-white/90 p-1 shadow-lg" />
+            </motion.div>
             <motion.h1 variants={fadeUp} custom={1} className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-[1.1] tracking-tight">
               Pakistan's Trusted
               <br />
-              <span className="text-primary">Lentil & Pulse</span>
+              <span className="text-primary">Lentil &amp; Pulse</span>
               <br />
               Factory
             </motion.h1>
