@@ -11,40 +11,6 @@ import { Leaf, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { toast } from "sonner";
 
-// ── Validation helpers ─────────────────────────────────────────
-
-function validateEmail(email: string): string | null {
-  if (!email) return "Email is required";
-
-  const lower = email.toLowerCase().trim();
-
-  // Must be a valid email format
-  if (!lower.includes("@")) return "Enter a valid email address";
-
-  const [, domain] = lower.split("@");
-
-  // Staff rule: domain must be qaisfoods.com
-  // Customer rule: local part must contain "customer"
-  const localPart = lower.split("@")[0];
-
-  const isStaffEmail   = domain === "qaisfoods.com";
-  const isCustomerEmail = localPart.includes("customer");
-
-  if (!isStaffEmail && !isCustomerEmail) {
-    return "Staff must use a @qaisfoods.com email. Customers must have 'customer' in their email.";
-  }
-
-  return null; // valid
-}
-
-function validatePassword(password: string): string | null {
-  if (!password)          return "Password is required";
-  if (password.length < 6) return "Password must be at least 6 characters";
-  return null;
-}
-
-// ─── Component ────────────────────────────────────────────────
-
 export default function Login() {
   const [email, setEmail]               = useState("");
   const [password, setPassword]         = useState("");
@@ -56,30 +22,31 @@ export default function Login() {
   const login    = useAuthStore((s) => s.login);
   const navigate = useNavigate();
 
-  // ── Inline field validation on blur
-  const handleEmailBlur = () => {
-    setEmailError(validateEmail(email));
+  // ── Simple validation — just check not empty
+  const validateEmail = (val: string) => {
+    if (!val.trim()) return "Email is required";
+    if (!val.includes("@")) return "Enter a valid email address";
+    return null;
   };
 
-  const handlePasswordBlur = () => {
-    setPasswordError(validatePassword(password));
+  const validatePassword = (val: string) => {
+    if (!val) return "Password is required";
+    if (val.length < 6) return "Password must be at least 6 characters";
+    return null;
   };
 
-  // ── Submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate both fields before hitting Supabase
     const eErr = validateEmail(email);
     const pErr = validatePassword(password);
 
     setEmailError(eErr);
     setPasswordError(pErr);
-
-    if (eErr || pErr) return; // stop here if invalid
+    if (eErr || pErr) return;
 
     setLoading(true);
-    const ok = await login(email.trim(), password);
+    const ok = await login(email.trim().toLowerCase(), password);
     setLoading(false);
 
     if (!ok) {
@@ -87,7 +54,7 @@ export default function Login() {
       return;
     }
 
-    // Role is set in the store by authStore.login() reading public.users
+    // Read role from store after login
     const role = useAuthStore.getState().userRole;
 
     if (role === "customer") {
@@ -128,10 +95,10 @@ export default function Login() {
                     setEmail(e.target.value);
                     if (emailError) setEmailError(validateEmail(e.target.value));
                   }}
-                  onBlur={handleEmailBlur}
-                  placeholder="admin@qaisfoods.com"
+                  onBlur={() => setEmailError(validateEmail(email))}
+                  placeholder="your@email.com"
                   autoComplete="email"
-                  className={emailError ? "border-destructive focus-visible:ring-destructive" : ""}
+                  className={emailError ? "border-destructive" : ""}
                 />
                 {emailError && (
                   <p className="text-xs text-destructive">{emailError}</p>
@@ -150,21 +117,18 @@ export default function Login() {
                       setPassword(e.target.value);
                       if (passwordError) setPasswordError(validatePassword(e.target.value));
                     }}
-                    onBlur={handlePasswordBlur}
+                    onBlur={() => setPasswordError(validatePassword(password))}
                     placeholder="••••••••"
                     autoComplete="current-password"
-                    className={passwordError ? "border-destructive focus-visible:ring-destructive" : ""}
+                    className={passwordError ? "border-destructive" : ""}
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     onClick={() => setShowPassword((v) => !v)}
                     tabIndex={-1}
                   >
-                    {showPassword
-                      ? <EyeOff className="h-4 w-4" />
-                      : <Eye className="h-4 w-4" />
-                    }
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
                 {passwordError && (
@@ -172,13 +136,7 @@ export default function Login() {
                 )}
               </div>
 
-              {/* Submit */}
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-                disabled={loading}
-              >
+              <Button type="submit" className="w-full" size="lg" disabled={loading}>
                 {loading
                   ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Signing in...</>
                   : "Sign In"
@@ -189,7 +147,7 @@ export default function Login() {
             {/* Register link */}
             <div className="mt-6 pt-5 border-t text-center space-y-1">
               <p className="text-sm text-muted-foreground">
-                New customer? Don't have an account yet?
+                Customer? Don't have an account yet?
               </p>
               <Link
                 to="/register"
@@ -207,15 +165,15 @@ export default function Login() {
           <div className="flex items-start gap-2">
             <span className="mt-0.5 h-2 w-2 rounded-full bg-primary shrink-0" />
             <p>
-              <span className="font-medium text-foreground">Factory Staff</span> — 
-              Must use a <span className="font-mono text-foreground">@qaisfoods.com</span> email
+              <span className="font-medium text-foreground">Factory Staff</span> —
+              Login with your <span className="font-mono text-foreground">@qaisfoods.com</span> email
             </p>
           </div>
           <div className="flex items-start gap-2">
             <span className="mt-0.5 h-2 w-2 rounded-full bg-green-500 shrink-0" />
             <p>
-              <span className="font-medium text-foreground">Customers</span> — 
-              Email must contain <span className="font-mono text-foreground">customer</span> (e.g. customer1@gmail.com)
+              <span className="font-medium text-foreground">Customers</span> —
+              Register first using your factory-registered phone number
             </p>
           </div>
         </div>

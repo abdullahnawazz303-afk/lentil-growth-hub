@@ -26,21 +26,23 @@ export const useWasteStore = create<WasteState>((set, get) => ({
     set({ loading: true, error: null });
 
     const { data, error } = await supabase
-      .from('processing_records')
-      .select(`
-        *,
-        inventory_batches(item_name, grade, vendor_id),
-        waste_records(
-          id,
-          waste_quantity_kg,
-          is_sold,
-          sale_price_per_kg,
-          sale_amount,
-          sold_to,
-          sold_date
-        )
-      `)
-      .order('process_date', { ascending: false });
+  .from('processing_records')
+  .select(`
+    *,
+    source_batch:inventory_batches!processing_records_source_batch_id_fkey(
+      item_name, grade, vendor_id
+    ),
+    waste_records(
+      id,
+      waste_quantity_kg,
+      is_sold,
+      sale_price_per_kg,
+      sale_amount,
+      sold_to,
+      sold_date
+    )
+  `)
+  .order('process_date', { ascending: false });
 
     if (error) {
       set({ error: error.message, loading: false });
