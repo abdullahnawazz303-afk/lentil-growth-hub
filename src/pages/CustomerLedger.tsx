@@ -26,67 +26,55 @@ const CustomerLedger = () => {
   const { sales, fetchSales, addPayment } = useSalesStore();
 
   const [selectedCustomer, setSelectedCustomer] = useState("");
-  const [open, setOpen]           = useState(false);
+  const [open, setOpen]             = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // ── Payment dialog state
   const [payOpen, setPayOpen]       = useState(false);
   const [payingSale, setPayingSale] = useState<{
-    id: string;
-    outstanding: number;
-    customerName: string;
+    id: string; outstanding: number; customerName: string;
   } | null>(null);
   const [payAmount, setPayAmount] = useState("");
   const [paying, setPaying]       = useState(false);
 
-  // ── Load data on mount
   useEffect(() => {
     fetchCustomers();
     fetchSales();
   }, []);
 
-  // ── Fetch ledger when customer selected
   useEffect(() => {
-    if (selectedCustomer) {
-      fetchLedger(selectedCustomer);
-    }
+    if (selectedCustomer) fetchLedger(selectedCustomer);
   }, [selectedCustomer]);
 
-  const customer   = customers.find((c) => c.id === selectedCustomer);
-  const entries    = ledgerEntries[selectedCustomer] || [];
-  const totalDebit  = entries.reduce((s, e) => s + e.debit, 0);
-  const totalCredit = entries.reduce((s, e) => s + e.credit, 0);
+  const customer    = customers.find(c => c.id === selectedCustomer);
+  const allEntries  = ledgerEntries[selectedCustomer] || [];
 
-  // ── Find a sale by reference_id stored in ledger description
-  // Sale entries have description like "Sale SL-20260313-0001"
-  // We match by looking up sales for this customer
-  const getSaleForEntry = (entry: typeof entries[0]) => {
+  // Latest at top — reverse for display only, totals use allEntries
+  const entries     = [...allEntries].reverse();
+  const totalDebit  = allEntries.reduce((s, e) => s + e.debit, 0);
+  const totalCredit = allEntries.reduce((s, e) => s + e.credit, 0);
+
+  const getSaleForEntry = (entry: typeof allEntries[0]) => {
     if (entry.type !== "Sale") return null;
-    // Match by reference_id if available, else try description
     return sales.find(
-      (s) =>
+      s =>
         s.customerId === selectedCustomer &&
         s.outstanding > 0 &&
-        (
-          entry.description?.includes(s.id) ||
-          entry.description?.includes((s as any).saleRef ?? "")
-        )
+        (entry.description?.includes(s.id) ||
+          entry.description?.includes((s as any).saleRef ?? ""))
     ) ?? null;
   };
 
-  // ── Add manual ledger entry
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd     = new FormData(e.currentTarget);
     const type   = fd.get("type") as string;
     const amount = Number(fd.get("amount"));
-
     setSubmitting(true);
     await addLedgerEntry(selectedCustomer, {
-      date: fd.get("date") as string || getTodayISO(),
+      date:        fd.get("date") as string || getTodayISO(),
       type,
       description: fd.get("description") as string,
-      debit:  type === "Sale" || type === "Adjustment" ? amount : 0,
+      debit:  type === "Adjustment" ? amount : 0,
       credit: type === "Payment Received" ? amount : 0,
     });
     setSubmitting(false);
@@ -94,52 +82,38 @@ const CustomerLedger = () => {
     toast.success("Ledger entry added");
   };
 
-  // ── Open pay dialog
   const openPayDialog = (saleId: string, outstanding: number) => {
-    const sale = sales.find((s) => s.id === saleId);
-    setPayingSale({
-      id: saleId,
-      outstanding,
-      customerName: sale?.customerName ?? customer?.name ?? "",
-    });
+    const sale = sales.find(s => s.id === saleId);
+    setPayingSale({ id: saleId, outstanding, customerName: sale?.customerName ?? customer?.name ?? "" });
     setPayAmount(String(outstanding));
     setPayOpen(true);
   };
 
-  // ── Submit payment
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!payingSale) return;
-
     const amount = Number(payAmount);
     if (amount <= 0) { toast.error("Enter a valid amount"); return; }
     if (amount > payingSale.outstanding) {
-      toast.error(`Cannot exceed outstanding: ${formatPKR(payingSale.outstanding)}`);
-      return;
+      toast.error(`Cannot exceed outstanding: ${formatPKR(payingSale.outstanding)}`); return;
     }
-
     setPaying(true);
     const result = await addPayment(payingSale.id, amount);
     setPaying(false);
-
     if (result) {
       toast.success(`${formatPKR(amount)} payment recorded`);
-      setPayOpen(false);
-      setPayingSale(null);
-      setPayAmount("");
-      // Refresh ledger to show new credit entry
+      setPayOpen(false); setPayingSale(null); setPayAmount("");
       fetchLedger(selectedCustomer);
     } else {
       toast.error("Payment failed. Please try again.");
     }
   };
 
-  // ── Export CSV
   const exportCSV = () => {
-    if (entries.length === 0) return;
+    if (allEntries.length === 0) return;
     const headers = "Date,Type,Description,Debit,Credit,Balance\n";
-    const rows = entries
-      .map((e) => `${e.date},${e.type},${e.description},${e.debit},${e.credit},${e.balance}`)
+    const rows    = allEntries
+      .map(e => `${e.date},${e.type},${e.description},${e.debit},${e.credit},${e.balance}`)
       .join("\n");
     const blob = new Blob([headers + rows], { type: "text/csv" });
     const url  = URL.createObjectURL(blob);
@@ -153,7 +127,7 @@ const CustomerLedger = () => {
   return (
     <div className="space-y-6">
 
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-display font-bold">Customer Ledger</h1>
@@ -167,6 +141,9 @@ const CustomerLedger = () => {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>Add Ledger Entry</DialogTitle></DialogHeader>
+                <p className="text-xs text-muted-foreground px-1">
+                  Sales appear automatically when recorded. Use this only for payments or adjustments.
+                </p>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label>Type</Label>
@@ -200,39 +177,34 @@ const CustomerLedger = () => {
           <Button variant="outline" onClick={() => window.print()}>
             <Printer className="h-4 w-4 mr-2" /> Print
           </Button>
-          {entries.length > 0 && (
+          {allEntries.length > 0 && (
             <Button variant="outline" onClick={exportCSV}>Export CSV</Button>
           )}
         </div>
       </div>
 
-      {/* ── Customer Selector ── */}
+      {/* Customer Selector */}
       <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
         <SelectTrigger className="w-[300px]">
           <SelectValue placeholder="Select customer" />
         </SelectTrigger>
         <SelectContent>
-          {customers.map((c) => (
+          {customers.map(c => (
             <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
           ))}
         </SelectContent>
       </Select>
 
       {!selectedCustomer ? (
-        <EmptyState
-          title="Select a customer"
-          description="Choose a customer from the dropdown to view their ledger."
-        />
-      ) : entries.length === 0 ? (
-        <EmptyState
-          title="No transactions yet"
-          description={`No ledger entries for ${customer?.name}. Transactions will appear here automatically when sales are recorded.`}
-          actionLabel="Add Entry"
-          onAction={() => setOpen(true)}
-        />
+        <EmptyState title="Select a customer"
+          description="Choose a customer from the dropdown to view their ledger." />
+      ) : allEntries.length === 0 ? (
+        <EmptyState title="No transactions yet"
+          description={`No ledger entries for ${customer?.name}. Transactions appear here automatically when sales are recorded.`}
+          actionLabel="Add Entry" onAction={() => setOpen(true)} />
       ) : (
         <>
-          {/* ── Summary Cards ── */}
+          {/* Summary Cards */}
           {customer && (
             <div className="grid grid-cols-3 gap-4">
               <div className="rounded-lg border bg-card p-4">
@@ -253,7 +225,7 @@ const CustomerLedger = () => {
             </div>
           )}
 
-          {/* ── Ledger Table ── */}
+          {/* Ledger Table — latest at top */}
           <div className="rounded-lg border">
             <Table>
               <TableHeader>
@@ -269,7 +241,7 @@ const CustomerLedger = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {entries.map((e) => {
+                {entries.map(e => {
                   const linkedSale = getSaleForEntry(e);
                   return (
                     <TableRow key={e.id}>
@@ -287,21 +259,15 @@ const CustomerLedger = () => {
                       <TableCell className="text-right font-medium">
                         {formatPKR(e.balance)}
                       </TableCell>
-
-                      {/* ── Status badge — only for Sale entries ── */}
                       <TableCell>
                         {e.type === "Sale" && (
-                          <Badge
-                            variant={
-                              linkedSale
-                                ? linkedSale.paymentStatus === "Paid"
-                                  ? "default"
-                                  : linkedSale.paymentStatus === "Unpaid"
-                                  ? "destructive"
-                                  : "secondary"
-                                : "secondary"
-                            }
-                          >
+                          <Badge variant={
+                            linkedSale
+                              ? linkedSale.paymentStatus === "Paid" ? "default"
+                              : linkedSale.paymentStatus === "Unpaid" ? "destructive"
+                              : "secondary"
+                              : "secondary"
+                          }>
                             {linkedSale?.paymentStatus ?? "Sale"}
                           </Badge>
                         )}
@@ -309,17 +275,10 @@ const CustomerLedger = () => {
                           <Badge variant="default">Received</Badge>
                         )}
                       </TableCell>
-
-                      {/* ── Pay button — only for Sale entries with outstanding > 0 ── */}
                       <TableCell>
                         {e.type === "Sale" && linkedSale && linkedSale.outstanding > 0 && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              openPayDialog(linkedSale.id, linkedSale.outstanding)
-                            }
-                          >
+                          <Button size="sm" variant="outline"
+                            onClick={() => openPayDialog(linkedSale.id, linkedSale.outstanding)}>
                             <CreditCard className="h-3 w-3 mr-1" /> Pay
                           </Button>
                         )}
@@ -331,12 +290,11 @@ const CustomerLedger = () => {
             </Table>
           </div>
 
-          {/* ── Summary Footer ── */}
+          {/* Summary Footer */}
           <div className="flex justify-end gap-8 text-sm border-t pt-4">
             <span>Total Sales: <strong>{formatPKR(totalDebit)}</strong></span>
             <span>Total Paid: <strong>{formatPKR(totalCredit)}</strong></span>
-            <span>
-              Outstanding:{" "}
+            <span>Outstanding:{" "}
               <strong className={getOutstanding(selectedCustomer) > 0 ? "text-red-500" : "text-green-600"}>
                 {formatPKR(getOutstanding(selectedCustomer))}
               </strong>
@@ -345,59 +303,29 @@ const CustomerLedger = () => {
         </>
       )}
 
-      {/* ── Payment Dialog ── */}
-      <Dialog
-        open={payOpen}
-        onOpenChange={(v) => {
-          setPayOpen(v);
-          if (!v) { setPayingSale(null); setPayAmount(""); }
-        }}
-      >
+      {/* Payment Dialog */}
+      <Dialog open={payOpen} onOpenChange={v => { setPayOpen(v); if (!v) { setPayingSale(null); setPayAmount(""); } }}>
         <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Record Payment</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Record Payment</DialogTitle></DialogHeader>
           {payingSale && (
             <form onSubmit={handlePayment} className="space-y-4">
               <div className="rounded-lg bg-muted p-3 space-y-1 text-sm">
-                <p>
-                  <span className="text-muted-foreground">Customer: </span>
-                  <span className="font-medium">{payingSale.customerName}</span>
-                </p>
-                <p>
-                  <span className="text-muted-foreground">Outstanding: </span>
-                  <span className="font-semibold text-red-500">
-                    {formatPKR(payingSale.outstanding)}
-                  </span>
-                </p>
+                <p><span className="text-muted-foreground">Customer: </span>
+                  <span className="font-medium">{payingSale.customerName}</span></p>
+                <p><span className="text-muted-foreground">Outstanding: </span>
+                  <span className="font-semibold text-red-500">{formatPKR(payingSale.outstanding)}</span></p>
               </div>
               <div className="space-y-2">
                 <Label>Payment Amount (PKR) *</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={payingSale.outstanding}
-                  value={payAmount}
-                  onChange={(e) => setPayAmount(e.target.value)}
-                  autoFocus
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Max: {formatPKR(payingSale.outstanding)}
-                </p>
+                <Input type="number" min={1} max={payingSale.outstanding}
+                  value={payAmount} onChange={e => setPayAmount(e.target.value)} autoFocus required />
+                <p className="text-xs text-muted-foreground">Max: {formatPKR(payingSale.outstanding)}</p>
               </div>
               <div className="flex gap-2">
-                <Button
-                  type="button" variant="outline" className="flex-1"
-                  onClick={() => setPayOpen(false)}
-                >
-                  Cancel
-                </Button>
+                <Button type="button" variant="outline" className="flex-1"
+                  onClick={() => setPayOpen(false)}>Cancel</Button>
                 <Button type="submit" className="flex-1" disabled={paying}>
-                  {paying
-                    ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</>
-                    : "Confirm Payment"
-                  }
+                  {paying ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : "Confirm Payment"}
                 </Button>
               </div>
             </form>

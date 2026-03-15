@@ -25,7 +25,10 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, Plus, LogOut, Loader2, Package, User, KeyRound, ShieldCheck } from "lucide-react";
+import {
+  Trash2, Plus, LogOut, Loader2, Package,
+  User, KeyRound, ShieldCheck, Pencil, XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { formatDate, formatPKR, formatKG } from "@/lib/formatters";
 import type { Grade, OnlineOrderItem } from "@/types";
@@ -48,16 +51,23 @@ const statusVariant = (s: string) => {
 
 const CustomerPortal = () => {
   const { logout, customerId, userEmail } = useAuthStore();
-  const { orders, fetchMyOrders, addOrder, loading: ordersLoading } = useOnlineOrderStore();
-  const { fetchLedger, ledgerEntries } = useCustomerStore();
+  const { orders, fetchMyOrders, addOrder, cancelOrder, loading: ordersLoading } = useOnlineOrderStore();
+  const { fetchLedger, ledgerEntries, editCustomerSelf } = useCustomerStore();
 
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [customerCity, setCustomerCity] = useState("");
+  const [customerAddress, setCustomerAddress] = useState("");
 
-  // Account popover state
-  const [accountOpen, setAccountOpen] = useState(false);
-  const [changingPw, setChangingPw]   = useState(false);
-  const [pwLoading, setPwLoading]     = useState(false);
+  // Account popover views: 'profile' | 'changePassword' | 'editProfile'
+  const [accountOpen, setAccountOpen]   = useState(false);
+  const [accountView, setAccountView]   = useState<'profile' | 'changePassword' | 'editProfile'>('profile');
+  const [pwLoading, setPwLoading]       = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+
+  // Cancel order confirm dialog
+  const [cancelOrderId, setCancelOrderId]   = useState<string | null>(null);
+  const [cancelling, setCancelling]         = useState(false);
 
   // New order form
   const [orderOpen, setOrderOpen]   = useState(false);
@@ -65,7 +75,6 @@ const CustomerPortal = () => {
   const [orderItems, setOrderItems] = useState<OnlineOrderItem[]>([]);
   const [deliveryDate, setDeliveryDate] = useState("");
   const [orderNotes, setOrderNotes] = useState("");
-
   const [currentItem, setCurrentItem]   = useState("");
   const [currentGrade, setCurrentGrade] = useState<Grade>("A");
   const [currentQty, setCurrentQty]     = useState("");
@@ -81,12 +90,14 @@ const CustomerPortal = () => {
     if (!customerId) return;
     const { data } = await supabase
       .from("customers")
-      .select("name, phone")
+      .select("name, phone, city, address")
       .eq("id", customerId)
       .single();
     if (data) {
       setCustomerName(data.name ?? "");
       setCustomerPhone(data.phone ?? "");
+      setCustomerCity(data.city ?? "");
+      setCustomerAddress(data.address ?? "");
     }
   };
 
@@ -96,32 +107,66 @@ const CustomerPortal = () => {
   // ── Change password
   const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const fd          = new FormData(e.currentTarget);
+    const fd = new FormData(e.currentTarget);
     const newPassword = fd.get("newPassword") as string;
     const confirm     = fd.get("confirm") as string;
-
     if (newPassword.length < 6) { toast.error("Password must be at least 6 characters"); return; }
     if (newPassword !== confirm) { toast.error("Passwords do not match"); return; }
-
     setPwLoading(true);
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     setPwLoading(false);
-
-    if (error) {
-      toast.error(error.message);
-    } else {
+    if (error) { toast.error(error.message); }
+    else {
       toast.success("Password changed successfully");
-      setChangingPw(false);
+      setAccountView('profile');
       setAccountOpen(false);
       (e.target as HTMLFormElement).reset();
     }
   };
 
+  // ── Edit profile (phone, city, address only)
+  const handleEditProfile = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!customerId) return;
+    const fd = new FormData(e.currentTarget);
+    const phone   = fd.get("phone") as string;
+    const city    = fd.get("city") as string;
+    const address = fd.get("address") as string;
+
+    setProfileSaving(true);
+    const ok = await editCustomerSelf(customerId, { phone, city, address });
+    setProfileSaving(false);
+
+    if (ok) {
+      setCustomerPhone(phone);
+      setCustomerCity(city);
+      setCustomerAddress(address);
+      toast.success("Profile updated");
+      setAccountView('profile');
+    } else {
+      toast.error("Failed to update profile");
+    }
+  };
+
+  // ── Cancel order
+  const handleCancelOrder = async () => {
+    if (!cancelOrderId || !customerId) return;
+    setCancelling(true);
+    const result = await cancelOrder(cancelOrderId, customerId);
+    setCancelling(false);
+    setCancelOrderId(null);
+    if (result.success) {
+      toast.success("Order cancelled successfully");
+    } else {
+      toast.error(result.reason || "Could not cancel this order");
+    }
+  };
+
   // ── Order helpers
   const addOrderItem = () => {
-    if (!currentItem)    { toast.error("Select an item"); return; }
+    if (!currentItem) { toast.error("Select an item"); return; }
     const qty = Number(currentQty);
-    if (qty <= 0)        { toast.error("Enter a valid quantity"); return; }
+    if (qty <= 0) { toast.error("Enter a valid quantity"); return; }
     setOrderItems(prev => [...prev, { itemName: currentItem, grade: currentGrade, quantity: qty, notes: "" }]);
     setCurrentItem(""); setCurrentGrade("A"); setCurrentQty("");
   };
@@ -138,26 +183,24 @@ const CustomerPortal = () => {
     e.preventDefault();
     if (!customerId)             { toast.error("Session error. Please log in again."); return; }
     if (orderItems.length === 0) { toast.error("Add at least one item"); return; }
-
     setSubmitting(true);
     const id = await addOrder(customerId, orderItems, orderNotes, deliveryDate || undefined);
     setSubmitting(false);
-
     if (id) {
       toast.success("Order placed! The factory will confirm it shortly.");
-      resetOrderForm();
-      setOrderOpen(false);
+      resetOrderForm(); setOrderOpen(false);
     } else {
       toast.error("Failed to place order. Please try again.");
     }
   };
 
+  const cancelTarget = orders.find(o => o.id === cancelOrderId);
+
   return (
     <div className="min-h-screen bg-background">
 
-      {/* ── Top bar ── */}
+      {/* Top bar */}
       <div className="border-b bg-card px-4 py-3 flex items-center justify-between">
-        {/* Left: brand / customer info */}
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
             <Package className="h-4 w-4 text-primary" />
@@ -168,22 +211,20 @@ const CustomerPortal = () => {
           </div>
         </div>
 
-        {/* Right: account + logout */}
         <div className="flex items-center gap-2">
-
           {/* Account Popover */}
-          <Popover open={accountOpen} onOpenChange={v => { setAccountOpen(v); if (!v) setChangingPw(false); }}>
+          <Popover open={accountOpen} onOpenChange={v => { setAccountOpen(v); if (!v) setAccountView('profile'); }}>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
-                <User className="h-4 w-4" />
-                Account
+                <User className="h-4 w-4" />Account
               </Button>
             </PopoverTrigger>
 
             <PopoverContent className="w-72 p-0" align="end">
-              {!changingPw ? (
+
+              {/* ── Profile View ── */}
+              {accountView === 'profile' && (
                 <div>
-                  {/* Profile header */}
                   <div className="p-4 bg-muted/50">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center">
@@ -201,7 +242,6 @@ const CustomerPortal = () => {
 
                   <Separator />
 
-                  {/* Info */}
                   <div className="p-4 space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Name</span>
@@ -216,6 +256,10 @@ const CustomerPortal = () => {
                       <span className="font-medium">{customerPhone || "—"}</span>
                     </div>
                     <div className="flex justify-between">
+                      <span className="text-muted-foreground">City</span>
+                      <span className="font-medium">{customerCity || "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
                       <span className="text-muted-foreground">Balance</span>
                       <span className={`font-semibold ${outstanding > 0 ? "text-destructive" : "text-green-600"}`}>
                         {formatPKR(outstanding)}
@@ -225,32 +269,64 @@ const CustomerPortal = () => {
 
                   <Separator />
 
-                  {/* Actions */}
                   <div className="p-2 space-y-1">
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start text-sm h-9"
-                      onClick={() => setChangingPw(true)}
-                    >
-                      <KeyRound className="h-4 w-4 mr-2" />
-                      Change Password
+                    <Button variant="ghost" className="w-full justify-start text-sm h-9"
+                      onClick={() => setAccountView('editProfile')}>
+                      <Pencil className="h-4 w-4 mr-2" />Edit Contact Info
                     </Button>
-                    <Button
-                      variant="ghost"
+                    <Button variant="ghost" className="w-full justify-start text-sm h-9"
+                      onClick={() => setAccountView('changePassword')}>
+                      <KeyRound className="h-4 w-4 mr-2" />Change Password
+                    </Button>
+                    <Button variant="ghost"
                       className="w-full justify-start text-sm h-9 text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={logout}
-                    >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Logout
+                      onClick={logout}>
+                      <LogOut className="h-4 w-4 mr-2" />Logout
                     </Button>
                   </div>
                 </div>
-              ) : (
-                /* Change Password view */
+              )}
+
+              {/* ── Edit Profile View ── */}
+              {accountView === 'editProfile' && (
                 <div>
                   <div className="p-4 border-b flex items-center gap-2">
                     <Button variant="ghost" size="icon" className="h-7 w-7"
-                      onClick={() => setChangingPw(false)}>←</Button>
+                      onClick={() => setAccountView('profile')}>←</Button>
+                    <span className="font-semibold text-sm">Edit Contact Info</span>
+                  </div>
+                  <form onSubmit={handleEditProfile} className="p-4 space-y-3">
+                    <p className="text-xs text-muted-foreground">
+                      You can update your phone, city, and address. To change your name, contact the factory.
+                    </p>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Phone</Label>
+                      <Input name="phone" defaultValue={customerPhone}
+                        placeholder="Your phone number" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">City</Label>
+                      <Input name="city" defaultValue={customerCity}
+                        placeholder="Your city" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Address</Label>
+                      <Input name="address" defaultValue={customerAddress}
+                        placeholder="Your address" />
+                    </div>
+                    <Button type="submit" className="w-full" size="sm" disabled={profileSaving}>
+                      {profileSaving ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </form>
+                </div>
+              )}
+
+              {/* ── Change Password View ── */}
+              {accountView === 'changePassword' && (
+                <div>
+                  <div className="p-4 border-b flex items-center gap-2">
+                    <Button variant="ghost" size="icon" className="h-7 w-7"
+                      onClick={() => setAccountView('profile')}>←</Button>
                     <span className="font-semibold text-sm">Change Password</span>
                   </div>
                   <form onSubmit={handleChangePassword} className="p-4 space-y-3">
@@ -273,14 +349,9 @@ const CustomerPortal = () => {
             </PopoverContent>
           </Popover>
 
-          {/* Logout button with text */}
-          <Button
-            variant="ghost" size="sm"
-            onClick={logout}
-            className="gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-          >
-            <LogOut className="h-4 w-4" />
-            Logout
+          <Button variant="ghost" size="sm" onClick={logout}
+            className="gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+            <LogOut className="h-4 w-4" />Logout
           </Button>
         </div>
       </div>
@@ -407,6 +478,7 @@ const CustomerPortal = () => {
                       <TableHead>Items</TableHead>
                       <TableHead>Delivery</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -426,6 +498,17 @@ const CustomerPortal = () => {
                         </TableCell>
                         <TableCell>
                           <Badge variant={statusVariant(o.status)}>{o.status}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {/* Cancel button — only for Pending orders */}
+                          {o.status === "Pending" && (
+                            <Button size="sm" variant="ghost"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10 h-7 px-2"
+                              onClick={() => setCancelOrderId(o.id)}
+                              title="Cancel this order">
+                              <XCircle className="h-3.5 w-3.5 mr-1" />Cancel
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -488,6 +571,42 @@ const CustomerPortal = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* ── Cancel Order Confirmation Dialog ── */}
+      <Dialog open={!!cancelOrderId} onOpenChange={v => { if (!v) setCancelOrderId(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Cancel Order</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Are you sure you want to cancel order{" "}
+              <span className="font-semibold text-foreground font-mono">
+                {cancelTarget?.orderRef || cancelOrderId?.slice(0, 8)}
+              </span>?
+            </p>
+            {cancelTarget && (
+              <div className="rounded-lg bg-muted p-3 text-sm space-y-1">
+                {cancelTarget.items.map((item, idx) => (
+                  <div key={idx} className="flex justify-between">
+                    <span>{item.itemName} Grade {item.grade}</span>
+                    <span className="font-medium">{item.quantity} kg</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Once cancelled, you can place a new order if needed.
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1"
+                onClick={() => setCancelOrderId(null)}>Keep Order</Button>
+              <Button variant="destructive" className="flex-1"
+                disabled={cancelling} onClick={handleCancelOrder}>
+                {cancelling ? "Cancelling..." : "Yes, Cancel"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

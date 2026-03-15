@@ -22,39 +22,40 @@ const VendorLedger = () => {
   } = useVendorStore();
 
   const [selectedVendor, setSelectedVendor] = useState("");
-  const [open, setOpen] = useState(false);
+  const [open, setOpen]         = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Fetch vendors on mount
   useEffect(() => {
     fetchVendors();
   }, []);
 
-  // Fetch ledger when vendor is selected
   useEffect(() => {
-    if (selectedVendor) {
-      fetchLedger(selectedVendor);
-    }
+    if (selectedVendor) fetchLedger(selectedVendor);
   }, [selectedVendor]);
 
   const vendor = vendors.find(v => v.id === selectedVendor);
-  const entries = ledgerEntries[selectedVendor] || [];
-  const totalCredit = entries.reduce((s, e) => s + e.credit, 0);
-  const totalDebit = entries.reduce((s, e) => s + e.debit, 0);
+
+  // ── Entries sorted latest first for display
+  const allEntries  = ledgerEntries[selectedVendor] || [];
+  const entries     = [...allEntries].reverse(); // latest at top, oldest at bottom
+  const totalCredit = allEntries.reduce((s, e) => s + e.credit, 0);
+  const totalDebit  = allEntries.reduce((s, e) => s + e.debit, 0);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const type = fd.get("type") as string;
+    const fd     = new FormData(e.currentTarget);
+    const type   = fd.get("type") as string;
     const amount = Number(fd.get("amount"));
 
     setSubmitting(true);
     await addLedgerEntry(selectedVendor, {
-      date: fd.get("date") as string || getTodayISO(),
+      date:        fd.get("date") as string || getTodayISO(),
       type,
       description: fd.get("description") as string,
-      debit: (type === "Payment Made" || type === "Cheque Issued") ? amount : 0,
-      credit: (type === "Purchase" || type === "Cheque Bounced" || type === "Adjustment") ? amount : 0,
+      // Payment Made / Cheque Issued = debit (reduces what we owe)
+      // Cheque Bounced / Adjustment  = credit (increases what we owe)
+      debit:  (type === "Payment Made" || type === "Cheque Issued") ? amount : 0,
+      credit: (type === "Cheque Bounced" || type === "Adjustment")  ? amount : 0,
     });
     setSubmitting(false);
     setOpen(false);
@@ -62,15 +63,15 @@ const VendorLedger = () => {
   };
 
   const exportCSV = () => {
-    if (entries.length === 0) return;
+    if (allEntries.length === 0) return;
     const headers = "Date,Type,Description,Debit,Credit,Balance\n";
-    const rows = entries
+    const rows    = allEntries
       .map(e => `${e.date},${e.type},${e.description},${e.debit},${e.credit},${e.balance}`)
       .join("\n");
     const blob = new Blob([headers + rows], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
     a.download = `vendor-ledger-${vendor?.name || 'export'}.csv`;
     a.click();
     URL.revokeObjectURL(url);
@@ -91,13 +92,17 @@ const VendorLedger = () => {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>Add Ledger Entry</DialogTitle></DialogHeader>
+                <p className="text-xs text-muted-foreground px-1">
+                  Purchases are added automatically when you add stock in Inventory.
+                  Use this only for payments, cheque actions, or manual adjustments.
+                </p>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label>Type</Label>
                     <Select name="type" required>
                       <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Purchase">Purchase</SelectItem>
+                        {/* Purchase removed — comes from Inventory page only */}
                         <SelectItem value="Payment Made">Payment Made</SelectItem>
                         <SelectItem value="Cheque Issued">Cheque Issued</SelectItem>
                         <SelectItem value="Cheque Bounced">Cheque Bounced</SelectItem>
@@ -127,7 +132,7 @@ const VendorLedger = () => {
           <Button variant="outline" onClick={() => window.print()}>
             <Printer className="h-4 w-4 mr-2" /> Print
           </Button>
-          {entries.length > 0 && (
+          {allEntries.length > 0 && (
             <Button variant="outline" onClick={exportCSV}>Export CSV</Button>
           )}
         </div>
@@ -146,17 +151,12 @@ const VendorLedger = () => {
       </Select>
 
       {!selectedVendor ? (
-        <EmptyState
-          title="Select a vendor"
-          description="Choose a vendor from the dropdown to view their ledger."
-        />
-      ) : entries.length === 0 ? (
-        <EmptyState
-          title="No transactions yet"
-          description={`No ledger entries for ${vendor?.name}. Add your first entry to get started.`}
-          actionLabel="Add Entry"
-          onAction={() => setOpen(true)}
-        />
+        <EmptyState title="Select a vendor"
+          description="Choose a vendor from the dropdown to view their ledger." />
+      ) : allEntries.length === 0 ? (
+        <EmptyState title="No transactions yet"
+          description={`No ledger entries for ${vendor?.name}. Transactions appear here automatically when you add inventory or make payments.`}
+          actionLabel="Add Entry" onAction={() => setOpen(true)} />
       ) : (
         <>
           {/* Summary Cards */}
@@ -173,14 +173,14 @@ const VendorLedger = () => {
               </div>
               <div className="rounded-lg border bg-card p-4">
                 <p className="text-sm text-muted-foreground">We Owe Them</p>
-                <p className={`font-semibold ${getOutstanding(selectedVendor) > 0 ? 'status-overdue' : 'status-healthy'}`}>
+                <p className={`font-semibold ${getOutstanding(selectedVendor) > 0 ? 'text-destructive' : 'text-green-600'}`}>
                   {formatPKR(getOutstanding(selectedVendor))}
                 </p>
               </div>
             </div>
           )}
 
-          {/* Ledger Table */}
+          {/* Ledger Table — latest at top */}
           <div className="rounded-lg border">
             <Table>
               <TableHeader>
@@ -200,10 +200,10 @@ const VendorLedger = () => {
                     <TableCell>{e.type}</TableCell>
                     <TableCell>{e.description}</TableCell>
                     <TableCell className="text-right">
-                      {e.debit > 0 ? formatPKR(e.debit) : '-'}
+                      {e.debit > 0 ? formatPKR(e.debit) : '—'}
                     </TableCell>
                     <TableCell className="text-right">
-                      {e.credit > 0 ? formatPKR(e.credit) : '-'}
+                      {e.credit > 0 ? formatPKR(e.credit) : '—'}
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       {formatPKR(e.balance)}
@@ -218,9 +218,11 @@ const VendorLedger = () => {
           <div className="flex justify-end gap-8 text-sm border-t pt-4">
             <span>Total Purchased: <strong>{formatPKR(totalCredit)}</strong></span>
             <span>Total Paid: <strong>{formatPKR(totalDebit)}</strong></span>
-            <span>Remaining: <strong className={getOutstanding(selectedVendor) > 0 ? 'status-overdue' : 'status-healthy'}>
-              {formatPKR(getOutstanding(selectedVendor))}
-            </strong></span>
+            <span>Remaining:{" "}
+              <strong className={getOutstanding(selectedVendor) > 0 ? 'text-destructive' : 'text-green-600'}>
+                {formatPKR(getOutstanding(selectedVendor))}
+              </strong>
+            </span>
           </div>
         </>
       )}

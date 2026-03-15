@@ -13,6 +13,16 @@ interface VendorState {
   fetchLedger: (vendorId: string) => Promise<void>;
   fetchPurchases: () => Promise<void>;
   addVendor: (v: Omit<Vendor, 'id' | 'createdAt'>) => Promise<string | null>;
+  editVendor: (vendorId: string, updates: {
+    name: string;
+    contactPerson: string;
+    phone: string;
+    city: string;
+    address: string;
+    notes: string;
+    isActive: boolean;
+  }) => Promise<boolean>;
+  deleteVendor: (vendorId: string) => Promise<{ success: boolean; reason?: string }>;
   addLedgerEntry: (vendorId: string, entry: Omit<LedgerEntry, 'id' | 'balance'>) => Promise<void>;
   addPurchase: (p: {
     vendorId: string;
@@ -64,7 +74,6 @@ export const useVendorStore = create<VendorState>((set, get) => ({
       createdAt: row.created_at,
     }));
 
-    // Group all ledger entries by vendor_id
     const ledgerEntries: Record<string, LedgerEntry[]> = {};
     for (const row of (ledgerData || [])) {
       if (!ledgerEntries[row.vendor_id]) ledgerEntries[row.vendor_id] = [];
@@ -82,7 +91,7 @@ export const useVendorStore = create<VendorState>((set, get) => ({
     set({ vendors, ledgerEntries, loading: false });
   },
 
-  // ── Fetch single vendor ledger (for VendorLedger detail page)
+  // ── Fetch single vendor ledger
   fetchLedger: async (vendorId) => {
     const { data, error } = await supabase
       .from('vendor_ledger')
@@ -105,7 +114,7 @@ export const useVendorStore = create<VendorState>((set, get) => ({
     set((s) => ({ ledgerEntries: { ...s.ledgerEntries, [vendorId]: entries } }));
   },
 
-  // ── Fetch all purchases with items (for VendorPayables page)
+  // ── Fetch all purchases
   fetchPurchases: async () => {
     const { data, error } = await supabase
       .from('vendor_purchases')
@@ -183,14 +192,135 @@ export const useVendorStore = create<VendorState>((set, get) => ({
     return data.id;
   },
 
-  // ── Add purchase (called from Inventory page when stock is added on credit)
+  // ── Edit vendor profile — no financial impact
+  editVendor: async (vendorId, updates) => {
+    const { error } = await supabase
+      .from('vendors')
+      .update({
+        name: updates.name,
+        contact_person: updates.contactPerson || null,
+        phone: updates.phone || null,
+        city: updates.city || null,
+        address: updates.address || null,
+        notes: updates.notes || null,
+        is_active: updates.isActive,
+      })
+      .eq('id', vendorId);
+
+    if (error) { set({ error: error.message }); return false; }
+
+    // Update local state immediately
+    set((s) => ({
+      vendors: s.vendors.map((v) =>
+        v.id === vendorId
+          ? {
+              ...v,
+              name: updates.name,
+              contactPerson: updates.contactPerson,
+              phone: updates.phone,
+              city: updates.city,
+              address: updates.address,
+              notes: updates.notes,
+              isActive: updates.isActive,
+            }
+          : v
+      ),
+    }));
+
+    return true;
+  },
+
+  // ── Delete vendor — blocked if any purchases, ledger entries, or inventory batches exist
+  deleteVendor: async (vendorId) => {
+    // Check vendor_purchases
+    const { count: purchaseCount } = await supabase
+      .from('vendor_purchases')
+      .select('id', { count: 'exact', head: true })
+      .eq('vendor_id', vendorId);
+
+    if (purchaseCount && purchaseCount > 0) {
+      return {
+        success: false,
+        reason: `This vendor has ${purchaseCount} purchase record${purchaseCount > 1 ? 's' : ''}. Cannot delete a vendor with purchase history.`,
+      };
+    }
+
+    // Check inventory_batches
+    const { count: batchCount } = await supabase
+      .from('inventory_batches')
+      .select('id', { count: 'exact', head: true })
+      .eq('vendor_id', vendorId);
+
+    if (batchCount && batchCount > 0) {
+      return {
+        success: false,
+        reason: `This vendor has ${batchCount} inventory batch${batchCount > 1 ? 'es' : ''}. Cannot delete a vendor with inventory history.`,
+      };
+    }
+
+    // Check vendor_ledger (beyond opening balance)
+    const { count: ledgerCount } = await supabase
+      .from('vendor_ledger')
+      .select('id', { count: 'exact', head: true })
+      .eq('vendor_id', vendorId)
+      .neq('transaction_type', 'Opening Balance');
+
+    if (ledgerCount && ledgerCount > 0) {
+      return {
+        success: false,
+        reason: `This vendor has ledger transaction history. Cannot delete.`,
+      };
+    }
+
+    // Safe to delete
+    const { error } = await supabase
+      .from('vendors')
+      .delete()
+      .eq('id', vendorId);
+
+    if (error) return { success: false, reason: error.message };
+
+    set((s) => ({
+      vendors: s.vendors.filter((v) => v.id !== vendorId),
+      ledgerEntries: Object.fromEntries(
+        Object.entries(s.ledgerEntries).filter(([id]) => id !== vendorId)
+      ),
+    }));
+
+    return { success: true };
+  },
+
+  // ── Add ledger entry — always fetch last balance from DB, never local state
+  addLedgerEntry: async (vendorId, entry) => {
+    const { data: lastRow } = await supabase
+      .from('vendor_ledger')
+      .select('running_balance')
+      .eq('vendor_id', vendorId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const lastBalance = lastRow?.running_balance ?? 0;
+    const newBalance = lastBalance + entry.credit - entry.debit;
+
+    const { error } = await supabase.from('vendor_ledger').insert({
+      vendor_id: vendorId,
+      entry_date: entry.date,
+      transaction_type: entry.type,
+      description: entry.description ?? null,
+      debit: entry.debit ?? 0,
+      credit: entry.credit ?? 0,
+      running_balance: newBalance,
+    });
+
+    if (error) { set({ error: error.message }); return; }
+    await get().fetchLedger(vendorId);
+  },
+
+  // ── Add purchase
   addPurchase: async (p) => {
     const outstanding = p.totalAmount - p.amountPaid;
     const paymentStatus = outstanding <= 0 ? 'Paid' : p.amountPaid > 0 ? 'Partially Paid' : 'Unpaid';
-    const dueDate = p.paymentTermsDays > 0
-      ? new Date(new Date(p.purchaseDate).getTime() + p.paymentTermsDays * 86400000)
-          .toISOString().split('T')[0]
-      : p.purchaseDate;
 
     const { data, error } = await supabase
       .from('vendor_purchases')
@@ -208,7 +338,6 @@ export const useVendorStore = create<VendorState>((set, get) => ({
 
     if (error) { set({ error: error.message }); return null; }
 
-    // Insert line items
     await supabase.from('vendor_purchase_items').insert(
       p.items.map(i => ({
         purchase_id: data.id,
@@ -220,7 +349,6 @@ export const useVendorStore = create<VendorState>((set, get) => ({
       }))
     );
 
-    // Vendor ledger: credit = we owe them
     await get().addLedgerEntry(p.vendorId, {
       date: p.purchaseDate,
       type: 'Purchase',
@@ -229,7 +357,6 @@ export const useVendorStore = create<VendorState>((set, get) => ({
       credit: p.totalAmount,
     });
 
-    // Vendor ledger: debit = we paid upfront
     if (p.amountPaid > 0) {
       await get().addLedgerEntry(p.vendorId, {
         date: p.purchaseDate,
@@ -244,7 +371,7 @@ export const useVendorStore = create<VendorState>((set, get) => ({
     return data.id;
   },
 
-  // ── Record payment against a purchase (from VendorPayables page)
+  // ── Record payment against a purchase
   recordPayment: async (purchaseId, vendorId, amount, method, notes) => {
     const purchase = get().purchases.find(p => p.id === purchaseId);
     if (!purchase) return;
@@ -278,34 +405,13 @@ export const useVendorStore = create<VendorState>((set, get) => ({
     await get().fetchPurchases();
   },
 
-  // ── Add ledger entry manually
-  addLedgerEntry: async (vendorId, entry) => {
-    const existing = get().ledgerEntries[vendorId] || [];
-    const lastBalance = existing.length > 0 ? existing[existing.length - 1].balance : 0;
-    const newBalance = lastBalance + entry.credit - entry.debit;
-
-    const { error } = await supabase.from('vendor_ledger').insert({
-      vendor_id: vendorId,
-      entry_date: entry.date,
-      transaction_type: entry.type,
-      description: entry.description ?? null,
-      debit: entry.debit ?? 0,
-      credit: entry.credit ?? 0,
-      running_balance: newBalance,
-    });
-
-    if (error) { set({ error: error.message }); return; }
-    await get().fetchLedger(vendorId);
-  },
-
-  // ── Computed: outstanding balance for one vendor
+  // ── Computed
   getOutstanding: (vendorId) => {
     const entries = get().ledgerEntries[vendorId] || [];
     if (entries.length === 0) return 0;
     return entries[entries.length - 1].balance;
   },
 
-  // ── Computed: total payables across ALL vendors
   getTotalPayables: () => {
     let total = 0;
     for (const entries of Object.values(get().ledgerEntries)) {
@@ -317,7 +423,6 @@ export const useVendorStore = create<VendorState>((set, get) => ({
     return total;
   },
 
-  // ── Computed: payables list from purchases table
   getPayables: () => {
     const today = new Date().toISOString().split('T')[0];
     return get().purchases
@@ -350,6 +455,8 @@ export const useVendorStore = create<VendorState>((set, get) => ({
   getUpcomingPayables: (days) => {
     const today = new Date().toISOString().split('T')[0];
     const future = new Date(Date.now() + days * 86400000).toISOString().split('T')[0];
-    return get().getPayables().filter(p => (p.dueDate ?? '') >= today && (p.dueDate ?? '') <= future);
+    return get().getPayables().filter(p =>
+      (p.dueDate ?? '') >= today && (p.dueDate ?? '') <= future
+    );
   },
 }));
