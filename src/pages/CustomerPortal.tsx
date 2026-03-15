@@ -151,12 +151,17 @@ const CustomerPortal = () => {
   // ── Cancel order
   const handleCancelOrder = async () => {
     if (!cancelOrderId || !customerId) return;
+    const target = orders.find(o => o.id === cancelOrderId);
+    const orderRef = target?.orderRef || cancelOrderId.slice(0, 8);
     setCancelling(true);
     const result = await cancelOrder(cancelOrderId, customerId);
     setCancelling(false);
     setCancelOrderId(null);
     if (result.success) {
       toast.success("Order cancelled successfully");
+      const cancelText = `*Order Cancelled*\nOrder Ref: ${orderRef}\nCustomer: ${customerName || userEmail}\nPhone: ${customerPhone || "N/A"}\n\nThis order has been cancelled by the customer.`;
+      const whatsappUrl = `https://wa.me/923065887827?text=${encodeURIComponent(cancelText)}`;
+      window.open(whatsappUrl, '_blank');
     } else {
       toast.error(result.reason || "Could not cancel this order");
     }
@@ -188,6 +193,19 @@ const CustomerPortal = () => {
     setSubmitting(false);
     if (id) {
       toast.success("Order placed! The factory will confirm it shortly.");
+      
+      const orderText = `*New Online Order*\n` +
+        `Customer: ${customerName || userEmail}\n` +
+        `Phone: ${customerPhone || "N/A"}\n` +
+        `Address: ${customerAddress || "N/A"}, ${customerCity || "N/A"}\n\n` +
+        `*Items:*\n` +
+        orderItems.map(i => `- ${i.itemName} (Grade ${i.grade}): ${i.quantity} kg`).join("\n") +
+        (deliveryDate ? `\n\nPreferred Delivery: ${deliveryDate}` : "") +
+        (orderNotes ? `\nNotes: ${orderNotes}` : "");
+      
+      const whatsappUrl = `https://wa.me/923065887827?text=${encodeURIComponent(orderText)}`;
+      window.open(whatsappUrl, '_blank');
+
       resetOrderForm(); setOrderOpen(false);
     } else {
       toast.error("Failed to place order. Please try again.");

@@ -137,12 +137,30 @@ const OnlineOrders = () => {
   const { totalAmount, paid, outstanding } = computeTotals();
 
   const handleStatusUpdate = async (status: OnlineOrderStatus) => {
-    if (!selectedOrderId) return;
+    if (!selectedOrderId || !order) return;
     setUpdating(true);
     const ok = await updateStatus(selectedOrderId, status, adminNotes);
     setUpdating(false);
     if (ok) {
       toast.success(`Order marked as ${status}`);
+
+      let phone = order.customerPhone?.replace(/[^\d]/g, '') || "";
+      if (phone.startsWith("0")) phone = "92" + phone.slice(1);
+
+      if (phone && (status === "Confirmed" || status === "Cancelled")) {
+        const ref = order.orderRef || order.id.slice(0, 8);
+        let msg = "";
+        if (status === "Confirmed") {
+          msg = `Hello ${order.customerName},\nYour order *${ref}* has been confirmed by Lentil Factory. We will process and deliver it shortly!`;
+          if (adminNotes) msg += `\n\nNotes from factory: ${adminNotes}`;
+        } else if (status === "Cancelled") {
+          msg = `Hello ${order.customerName},\nYour order *${ref}* has been cancelled by Lentil Factory.`;
+          if (adminNotes) msg += `\n\nReason: ${adminNotes}`;
+        }
+        
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+      }
+
       setSelectedOrderId(null);
       setAdminNotes("");
     } else {
