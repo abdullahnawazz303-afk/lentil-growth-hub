@@ -326,7 +326,7 @@ const OnlineOrders = () => {
                     <TableCell className="text-sm">{o.customerPhone}</TableCell>
                     <TableCell className="max-w-[200px]">
                       <div className="truncate text-sm">
-                        {o.items.map(i => `${i.itemName} ${i.grade} (${i.quantity}kg)`).join(", ")}
+                        {o.items.map(i => `${i.itemName} ${i.grade}${i.packing && i.packing !== 'Loose' ? ` [${i.packing}]` : ''} (${i.quantity}kg)`).join(", ")}
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
@@ -365,7 +365,7 @@ const OnlineOrders = () => {
       {/* ── Order Detail Dialog ── */}
       <Dialog open={!!selectedOrderId}
         onOpenChange={v => { if (!v) { setSelectedOrderId(null); setAdminNotes(""); } }}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Order Details</DialogTitle>
             <DialogDescription>Review and manage this customer order.</DialogDescription>
@@ -390,9 +390,12 @@ const OnlineOrders = () => {
                       <div>
                         <span>{item.itemName} </span>
                         <span className="text-muted-foreground text-xs">Grade {item.grade}</span>
+                        {item.packing && item.packing !== "Loose" && (
+                          <Badge variant="outline" className="ml-2 py-0 h-5 text-[10px]">{item.packing}</Badge>
+                        )}
                         {cost && (
-                          <div className="text-xs text-muted-foreground">
-                            Cost: {formatPKR(cost)}/kg
+                          <div className="text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 rounded px-1.5 py-0.5 mt-0.5 inline-block">
+                            Purchase cost: {formatPKR(cost)}/kg
                           </div>
                         )}
                       </div>
@@ -456,7 +459,7 @@ const OnlineOrders = () => {
       {/* ── Delivery & Sale Dialog ── */}
       <Dialog open={deliveryOpen}
         onOpenChange={v => { if (!v && !submitting) setDeliveryOpen(false); }}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Confirm Delivery</DialogTitle>
             <DialogDescription>
@@ -490,6 +493,7 @@ const OnlineOrders = () => {
                           <p className="text-sm font-medium">{item.itemName}</p>
                           <p className="text-xs text-muted-foreground">
                             Grade {item.grade} — {item.quantity} kg
+                            {item.packing && item.packing !== "Loose" && ` (${item.packing})`}
                           </p>
                           {cost && (
                             <p className="text-xs text-muted-foreground mt-0.5">

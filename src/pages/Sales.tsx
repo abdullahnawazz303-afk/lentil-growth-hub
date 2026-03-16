@@ -291,7 +291,7 @@ const Sales = () => {
                       ) : (
                         availableBatches.map((b) => (
                           <SelectItem key={b.id} value={b.id}>
-                            {b.itemName} {b.grade} — {formatKG(b.remainingQuantity)} avail
+                            {b.itemName} {b.grade} — {formatKG(b.remainingQuantity)} avail (PKR {b.purchasePrice}/kg)
                           </SelectItem>
                         ))
                       )}

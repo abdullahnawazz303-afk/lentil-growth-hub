@@ -12,6 +12,7 @@ import { useSalesStore } from "@/stores/salesStore";
 import { useOnlineOrderStore } from "@/stores/onlineOrderStore";
 import { formatPKR, formatDate } from "@/lib/formatters";
 import { Badge } from "@/components/ui/badge";
+import { AdminNotifications } from "@/components/AdminNotifications";
 
 const Dashboard = () => {
   const { getTodayBalance, fetchDays } = useCashFlowStore();
@@ -73,6 +74,9 @@ const Dashboard = () => {
         <h1 className="text-2xl font-display font-bold">Dashboard</h1>
         <p className="text-sm text-muted-foreground">Overview of factory operations & finances</p>
       </div>
+
+      {/* ── Notifications ── */}
+      <AdminNotifications />
 
       {/* ── Row 1 — Finance KPIs ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

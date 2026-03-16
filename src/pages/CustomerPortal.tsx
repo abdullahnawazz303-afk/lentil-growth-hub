@@ -76,6 +76,7 @@ const CustomerPortal = () => {
   const [deliveryDate, setDeliveryDate] = useState("");
   const [orderNotes, setOrderNotes] = useState("");
   const [currentItem, setCurrentItem]   = useState("");
+  const [currentPacking, setCurrentPacking] = useState("Loose");
   const [currentGrade, setCurrentGrade] = useState<Grade>("A");
   const [currentQty, setCurrentQty]     = useState("");
 
@@ -172,8 +173,8 @@ const CustomerPortal = () => {
     if (!currentItem) { toast.error("Select an item"); return; }
     const qty = Number(currentQty);
     if (qty <= 0) { toast.error("Enter a valid quantity"); return; }
-    setOrderItems(prev => [...prev, { itemName: currentItem, grade: currentGrade, quantity: qty, notes: "" }]);
-    setCurrentItem(""); setCurrentGrade("A"); setCurrentQty("");
+    setOrderItems(prev => [...prev, { itemName: currentItem, packing: currentPacking, grade: currentGrade, quantity: qty, notes: "" }]);
+    setCurrentItem(""); setCurrentPacking("Loose"); setCurrentGrade("A"); setCurrentQty("");
   };
 
   const removeOrderItem = (idx: number) =>
@@ -181,7 +182,7 @@ const CustomerPortal = () => {
 
   const resetOrderForm = () => {
     setOrderItems([]); setDeliveryDate(""); setOrderNotes("");
-    setCurrentItem(""); setCurrentGrade("A"); setCurrentQty("");
+    setCurrentItem(""); setCurrentPacking("Loose"); setCurrentGrade("A"); setCurrentQty("");
   };
 
   const handleOrderSubmit = async (e: React.FormEvent) => {
@@ -199,7 +200,7 @@ const CustomerPortal = () => {
         `Phone: ${customerPhone || "N/A"}\n` +
         `Address: ${customerAddress || "N/A"}, ${customerCity || "N/A"}\n\n` +
         `*Items:*\n` +
-        orderItems.map(i => `- ${i.itemName} (Grade ${i.grade}): ${i.quantity} kg`).join("\n") +
+        orderItems.map(i => `- ${i.itemName} (Grade ${i.grade})${i.packing && i.packing !== 'Loose' ? ` [${i.packing} packing]` : ''}: ${i.quantity} kg`).join("\n") +
         (deliveryDate ? `\n\nPreferred Delivery: ${deliveryDate}` : "") +
         (orderNotes ? `\nNotes: ${orderNotes}` : "");
       
@@ -421,6 +422,9 @@ const CustomerPortal = () => {
                           <span>
                             {item.itemName}{" "}
                             <span className="text-muted-foreground">Grade {item.grade}</span>
+                            {item.packing && item.packing !== "Loose" && (
+                              <Badge variant="outline" className="ml-2 py-0 h-5 text-[10px]">{item.packing}</Badge>
+                            )}
                             {" — "}
                             <span className="font-medium">{formatKG(item.quantity)}</span>
                           </span>
@@ -434,6 +438,14 @@ const CustomerPortal = () => {
                           <SelectTrigger><SelectValue placeholder="Select item" /></SelectTrigger>
                           <SelectContent>
                             {ITEM_OPTIONS.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <Select value={currentPacking} onValueChange={setCurrentPacking}>
+                          <SelectTrigger className="w-24"><SelectValue placeholder="Packing" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Loose">Loose</SelectItem>
+                            <SelectItem value="0.5 kg">0.5 kg</SelectItem>
+                            <SelectItem value="1 kg">1 kg</SelectItem>
                           </SelectContent>
                         </Select>
                         <Select value={currentGrade} onValueChange={v => setCurrentGrade(v as Grade)}>

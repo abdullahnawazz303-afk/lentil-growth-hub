@@ -380,6 +380,7 @@ CREATE TABLE online_order_items (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   order_id UUID NOT NULL REFERENCES online_orders(id) ON DELETE CASCADE,
   item_name TEXT NOT NULL,
+  packing TEXT,
   grade TEXT CHECK (grade IN ('A+', 'A', 'B', 'C')),
   quantity_kg NUMERIC(12,2) NOT NULL CHECK (quantity_kg > 0),
   requested_price_per_kg NUMERIC(10,2),

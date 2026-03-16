@@ -191,13 +191,28 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
   },
 
   // ── Deduct quantity from a batch when a sale is made
+  // Fetches fresh data from DB if local state is stale / not loaded
   deductFromBatch: async (batchId, qty) => {
-    const batch = get().batches.find(b => b.id === batchId);
-    if (!batch || batch.remainingQuantity < qty) return false;
+    // Try local state first
+    let remaining = get().batches.find(b => b.id === batchId)?.remainingQuantity;
 
+    // If not in local cache, fetch from DB directly
+    if (remaining === undefined) {
+      const { data } = await supabase
+        .from('inventory_batches')
+        .select('remaining_qty_kg')
+        .eq('id', batchId)
+        .single();
+      if (!data) return false;
+      remaining = data.remaining_qty_kg;
+    }
+
+    if (remaining < qty) return false;
+
+    const newRemaining = remaining - qty;
     const { error } = await supabase
       .from('inventory_batches')
-      .update({ remaining_qty_kg: batch.remainingQuantity - qty })
+      .update({ remaining_qty_kg: newRemaining })
       .eq('id', batchId);
 
     if (error) return false;
@@ -205,7 +220,7 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
     // Update local state immediately for UI responsiveness
     set((s) => ({
       batches: s.batches.map(b =>
-        b.id === batchId ? { ...b, remainingQuantity: b.remainingQuantity - qty } : b
+        b.id === batchId ? { ...b, remainingQuantity: newRemaining } : b
       ),
     }));
 

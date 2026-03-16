@@ -203,6 +203,7 @@ export interface Sale {
 
 export interface OnlineOrderItem {
   itemName: string;
+  packing?: string;
   grade: Grade;
   quantity: number;       // quantity_kg
   notes: string;

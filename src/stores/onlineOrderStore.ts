@@ -46,6 +46,7 @@ export const useOnlineOrderStore = create<OnlineOrderState>((set, get) => ({
       cancelledAt: row.cancelled_at ?? '',
       items: (row.online_order_items || []).map((i: any) => ({
         itemName: i.item_name,
+        packing: i.packing,
         grade: i.grade,
         quantity: i.quantity_kg,
         notes: i.notes ?? '',
@@ -83,6 +84,7 @@ export const useOnlineOrderStore = create<OnlineOrderState>((set, get) => ({
       cancelledAt: row.cancelled_at ?? '',
       items: (row.online_order_items || []).map((i: any) => ({
         itemName: i.item_name,
+        packing: i.packing,
         grade: i.grade,
         quantity: i.quantity_kg,
         notes: i.notes ?? '',
@@ -116,6 +118,7 @@ export const useOnlineOrderStore = create<OnlineOrderState>((set, get) => ({
       .insert(items.map((i) => ({
         order_id: orderRow.id,
         item_name: i.itemName,
+        packing: i.packing || null,
         grade: i.grade,
         quantity_kg: i.quantity,
         notes: i.notes ?? null,

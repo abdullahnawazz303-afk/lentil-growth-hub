@@ -70,6 +70,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
+    sessionStorage.removeItem("admin_notif_panel_closed"); // Reset notification modal state
     await supabase.auth.signOut();
     set({
       isLoggedIn: false,

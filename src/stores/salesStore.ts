@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
+import { useInventoryStore } from './inventoryStore';
 import type { Sale, PaymentStatus } from '@/types';
 
 interface SalesState {
@@ -154,7 +155,6 @@ export const useSalesStore = create<SalesState>((set, get) => ({
     }
 
     // ── Step 2: Insert sale items
-    // DB trigger `trg_deduct_inventory_on_sale` fires per item and deducts stock
     const { error: itemsErr } = await supabase
       .from('sale_items')
       .insert(
@@ -173,6 +173,28 @@ export const useSalesStore = create<SalesState>((set, get) => ({
       console.error('Sale items insert failed (sale rolled back):', itemsErr.message);
       set({ error: itemsErr.message, loading: false });
       return null;
+    }
+
+    // ── Step 2b: Deduct inventory for each item & record OUT movement
+    // The DB trigger trg_deduct_inventory_on_sale may or may not exist in Supabase.
+    // We do this explicitly in JS to guarantee stock is always updated.
+    const inventoryStore = useInventoryStore.getState();
+    for (const item of s.items) {
+      if (!item.batchId) continue;
+      // Deduct from batch (updates remaining_qty_kg in DB + local state)
+      const deducted = await inventoryStore.deductFromBatch(item.batchId, item.quantity);
+      if (!deducted) {
+        console.warn(`Could not deduct inventory for batch ${item.batchId}. Stock may be insufficient.`);
+      }
+      // Log an OUT movement in inventory_movements for audit trail
+      await supabase.from('inventory_movements').insert({
+        batch_id: item.batchId,
+        movement_type: 'OUT',
+        quantity_kg: item.quantity,
+        reference_type: 'SALE',
+        reference_id: saleRow.id,
+        notes: `Sale ${saleRow.sale_ref} — ${item.itemName}`,
+      });
     }
 
     // ── Step 3: If customer paid upfront, post credit to their ledger
