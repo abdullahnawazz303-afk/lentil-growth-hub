@@ -14,6 +14,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import RequestAccess from "./pages/RequestAccess";
 import NotFound from "./pages/NotFound";
 
 // Customer portal
@@ -25,6 +26,7 @@ import Inventory from "./pages/Inventory";
 import Sales from "./pages/Sales";
 import Customers from "./pages/Customers";
 import CustomerLedger from "./pages/CustomerLedger";
+import CustomerRequests from "./pages/CustomerRequests";
 import Vendors from "./pages/Vendors";
 import VendorLedger from "./pages/VendorLedger";
 import VendorPayables from "./pages/VendorPayables";
@@ -37,7 +39,6 @@ import WasteManagement from "./pages/WasteManagement";
 
 const queryClient = new QueryClient();
 
-// ─── Loading screen ───────────────────────────────────────────
 const LoadingScreen = () => (
   <div className="min-h-screen flex items-center justify-center text-muted-foreground">
     <div className="flex flex-col items-center gap-3">
@@ -47,24 +48,18 @@ const LoadingScreen = () => (
   </div>
 );
 
-// ─── Staff / Admin route guard ────────────────────────────────
-// Only admin, manager, cashier, viewer can access the ERP
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const userRole   = useAuthStore((s) => s.userRole);
   const loading    = useAuthStore((s) => s.loading);
 
-  if (loading)      return <LoadingScreen />;
-  if (!isLoggedIn)  return <Navigate to="/login" replace />;
-
-  // Customer accounts should not access the internal ERP
+  if (loading)     return <LoadingScreen />;
+  if (!isLoggedIn) return <Navigate to="/login" replace />;
   if (userRole === "customer") return <Navigate to="/portal" replace />;
 
   return <>{children}</>;
 }
 
-// ─── Customer portal route guard ─────────────────────────────
-// Only accounts with role='customer' can access the portal
 function CustomerRoute({ children }: { children: React.ReactNode }) {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const userRole   = useAuthStore((s) => s.userRole);
@@ -72,21 +67,15 @@ function CustomerRoute({ children }: { children: React.ReactNode }) {
 
   if (loading)     return <LoadingScreen />;
   if (!isLoggedIn) return <Navigate to="/login" replace />;
-
-  // Staff accounts should not land on the customer portal
   if (userRole !== "customer") return <Navigate to="/dashboard" replace />;
 
   return <>{children}</>;
 }
 
-// ─── App ──────────────────────────────────────────────────────
 const App = () => {
   const restoreSession = useAuthStore((s) => s.restoreSession);
 
-  // Restore Supabase session on app load
-  useEffect(() => {
-    restoreSession();
-  }, []);
+  useEffect(() => { restoreSession(); }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -104,134 +93,31 @@ const App = () => {
             </Route>
 
             {/* ── Auth pages (no layout) ── */}
-            <Route path="/login"    element={<Login />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/login"          element={<Login />} />
+            <Route path="/register"       element={<Register />} />
+            <Route path="/request-access" element={<RequestAccess />} />
 
             {/* ── Customer Portal ── */}
-            <Route
-              path="/portal"
-              element={
-                <CustomerRoute>
-                  <CustomerPortal />
-                </CustomerRoute>
-              }
-            />
+            <Route path="/portal" element={<CustomerRoute><CustomerPortal /></CustomerRoute>} />
 
             {/* ── Internal ERP (staff only) ── */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <AppLayout><Dashboard /></AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/inventory"
-              element={
-                <ProtectedRoute>
-                  <AppLayout><Inventory /></AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/sales"
-              element={
-                <ProtectedRoute>
-                  <AppLayout><Sales /></AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/customers"
-              element={
-                <ProtectedRoute>
-                  <AppLayout><Customers /></AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/customer-ledger"
-              element={
-                <ProtectedRoute>
-                  <AppLayout><CustomerLedger /></AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/vendors"
-              element={
-                <ProtectedRoute>
-                  <AppLayout><Vendors /></AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/vendor-ledger"
-              element={
-                <ProtectedRoute>
-                  <AppLayout><VendorLedger /></AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/vendor-payables"
-              element={
-                <ProtectedRoute>
-                  <AppLayout><VendorPayables /></AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/advance-bookings"
-              element={
-                <ProtectedRoute>
-                  <AppLayout><AdvanceBookings /></AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/bank-cheques"
-              element={
-                <ProtectedRoute>
-                  <AppLayout><BankCheques /></AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/cash-flow"
-              element={
-                <ProtectedRoute>
-                  <AppLayout><Rokar /></AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/online-orders"
-              element={
-                <ProtectedRoute>
-                  <AppLayout><OnlineOrders /></AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/waste"
-              element={
-                <ProtectedRoute>
-                  <AppLayout><WasteManagement /></AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/reports"
-              element={
-                <ProtectedRoute>
-                  <AppLayout><Reports /></AppLayout>
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/dashboard" element={<ProtectedRoute><AppLayout><Dashboard /></AppLayout></ProtectedRoute>} />
+            <Route path="/inventory" element={<ProtectedRoute><AppLayout><Inventory /></AppLayout></ProtectedRoute>} />
+            <Route path="/sales" element={<ProtectedRoute><AppLayout><Sales /></AppLayout></ProtectedRoute>} />
+            <Route path="/customers" element={<ProtectedRoute><AppLayout><Customers /></AppLayout></ProtectedRoute>} />
+            <Route path="/customer-ledger" element={<ProtectedRoute><AppLayout><CustomerLedger /></AppLayout></ProtectedRoute>} />
+            <Route path="/customer-requests" element={<ProtectedRoute><AppLayout><CustomerRequests /></AppLayout></ProtectedRoute>} />
+            <Route path="/vendors" element={<ProtectedRoute><AppLayout><Vendors /></AppLayout></ProtectedRoute>} />
+            <Route path="/vendor-ledger" element={<ProtectedRoute><AppLayout><VendorLedger /></AppLayout></ProtectedRoute>} />
+            <Route path="/vendor-payables" element={<ProtectedRoute><AppLayout><VendorPayables /></AppLayout></ProtectedRoute>} />
+            <Route path="/advance-bookings" element={<ProtectedRoute><AppLayout><AdvanceBookings /></AppLayout></ProtectedRoute>} />
+            <Route path="/bank-cheques" element={<ProtectedRoute><AppLayout><BankCheques /></AppLayout></ProtectedRoute>} />
+            <Route path="/cash-flow" element={<ProtectedRoute><AppLayout><Rokar /></AppLayout></ProtectedRoute>} />
+            <Route path="/online-orders" element={<ProtectedRoute><AppLayout><OnlineOrders /></AppLayout></ProtectedRoute>} />
+            <Route path="/waste" element={<ProtectedRoute><AppLayout><WasteManagement /></AppLayout></ProtectedRoute>} />
+            <Route path="/reports" element={<ProtectedRoute><AppLayout><Reports /></AppLayout></ProtectedRoute>} />
 
-            {/* ── Fallback redirects ── */}
+            {/* ── Fallback ── */}
             <Route path="/index" element={<Navigate to="/" replace />} />
             <Route path="*"      element={<NotFound />} />
 
