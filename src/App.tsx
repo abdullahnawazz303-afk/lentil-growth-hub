@@ -16,6 +16,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import RequestAccess from "./pages/RequestAccess";
 import NotFound from "./pages/NotFound";
+import AuthCallback from "./pages/AuthCallback";
 
 // Customer portal
 import CustomerPortal from "./pages/CustomerPortal";
@@ -96,6 +97,7 @@ const App = () => {
             <Route path="/login"          element={<Login />} />
             <Route path="/register"       element={<Register />} />
             <Route path="/request-access" element={<RequestAccess />} />
+            <Route path="/auth/callback"  element={<AuthCallback />} />
 
             {/* ── Customer Portal ── */}
             <Route path="/portal" element={<CustomerRoute><CustomerPortal /></CustomerRoute>} />

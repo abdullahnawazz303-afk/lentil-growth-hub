@@ -11,6 +11,8 @@ interface AuthState {
   customerId: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
+  loginWithGoogle: () => Promise<void>;
+  finalizeGoogleLogin: () => Promise<{ ok: boolean; blocked: boolean; message: string }>;
   logout: () => void;
   restoreSession: () => Promise<void>;
 }
@@ -40,6 +42,49 @@ export const useAuthStore = create<AuthState>((set) => ({
   userId: null,
   customerId: null,
   loading: false,
+
+  loginWithGoogle: async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+  },
+
+  finalizeGoogleLogin: async () => {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) {
+      return { ok: false, blocked: false, message: 'No session found. Please try again.' };
+    }
+
+    const user = data.session.user;
+    const { role, customerId } = await fetchUserProfile(user.id);
+
+    // Block anyone who is not a customer (e.g. admin signed in with Google)
+    if (role !== 'customer') {
+      await supabase.auth.signOut();
+      return {
+        ok: false,
+        blocked: true,
+        message:
+          role === 'viewer'
+            ? 'Your Google account is not registered as a customer. Please contact the factory.'
+            : 'Staff accounts must use email & password login.',
+      };
+    }
+
+    set({
+      isLoggedIn: true,
+      userRole: role,
+      userEmail: user.email ?? null,
+      userId: user.id,
+      customerId,
+      loading: false,
+    });
+
+    return { ok: true, blocked: false, message: '' };
+  },
 
   login: async (email: string, password: string) => {
     set({ loading: true });

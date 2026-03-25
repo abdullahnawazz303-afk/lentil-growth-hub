@@ -54,6 +54,7 @@ export interface Vendor {
 export interface Customer {
   id: string;
   name: string;
+  email?: string;
   contactPerson: string;
   phone: string;
   city: string;

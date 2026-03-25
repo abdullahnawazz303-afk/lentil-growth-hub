@@ -51,6 +51,7 @@ const Customers = () => {
     setSubmitting(true);
     const id = await addCustomer({
       name:           fd.get("name") as string,
+      email:          fd.get("email") as string || "",
       contactPerson:  fd.get("contactPerson") as string || "",
       phone:          fd.get("phone") as string,
       city:           fd.get("city") as string || "",
@@ -74,6 +75,7 @@ const Customers = () => {
     setEditSubmitting(true);
     const ok = await editCustomer(editingCustomer.id, {
       name:          fd.get("name") as string,
+      email:         fd.get("email") as string || "",
       contactPerson: fd.get("contactPerson") as string || "",
       phone:         fd.get("phone") as string,
       city:          fd.get("city") as string || "",
@@ -149,13 +151,19 @@ const Customers = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>Name *</Label><Input name="name" required maxLength={100} /></div>
-                <div className="space-y-2"><Label>Contact Person</Label><Input name="contactPerson" maxLength={100} /></div>
+                <div className="space-y-2">
+                  <Label>Email (for Google Login)</Label>
+                  <Input name="email" type="email" placeholder="customer@gmail.com" />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>Phone *</Label><Input name="phone" required maxLength={20} /></div>
-                <div className="space-y-2"><Label>City</Label><Input name="city" maxLength={50} /></div>
+                <div className="space-y-2"><Label>Contact Person</Label><Input name="contactPerson" maxLength={100} /></div>
               </div>
-              <div className="space-y-2"><Label>Address</Label><Input name="address" maxLength={200} /></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>City</Label><Input name="city" maxLength={50} /></div>
+                <div className="space-y-2"><Label>Address</Label><Input name="address" maxLength={200} /></div>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Opening Balance (PKR)</Label>
@@ -206,7 +214,10 @@ const Customers = () => {
                   const outstanding = getOutstanding(c.id);
                   return (
                     <TableRow key={c.id}>
-                      <TableCell className="font-medium">{c.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {c.name}
+                        {c.email && <div className="text-xs text-muted-foreground font-normal">{c.email}</div>}
+                      </TableCell>
                       <TableCell>{c.phone}</TableCell>
                       <TableCell>{c.city}</TableCell>
                       <TableCell className={`text-right font-medium ${outstanding > 0 ? "text-red-500" : "text-green-600"}`}>
@@ -274,8 +285,8 @@ const Customers = () => {
                   <Input name="name" required maxLength={100} defaultValue={editingCustomer.name} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Contact Person</Label>
-                  <Input name="contactPerson" maxLength={100} defaultValue={editingCustomer.contactPerson} />
+                  <Label>Email (for Google Login)</Label>
+                  <Input name="email" type="email" defaultValue={editingCustomer.email} placeholder="customer@gmail.com" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -284,13 +295,19 @@ const Customers = () => {
                   <Input name="phone" required maxLength={20} defaultValue={editingCustomer.phone} />
                 </div>
                 <div className="space-y-2">
+                  <Label>Contact Person</Label>
+                  <Input name="contactPerson" maxLength={100} defaultValue={editingCustomer.contactPerson} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
                   <Label>City</Label>
                   <Input name="city" maxLength={50} defaultValue={editingCustomer.city} />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Address</Label>
-                <Input name="address" maxLength={200} defaultValue={editingCustomer.address} />
+                <div className="space-y-2">
+                  <Label>Address</Label>
+                  <Input name="address" maxLength={200} defaultValue={editingCustomer.address} />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Credit Limit (PKR)</Label>

@@ -15,6 +15,7 @@ interface CustomerState {
   // Admin: edit all profile fields
   editCustomer: (customerId: string, updates: {
     name: string;
+    email: string;
     contactPerson: string;
     phone: string;
     city: string;
@@ -64,6 +65,7 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
     const customers: Customer[] = (customerData || []).map((row: any) => ({
       id: row.id,
       name: row.name,
+      email: row.email ?? '',
       contactPerson: row.contact_person ?? '',
       phone: row.phone ?? '',
       city: row.city ?? '',
@@ -126,6 +128,7 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
       .from('customers')
       .insert({
         name: c.name,
+        email: c.email || null,
         contact_person: c.contactPerson ?? null,
         phone: c.phone ?? null,
         city: c.city ?? null,
@@ -162,6 +165,7 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
       .from('customers')
       .update({
         name: updates.name,
+        email: updates.email || null,
         contact_person: updates.contactPerson || null,
         phone: updates.phone || null,
         city: updates.city || null,
@@ -181,6 +185,7 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
           ? {
               ...c,
               name: updates.name,
+              email: updates.email,
               contactPerson: updates.contactPerson,
               phone: updates.phone,
               city: updates.city,
