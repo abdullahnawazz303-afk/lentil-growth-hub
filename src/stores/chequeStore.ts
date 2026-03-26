@@ -10,6 +10,7 @@ interface ChequeState {
   fetchCheques: () => Promise<void>;
   addCheque: (c: Omit<Cheque, 'id'>) => Promise<string | null>;
   updateStatus: (id: string, status: ChequeStatus) => Promise<Cheque | null>;
+  deleteCheque: (id: string) => Promise<boolean>;
   getPendingCount: () => number;
   getPendingTotal: () => number;
 }
@@ -160,4 +161,20 @@ export const useChequeStore = create<ChequeState>((set, get) => ({
     get().cheques
       .filter(c => c.status === 'Pending')
       .reduce((s, c) => s + c.amount, 0),
+
+  // ── Admin: Delete Cheque
+  deleteCheque: async (id) => {
+    const cheque = get().cheques.find(c => c.id === id);
+    if (!cheque || cheque.status === 'Cleared') return false;
+
+    set({ loading: true });
+    const { error } = await supabase.from('cheques').delete().eq('id', id);
+    if (error) {
+      set({ loading: false });
+      return false;
+    }
+
+    await get().fetchCheques();
+    return true;
+  },
 }));

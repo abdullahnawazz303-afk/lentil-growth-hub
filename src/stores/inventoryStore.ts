@@ -32,6 +32,8 @@ interface InventoryState {
   getLowStockBatches: () => InventoryBatch[];
   getUniqueItemCount: () => number;
   getBatchById: (batchId: string) => InventoryBatch | undefined;
+  updateBatch: (batchId: string, notes: string) => Promise<boolean>;
+  deleteBatch: (batchId: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 export const useInventoryStore = create<InventoryState>((set, get) => ({
@@ -239,4 +241,33 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
 
   getBatchById: (batchId) =>
     get().batches.find(b => b.id === batchId),
+
+  updateBatch: async (batchId, notes) => {
+    const { error } = await supabase.from('inventory_batches').update({ notes }).eq('id', batchId);
+    if (!error) {
+      set((s) => ({ batches: s.batches.map(b => b.id === batchId ? { ...b, notes } : b) }));
+      return true;
+    }
+    return false;
+  },
+
+  deleteBatch: async (batchId) => {
+    const batch = get().batches.find(b => b.id === batchId);
+    if (!batch) return { success: false, error: 'Batch not found' };
+    if (batch.remainingQuantity !== batch.quantity) {
+      return { success: false, error: 'Cannot delete batch that has been consumed or sold.' };
+    }
+    
+    set({ loading: true });
+    await supabase.from('inventory_movements').delete().eq('batch_id', batchId);
+    const { error } = await supabase.from('inventory_batches').delete().eq('id', batchId);
+    
+    if (error) {
+      set({ loading: false });
+      return { success: false, error: error.message };
+    }
+    
+    await get().fetchBatches();
+    return { success: true };
+  },
 }));

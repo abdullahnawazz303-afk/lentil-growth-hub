@@ -41,6 +41,7 @@ const AdvanceBookings = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const pageSize = 10;
 
   const [items, setItems] = useState<BookingItem[]>([]);
@@ -182,6 +183,49 @@ const AdvanceBookings = () => {
     setSubmitting(false);
     setPayOpen(false);
     toast.success("Payment recorded");
+  };
+
+  const handleDeleteBooking = async (booking: any) => {
+    if (booking.status === 'Delivered' || booking.status === 'Completed') {
+      toast.error("Cannot delete a delivered booking. Inventory has already been affected.");
+      return;
+    }
+    if (!confirm("Are you sure you want to permanently delete this booking? Associated ledgers and advances will be automatically reversed.")) return;
+    
+    setDeletingId(booking.id);
+    const ok = await useBookingStore.getState().deleteBooking(booking.id);
+    
+    if (ok) {
+        // Reverse Ledger purchase liability
+        await addLedgerEntry(booking.vendorId, {
+          date: getTodayISO(),
+          type: "Adjustment",
+          description: `Reversal of deleted booking`,
+          debit: booking.totalValue, // reverse the liability
+          credit: 0,
+        });
+
+        // Reverse Payments if any were made
+        if (booking.advancePaid > 0) {
+            await addLedgerEntry(booking.vendorId, {
+              date: getTodayISO(),
+              type: "Adjustment",
+              description: `Refund for deleted booking advance`,
+              debit: 0,
+              credit: booking.advancePaid,
+            });
+            await addCashEntry(getTodayISO(), {
+              type: 'in',
+              category: 'Other Income',
+              amount: booking.advancePaid,
+              description: `Refund for deleted booking advance`,
+            });
+        }
+        toast.success("Booking deleted and ledger reversed");
+    } else {
+        toast.error("Failed to delete booking");
+    }
+    setDeletingId(null);
   };
 
   const detailBooking = bookings.find(b => b.id === detailId);
@@ -358,6 +402,16 @@ const paged = sorted.slice(page * pageSize, (page + 1) * pageSize);
                             title={b.remainingBalance > 0 ? "Clear full payment first" : "Mark Completed"}
                           >
                             <PackagePlus className="h-3 w-3" />
+                          </Button>
+                        )}
+                        {(b.status !== 'Delivered' && b.status !== 'Completed') && (
+                          <Button
+                            size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDeleteBooking(b)}
+                            title="Delete Booking"
+                            disabled={deletingId === b.id}
+                          >
+                            <Trash2 className="h-3 w-3" />
                           </Button>
                         )}
                       </div>

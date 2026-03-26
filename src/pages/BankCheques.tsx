@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Check, X } from "lucide-react";
+import { Plus, Check, X, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { formatPKR, formatDate, getTodayISO } from "@/lib/formatters";
@@ -91,6 +91,32 @@ const BankCheques = () => {
         description: `Cheque cleared: ${cheque.chequeNumber} — ${cheque.vendorName || getVendorName(cheque.vendorId)}`,
       });
       toast.success("Cheque marked as cleared");
+    }
+  };
+
+  const handleDeleteCheque = async (cheque: any) => {
+    if (cheque.status === 'Cleared') {
+      toast.error("Cannot delete a cheque that has already been cleared.");
+      return;
+    }
+    if (!confirm("Are you sure you want to permanently delete this cheque?")) return;
+
+    const ok = await useChequeStore.getState().deleteCheque(cheque.id);
+    
+    if (ok) {
+      if (cheque.status === 'Pending') {
+        // Reverse the original "Cheque Issued" debit since the cheque bounced doesn't need to be double reversed
+        await addLedgerEntry(cheque.vendorId, {
+          date: getTodayISO(),
+          type: "Adjustment",
+          description: `Reversal of deleted Cheque ${cheque.chequeNumber}`,
+          debit: 0,
+          credit: cheque.amount,
+        });
+      }
+      toast.success("Cheque deleted successfully");
+    } else {
+      toast.error("Failed to delete cheque");
     }
   };
 
@@ -232,6 +258,17 @@ const BankCheques = () => {
                             title="Mark Bounced"
                           >
                             <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                      {(c.status === "Pending" || c.status === "Bounced") && (
+                        <div className="flex gap-1 mt-1">
+                          <Button 
+                            size="sm" variant="ghost" className="text-destructive w-full hover:bg-destructive/10 h-7"
+                            onClick={() => handleDeleteCheque(c)}
+                            title="Delete Cheque"
+                          >
+                            <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
                       )}

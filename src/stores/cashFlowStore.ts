@@ -15,6 +15,8 @@ interface CashFlowState {
     amount: number;
     description: string;
   }) => Promise<boolean>;
+  updateEntry: (date: string, entryId: string, updates: { amount?: number; description?: string; category?: CashInCategory | CashOutCategory }) => Promise<boolean>;
+  deleteEntry: (date: string, entryId: string) => Promise<boolean>;
   closeDay: (date: string) => Promise<void>;
   getTodayBalance: () => number;
 }
@@ -225,5 +227,43 @@ export const useCashFlowStore = create<CashFlowState>((set, get) => ({
       .reduce((s, e) => s + e.amount, 0);
 
     return day.openingBalance + totalIn - totalOut;
+  },
+
+  updateEntry: async (date, entryId, updates) => {
+    const day = get().days[date];
+    if (day?.isClosed) return false;
+
+    const { error } = await supabase.from('cash_entries').update(updates).eq('id', entryId);
+    if (error) return false;
+
+    set((s) => ({
+      days: {
+        ...s.days,
+        [date]: {
+          ...s.days[date],
+          entries: s.days[date].entries.map(e => e.id === entryId ? { ...e, ...updates } : e)
+        }
+      }
+    }));
+    return true;
+  },
+
+  deleteEntry: async (date, entryId) => {
+    const day = get().days[date];
+    if (day?.isClosed) return false;
+
+    const { error } = await supabase.from('cash_entries').delete().eq('id', entryId);
+    if (error) return false;
+
+    set((s) => ({
+      days: {
+        ...s.days,
+        [date]: {
+          ...s.days[date],
+          entries: s.days[date].entries.filter(e => e.id !== entryId)
+        }
+      }
+    }));
+    return true;
   },
 }));

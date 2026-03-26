@@ -410,9 +410,9 @@ const CustomerPortal = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="orders">
-          <TabsList className="w-full sm:w-auto">
-            <TabsTrigger value="orders">My Orders</TabsTrigger>
-            <TabsTrigger value="ledger">My Ledger</TabsTrigger>
+          <TabsList className="w-full sm:w-auto flex flex-col sm:flex-row h-auto sm:h-10 gap-1 sm:gap-0 bg-transparent sm:bg-muted p-0 sm:p-1 items-stretch">
+            <TabsTrigger value="orders" className="w-full sm:w-auto border sm:border-0 bg-muted/50 sm:bg-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:data-[state=active]:bg-background sm:data-[state=active]:text-foreground justify-start sm:justify-center">My Orders</TabsTrigger>
+            <TabsTrigger value="ledger" className="w-full sm:w-auto border sm:border-0 bg-muted/50 sm:bg-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:data-[state=active]:bg-background sm:data-[state=active]:text-foreground justify-start sm:justify-center">My Ledger</TabsTrigger>
           </TabsList>
 
           {/* Orders Tab */}

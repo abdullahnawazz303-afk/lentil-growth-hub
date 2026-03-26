@@ -11,6 +11,7 @@ interface SalesState {
   fetchSales: () => Promise<void>;
   addSale: (s: Omit<Sale, 'id' | 'outstanding' | 'paymentStatus'>) => Promise<string | null>;
   addPayment: (saleId: string, amount: number) => Promise<Sale | null>;
+  deleteSale: (saleId: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 // ── Helper: get or create today's cash day and return its id
@@ -152,6 +153,25 @@ export const useSalesStore = create<SalesState>((set, get) => ({
       console.error('Sale insert failed:', saleErr?.message);
       set({ error: saleErr?.message ?? 'Sale insert failed', loading: false });
       return null;
+    }
+
+    // ── Pre-flight check: validate stock levels
+    const batchIds = s.items.map(i => i.batchId);
+    const { data: currentBatches } = await supabase
+      .from('inventory_batches')
+      .select('id, remaining_qty_kg, item_name')
+      .in('id', batchIds);
+
+    if (currentBatches) {
+      for (const item of s.items) {
+        const b = currentBatches.find(cb => cb.id === item.batchId);
+        if (b && item.quantity > b.remaining_qty_kg) {
+          await supabase.from('sales').delete().eq('id', saleRow.id);
+          const errStr = `Not enough stock for ${b.item_name}. Only ${b.remaining_qty_kg}kg available.`;
+          set({ error: errStr, loading: false });
+          return null;
+        }
+      }
     }
 
     // ── Step 2: Insert sale items
@@ -300,5 +320,70 @@ export const useSalesStore = create<SalesState>((set, get) => ({
     }));
 
     return updated;
+  },
+
+  // ── Admin: Delete Sale
+  // Deletes the sale, restores inventory, and inserts a reversing ledger entry to maintain balance continuity.
+  deleteSale: async (saleId) => {
+    set({ loading: true });
+    
+    // Prevent orphaned FKs: fetch sale to get items, customer, etc.
+    const { data: sale } = await supabase.from('sales').select('*, sale_items(*)').eq('id', saleId).maybeSingle();
+    if (!sale) {
+      set({ loading: false });
+      return { success: false, error: 'Sale not found' };
+    }
+
+    // 1. Restore inventory
+    for (const item of sale.sale_items) {
+      const { data: batch } = await supabase.from('inventory_batches').select('remaining_qty_kg').eq('id', item.batch_id).maybeSingle();
+      if (batch) {
+        await supabase.from('inventory_batches').update({ remaining_qty_kg: batch.remaining_qty_kg + item.quantity_kg }).eq('id', item.batch_id);
+        await supabase.from('inventory_movements').insert({
+          batch_id: item.batch_id,
+          movement_type: 'IN',
+          quantity_kg: item.quantity_kg,
+          reference_type: 'MANUAL',
+          notes: `Reversed from deleted Sale ${sale.sale_ref}`
+        });
+      }
+    }
+
+    // 2. Customer Ledger Reversal
+    const prevBalance = await getLastCustomerBalance(sale.customer_id);
+    const netImpact = sale.total_amount - sale.amount_paid; // net debit from sale
+    if (netImpact > 0) {
+      await supabase.from('customer_ledger').insert({
+        customer_id: sale.customer_id,
+        entry_date: new Date().toISOString().split('T')[0],
+        transaction_type: 'Adjustment',
+        description: `Reversal of deleted Sale ${sale.sale_ref}`,
+        debit: 0,
+        credit: netImpact,
+        running_balance: prevBalance - netImpact,
+        reference_type: 'SALE'
+      });
+    }
+
+    // 3. Cash Flow Reversal
+    if (sale.amount_paid > 0) {
+      const cashDayId = await getOpenCashDayId();
+      if (cashDayId) {
+         await supabase.from('cash_entries').insert({
+           cash_day_id: cashDayId,
+           entry_type: 'out',
+           category: 'Refund',
+           amount: sale.amount_paid,
+           description: `Refund for deleted Sale ${sale.sale_ref}`
+         });
+      }
+    }
+
+    // 4. Delete the sale record (cascades to sale_items)
+    const { error } = await supabase.from('sales').delete().eq('id', saleId);
+    
+    await get().fetchSales();
+    if (error) return { success: false, error: error.message };
+    return { success: true };
   },
 }));

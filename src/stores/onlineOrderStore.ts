@@ -11,6 +11,7 @@ interface OnlineOrderState {
   fetchMyOrders: (customerId: string) => Promise<void>;
   addOrder: (customerId: string, items: OnlineOrderItem[], notes?: string, deliveryDate?: string) => Promise<string | null>;
   updateStatus: (orderId: string, status: OnlineOrderStatus, adminNotes?: string) => Promise<boolean>;
+  deleteOrder: (orderId: string) => Promise<boolean>;
   cancelOrder: (orderId: string, customerId: string) => Promise<{ success: boolean; reason?: string }>;
 }
 
@@ -223,6 +224,17 @@ export const useOnlineOrderStore = create<OnlineOrderState>((set, get) => ({
       ),
     }));
 
+    return true;
+  },
+
+  // ── Admin: delete order
+  deleteOrder: async (orderId) => {
+    const { error } = await supabase.from('online_orders').delete().eq('id', orderId);
+    if (error) {
+      console.error('Delete order failed:', error.message);
+      return false;
+    }
+    set((s) => ({ orders: s.orders.filter((o) => o.id !== orderId) }));
     return true;
   },
 }));

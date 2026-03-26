@@ -12,6 +12,7 @@ interface BookingState {
   addPayment: (bookingId: string, amount: number, notes: string) => Promise<void>;
   updateStatus: (bookingId: string, status: BookingStatus) => Promise<void>;
   markDelivered: (bookingId: string) => Promise<void>;
+  deleteBooking: (bookingId: string) => Promise<boolean>;
   getPendingDeliveryCount: () => number;
   getUpcomingDeliveries: (limit: number) => AdvanceBooking[];
 }
@@ -242,5 +243,18 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       )
       .sort((a, b) => a.expectedDeliveryDate.localeCompare(b.expectedDeliveryDate))
       .slice(0, limit);
+  },
+
+  // ── Admin: Delete Booking
+  deleteBooking: async (bookingId) => {
+    set({ loading: true });
+    // Cascades delete items and payments
+    const { error } = await supabase.from('advance_bookings').delete().eq('id', bookingId);
+    if (error) {
+      set({ loading: false, error: error.message });
+      return false;
+    }
+    await get().fetchBookings();
+    return true;
   },
 }));

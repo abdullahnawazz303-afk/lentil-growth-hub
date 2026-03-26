@@ -22,7 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/EmptyState";
 import { formatDate, formatPKR } from "@/lib/formatters";
-import { CheckCircle, XCircle, Truck, Loader2, RefreshCw } from "lucide-react";
+import { CheckCircle, XCircle, Truck, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { OnlineOrderStatus } from "@/types";
 
@@ -51,7 +51,7 @@ const cancelLabel = (cancelReason?: string) => {
 };
 
 const OnlineOrders = () => {
-  const { orders, fetchOrders, updateStatus, loading } = useOnlineOrderStore();
+  const { orders, fetchOrders, updateStatus, deleteOrder, loading } = useOnlineOrderStore();
   const { addSale } = useSalesStore();
   const { batches, fetchBatches } = useInventoryStore();
 
@@ -168,6 +168,20 @@ const OnlineOrders = () => {
     }
   };
 
+  const handleDeleteOrder = async () => {
+    if (!selectedOrderId) return;
+    if (!confirm("Are you sure you want to permanently delete this order? This action cannot be undone.")) return;
+    setUpdating(true);
+    const ok = await deleteOrder(selectedOrderId);
+    setUpdating(false);
+    if (ok) {
+      toast.success("Order deleted successfully");
+      setSelectedOrderId(null);
+    } else {
+      toast.error("Failed to delete order");
+    }
+  };
+
   const handleConfirmDelivery = async () => {
     if (!deliveryOrder) return;
 
@@ -240,9 +254,6 @@ const OnlineOrders = () => {
   };
 
   const pendingCount    = orders.filter(o => o.status === "Pending").length;
-  const cancelledByCustomer = orders.filter(
-    o => o.status === "Cancelled" && (o as any).cancelReason?.toLowerCase().includes("customer")
-  ).length;
 
   return (
     <div className="space-y-6">
@@ -254,11 +265,6 @@ const OnlineOrders = () => {
             Online Orders
             {pendingCount > 0 && (
               <Badge variant="destructive" className="text-xs">{pendingCount} pending</Badge>
-            )}
-            {cancelledByCustomer > 0 && (
-              <Badge variant="outline" className="text-xs border-orange-400 text-orange-600">
-                {cancelledByCustomer} cancelled by customer
-              </Badge>
             )}
           </h1>
           <p className="text-sm text-muted-foreground">Orders placed by customers through the portal</p>
@@ -447,9 +453,20 @@ const OnlineOrders = () => {
               )}
 
               {(order.status === "Delivered" || order.status === "Cancelled") && (
-                <p className="text-sm text-center text-muted-foreground">
+                <p className="text-sm text-center text-muted-foreground pb-2">
                   This order is {order.status.toLowerCase()}.
                 </p>
+              )}
+
+              {order.status !== "Delivered" && (
+                <div className="pt-4 border-t mt-4 flex flex-col gap-2">
+                  <p className="text-xs text-muted-foreground text-center">
+                    Destructive Action
+                  </p>
+                  <Button variant="destructive" onClick={handleDeleteOrder} disabled={updating}>
+                    <Trash2 className="h-4 w-4 mr-2" /> Delete Permanently
+                  </Button>
+                </div>
               )}
             </div>
           )}

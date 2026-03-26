@@ -61,7 +61,7 @@ const emptyLine = (): BatchLineItem => ({
 
 const Inventory = () => {
   const {
-    batches, addPurchase, fetchBatches, loading,
+    batches, addPurchase, fetchBatches, updateBatch, deleteBatch, loading,
     getTotalStockValue, getLowStockBatches, getUniqueItemCount,
   } = useInventoryStore();
 
@@ -98,6 +98,12 @@ const Inventory = () => {
   const [payOpen, setPayOpen]             = useState(false);
   const [payingPurchase, setPayingPurchase] = useState<VendorPurchase | null>(null);
   const [paySubmitting, setPaySubmitting] = useState(false);
+
+  // ── Edit Batch state
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingBatch, setEditingBatch] = useState<any | null>(null);
+  const [editNotes, setEditNotes] = useState("");
+  const [editSubmitting, setEditSubmitting] = useState(false);
 
   // ── Fetch item names from Supabase
   const fetchItemNames = async () => {
@@ -272,6 +278,33 @@ const Inventory = () => {
     setPayOpen(false);
     setPayingPurchase(null);
     toast.success("Payment recorded");
+  };
+
+  const handleEditBatch = async () => {
+    if (!editingBatch) return;
+    setEditSubmitting(true);
+    const ok = await updateBatch(editingBatch.id, editNotes);
+    setEditSubmitting(false);
+    if (ok) {
+      toast.success("Batch updated successfully");
+      setEditOpen(false);
+    } else {
+      toast.error("Failed to update batch");
+    }
+  };
+
+  const handleDeleteBatch = async (batch: any) => {
+    if (batch.remainingQuantity !== batch.quantity) {
+      toast.error("Cannot delete batch that has been consumed or sold. Real-world standards prohibit deleting active stock.");
+      return;
+    }
+    if (!confirm("Are you sure you want to permanently delete this inventory batch?")) return;
+    const { success, error } = await deleteBatch(batch.id);
+    if (success) {
+      toast.success("Batch deleted successfully");
+    } else {
+      toast.error(error || "Failed to delete batch");
+    }
   };
 
   const getVendorName = (id: string) =>
@@ -594,7 +627,7 @@ const Inventory = () => {
                   <TableHead className="text-right">Remaining Due</TableHead>
                   <TableHead>Payment</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead />
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -627,14 +660,28 @@ const Inventory = () => {
                         {formatDate(b.purchaseDate)}
                       </TableCell>
                       <TableCell>
-                        {purchase && purchase.outstanding > 0 && (
-                          <Button
-                            size="sm" variant="outline"
-                            onClick={() => handlePayOpen(purchase)}
+                        <div className="flex gap-2 items-center">
+                          {purchase && purchase.outstanding > 0 && (
+                            <Button
+                              size="sm" variant="outline"
+                              onClick={() => handlePayOpen(purchase)}
+                            >
+                              <CreditCard className="h-3 w-3 mr-1" /> Pay
+                            </Button>
+                          )}
+                          <Button 
+                            variant="ghost" size="sm" 
+                            onClick={() => { setEditingBatch(b); setEditNotes(b.notes || ""); setEditOpen(true); }}
                           >
-                            <CreditCard className="h-3 w-3 mr-1" /> Pay
+                            Edit
                           </Button>
-                        )}
+                          <Button 
+                            variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDeleteBatch(b)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -798,7 +845,25 @@ const Inventory = () => {
           )}
         </DialogContent>
       </Dialog>
-
+      
+      {/* ── Edit Batch Dialog ── */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Edit Batch Notes</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Notes</Label>
+              <Textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows={3} />
+            </div>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => setEditOpen(false)} className="flex-1">Cancel</Button>
+              <Button onClick={handleEditBatch} disabled={editSubmitting} className="flex-1">
+                {editSubmitting ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

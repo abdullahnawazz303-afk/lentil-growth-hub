@@ -26,7 +26,7 @@ import { formatPKR, formatKG, formatDate, getTodayISO } from "@/lib/formatters";
 import type { SaleItem } from "@/types";
 
 const Sales = () => {
-  const { sales, addSale, addPayment, fetchSales, loading } = useSalesStore();
+  const { sales, addSale, addPayment, deleteSale, fetchSales, loading } = useSalesStore();
   const { customers, fetchCustomers } = useCustomerStore();
   const { batches, fetchBatches } = useInventoryStore();
 
@@ -47,6 +47,7 @@ const Sales = () => {
   const [payingSale, setPayingSale]   = useState<{ id: string; outstanding: number; customerName: string } | null>(null);
   const [payAmount, setPayAmount]     = useState("");
   const [paying, setPaying]           = useState(false);
+  const [deletingSaleId, setDeletingSaleId] = useState<string | null>(null);
 
   // ── Table filters
   const [search, setSearch] = useState("");
@@ -152,7 +153,8 @@ const Sales = () => {
       resetSaleForm();
       setOpen(false);
     } else {
-      toast.error("Failed to save sale. Please try again.");
+      const errorMsg = useSalesStore.getState().error || "Failed to save sale. Please try again.";
+      toast.error(errorMsg);
     }
   };
 
@@ -190,6 +192,18 @@ const Sales = () => {
       setPayAmount("");
     } else {
       toast.error("Payment failed. Please try again.");
+    }
+  };
+
+  const handleDelete = async (saleId: string) => {
+    if (!confirm("Are you sure you want to delete this sale? This will automatically reverse inventory and adjust the customer's ledger.")) return;
+    setDeletingSaleId(saleId);
+    const { success, error } = await deleteSale(saleId);
+    setDeletingSaleId(null);
+    if (success) {
+      toast.success("Sale deleted and ledgers reversed successfully");
+    } else {
+      toast.error(error || "Failed to delete sale");
     }
   };
 
@@ -434,15 +448,26 @@ const Sales = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {s.outstanding > 0 && (
+                      <div className="flex gap-2 items-center">
+                        {s.outstanding > 0 && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openPayDialog(s)}
+                          >
+                            <CreditCard className="h-3 w-3 mr-1" /> Pay
+                          </Button>
+                        )}
                         <Button
                           size="sm"
-                          variant="outline"
-                          onClick={() => openPayDialog(s)}
+                          variant="ghost"
+                          className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                          onClick={() => handleDelete(s.id)}
+                          disabled={deletingSaleId === s.id}
                         >
-                          <CreditCard className="h-3 w-3 mr-1" /> Pay
+                          {deletingSaleId === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
                         </Button>
-                      )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
