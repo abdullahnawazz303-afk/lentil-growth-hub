@@ -1,8 +1,9 @@
 import {
   LayoutDashboard, Package, ShoppingCart, Users, BookOpen,
   Wallet, Landmark, FileText, BarChart3, Store, CreditCard,
-  Globe, Trash2, UserCheck,
+  Globe, Trash2, UserCheck, TrendingUp, X
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import qfLogo from "@/assets/qf-logo.png";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -26,6 +27,7 @@ const operationsNav = [
   { title: "Vendor Payables",  url: "/vendor-payables",    icon: Landmark },
   { title: "Advance Bookings", url: "/advance-bookings",   icon: FileText },
   { title: "Waste Management", url: "/waste",              icon: Trash2 },
+  { title: "Rate Card",        url: "/rate-card",          icon: TrendingUp },
   { title: "Online Orders",    url: "/online-orders",      icon: Globe },
 ];
 
@@ -36,7 +38,7 @@ const financeNav = [
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const location  = useLocation();
 
@@ -104,15 +106,27 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="overflow-hidden">
-      <SidebarHeader className="p-4 border-b border-sidebar-border">
-        <div className="flex items-center gap-3">
-           <img src={qfLogo} alt="QF Logo" className="w-10 h-10 object-contain shrink-0" />
-           {!collapsed && (
-             <div className="flex flex-col">
-               <span className="font-semibold text-base text-sidebar-primary tracking-tight">Qais Food</span>
-               <span className="text-[11px] font-medium text-sidebar-foreground/60">Pulses &amp; Rice</span>
-             </div>
-           )}
+      <SidebarHeader className="p-4 border-b border-sidebar-border relative">
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-3">
+             <img src={qfLogo} alt="QF Logo" className="w-10 h-10 object-contain shrink-0" />
+             {!collapsed && (
+               <div className="flex flex-col">
+                 <span className="font-semibold text-base text-sidebar-primary tracking-tight">Qais Food</span>
+                 <span className="text-[11px] font-medium text-sidebar-foreground/60">Pulses &amp; Rice</span>
+               </div>
+             )}
+          </div>
+          {isMobile && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" 
+              onClick={() => setOpenMobile(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </SidebarHeader>
 

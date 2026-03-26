@@ -37,6 +37,7 @@ import Rokar from "./pages/Rokar";
 import Reports from "./pages/Reports";
 import OnlineOrders from "./pages/OnlineOrders";
 import WasteManagement from "./pages/WasteManagement";
+import RateCard from "./pages/RateCard";
 
 const queryClient = new QueryClient();
 
@@ -118,6 +119,7 @@ const App = () => {
             <Route path="/online-orders" element={<ProtectedRoute><AppLayout><OnlineOrders /></AppLayout></ProtectedRoute>} />
             <Route path="/waste" element={<ProtectedRoute><AppLayout><WasteManagement /></AppLayout></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute><AppLayout><Reports /></AppLayout></ProtectedRoute>} />
+            <Route path="/rate-card" element={<ProtectedRoute><AppLayout><RateCard /></AppLayout></ProtectedRoute>} />
 
             {/* ── Fallback ── */}
             <Route path="/index" element={<Navigate to="/" replace />} />

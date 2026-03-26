@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { useOnlineOrderStore } from "@/stores/onlineOrderStore";
 import { useCustomerStore } from "@/stores/customerStore";
+import { useRateCardStore } from "@/stores/rateCardStore";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +50,7 @@ const CustomerPortal = () => {
   const { logout, customerId, userEmail } = useAuthStore();
   const { orders, fetchMyOrders, addOrder, cancelOrder, loading: ordersLoading } = useOnlineOrderStore();
   const { fetchLedger, ledgerEntries, editCustomerSelf } = useCustomerStore();
+  const { rates, fetchRates, loading: ratesLoading } = useRateCardStore();
 
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -96,6 +98,7 @@ const CustomerPortal = () => {
     fetchMyOrders(customerId);
     fetchLedger(customerId);
     loadCustomerProfile();
+    fetchRates();
   }, [customerId]);
 
   const loadCustomerProfile = async () => {
@@ -412,8 +415,60 @@ const CustomerPortal = () => {
         <Tabs defaultValue="orders">
           <TabsList className="w-full sm:w-auto flex flex-col sm:flex-row h-auto sm:h-10 gap-1 sm:gap-0 bg-transparent sm:bg-muted p-0 sm:p-1 items-stretch">
             <TabsTrigger value="orders" className="w-full sm:w-auto border sm:border-0 bg-muted/50 sm:bg-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:data-[state=active]:bg-background sm:data-[state=active]:text-foreground justify-start sm:justify-center">My Orders</TabsTrigger>
+            <TabsTrigger value="rates" className="w-full sm:w-auto border sm:border-0 bg-muted/50 sm:bg-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:data-[state=active]:bg-background sm:data-[state=active]:text-foreground justify-start sm:justify-center">Market Rates</TabsTrigger>
             <TabsTrigger value="ledger" className="w-full sm:w-auto border sm:border-0 bg-muted/50 sm:bg-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:data-[state=active]:bg-background sm:data-[state=active]:text-foreground justify-start sm:justify-center">My Ledger</TabsTrigger>
           </TabsList>
+
+          {/* Market Rates Tab */}
+          <TabsContent value="rates" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold">Today's Market Rates</h2>
+            </div>
+            
+            <div className="bg-muted/50 p-4 rounded-lg border text-sm text-muted-foreground mb-4">
+               <p className="font-semibold text-foreground mb-1">Pricing Note:</p>
+               <p>These rates are indicative estimates representing today's market. Final pricing may be negotiated and confirmed based on your order quantity upon processing.</p>
+            </div>
+
+            {ratesLoading ? (
+              <div className="flex items-center justify-center p-12 text-muted-foreground gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" /><span>Loading rates...</span>
+              </div>
+            ) : rates.length === 0 ? (
+              <div className="text-center py-12 border rounded-lg text-muted-foreground bg-card">
+                <p>No market rates are published currently.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Array.from(new Set(rates.map(r => r.item_name))).map(itemName => {
+                   const itemRates = rates.filter(r => r.item_name === itemName).sort((a,b) => a.grade.localeCompare(b.grade));
+                   if (itemRates.length === 0) return null;
+                   
+                   return (
+                    <div key={itemName} className="rounded-lg border bg-card overflow-hidden">
+                      <div className="bg-muted px-4 py-2 font-semibold text-sm border-b">
+                        {itemName}
+                      </div>
+                      <div className="p-3">
+                        <Table>
+                          <TableBody>
+                            {itemRates.map(rate => (
+                              <TableRow key={rate.id} className="border-b-0 hover:bg-transparent">
+                                <TableCell className="py-1.5 px-0 text-sm font-medium text-muted-foreground">Grade {rate.grade}</TableCell>
+                                <TableCell className="py-1.5 px-0 text-right text-sm font-bold text-foreground">
+                                  {rate.price_per_kg > 0 ? `${formatPKR(rate.price_per_kg)}/kg` : "Contact Us"}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
 
           {/* Orders Tab */}
           <TabsContent value="orders" className="space-y-4">
