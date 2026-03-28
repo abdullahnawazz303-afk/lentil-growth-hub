@@ -3,18 +3,49 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { MapPin, Phone, Mail, Clock, Send } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Send, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
 export default function Contact() {
-  const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+  const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Thank you! Your message has been sent. We'll get back to you soon.");
-    setForm({ name: "", email: "", phone: "", message: "" });
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          access_key: "dbe20b1b-4c59-47a2-8cfc-59edf77ac055",
+          name: form.name,
+          email: form.email,
+          message: form.message,
+          subject: "New Contact Form Submission from QAISFOODS",
+          from_name: "QAISFOODS Website",
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("Thank you! Your message has been sent. We'll get back to you soon.");
+        setForm({ name: "", email: "", message: "" });
+      } else {
+        toast.error(result.message || "Something went wrong. Please try again later.");
+      }
+    } catch (error) {
+      toast.error("Failed to send message. Please check your internet connection.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -67,27 +98,16 @@ export default function Contact() {
                       required
                     />
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={form.email}
-                        onChange={(e) => setForm({ ...form, email: e.target.value })}
-                        placeholder="your@email.com"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone</Label>
-                      <Input
-                        id="phone"
-                        value={form.phone}
-                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                        placeholder="+92 300 0000000"
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      placeholder="your@email.com"
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="message">Message</Label>
@@ -100,8 +120,12 @@ export default function Contact() {
                       required
                     />
                   </div>
-                  <Button type="submit" className="w-full h-11" size="lg">
-                    <Send className="h-4 w-4 mr-2" /> Send Message
+                  <Button type="submit" className="w-full h-11" size="lg" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending...</>
+                    ) : (
+                      <><Send className="h-4 w-4 mr-2" /> Send Message</>
+                    )}
                   </Button>
                 </form>
               </CardContent>
