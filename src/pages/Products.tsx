@@ -84,52 +84,37 @@ export default function Products() {
     <div className="min-h-screen overflow-x-hidden">
 
       {/* ── Hero Banner ───────────────────────────── */}
-      <section className="relative py-14 md:py-20 bg-primary overflow-hidden">
-        <div className="absolute inset-0">
-          <motion.div
-            className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-white/10 blur-3xl"
-            animate={{ scale: [1, 1.15, 1], x: [0, 20, 0], y: [0, -20, 0] }}
-            transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <motion.div
-            className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-white/5 blur-3xl"
-            animate={{ scale: [1, 1.2, 1], x: [0, -15, 0] }}
-            transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          />
+      <section className="relative bg-primary py-20 md:py-28 overflow-hidden">
+        {/* Decorative background elements */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-white/20 blur-3xl -translate-y-1/2 translate-x-1/3" />
+          <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full bg-white/15 blur-3xl translate-y-1/3 -translate-x-1/4" />
         </div>
-        <div className="absolute inset-0" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.04) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.04) 40px)" }} />
 
         <motion.div
-          className="relative max-w-5xl mx-auto px-4 md:px-8 text-center"
+          className="relative max-w-7xl mx-auto px-4 md:px-8 text-center"
           initial="hidden"
           animate="visible"
           variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.14 } } }}
         >
           <motion.span
             variants={fadeSlide("up")}
-            className="inline-block text-xs font-bold text-white/70 uppercase tracking-[0.25em] mb-5 px-4 py-1.5 rounded-full border border-white/30 bg-white/10"
+            className="inline-block text-xs font-semibold text-primary-foreground/80 uppercase tracking-widest mb-4 px-4 py-1.5 rounded-full border border-white/20 bg-white/10"
           >
             Product Catalogue
           </motion.span>
           <motion.h1
             variants={fadeSlide("up")}
-            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-display font-bold text-white mb-6 leading-[1.0] tracking-tight uppercase"
+            className="text-4xl md:text-5xl font-bold text-primary-foreground mb-4 tracking-tight uppercase"
           >
-            Our Premium<br />
-            <span className="text-white/60">Products</span>
+            Our Premium Products
           </motion.h1>
-          <motion.p variants={fadeSlide("up")} className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto leading-relaxed mb-10">
+          <motion.p 
+            variants={fadeSlide("up")} 
+            className="text-lg text-primary-foreground/80 max-w-xl mx-auto leading-relaxed"
+          >
             Factory-cleaned, machine-graded lentils and pulses — available for wholesale in bulk quantities across Pakistan.
           </motion.p>
-          <motion.div variants={fadeSlide("up")}>
-            <Link to="/contact">
-              <motion.div whileHover={{ scale: 1.06, y: -3 }} whileTap={{ scale: 0.96 }}>
-                <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/85 font-bold text-base px-10 shadow-xl border-0 animate-pulse-glow">
-                  Request a Quote <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </motion.div>
-            </Link>
-          </motion.div>
         </motion.div>
       </section>
 

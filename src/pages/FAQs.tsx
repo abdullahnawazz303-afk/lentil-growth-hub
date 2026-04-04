@@ -93,41 +93,35 @@ export default function FAQs() {
     <div className="min-h-screen overflow-x-hidden">
 
       {/* ── Hero ──────────────────────────────────── */}
-      <section className="relative py-14 md:py-20 bg-primary overflow-hidden">
-        <div className="absolute inset-0">
-          <motion.div
-            className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-white/10 blur-3xl"
-            animate={{ scale: [1, 1.18, 1], x: [0, 18, 0] }}
-            transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <motion.div
-            className="absolute bottom-0 left-0 w-[350px] h-[350px] rounded-full bg-white/5 blur-3xl"
-            animate={{ scale: [1, 1.25, 1] }}
-            transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          />
+      <section className="relative bg-primary py-20 md:py-28 overflow-hidden">
+        {/* Decorative background elements */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-white/20 blur-3xl -translate-y-1/2 translate-x-1/3" />
+          <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full bg-white/15 blur-3xl translate-y-1/3 -translate-x-1/4" />
         </div>
-        <div className="absolute inset-0" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.04) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.04) 40px)" }} />
 
         <motion.div
-          className="relative max-w-4xl mx-auto px-4 md:px-8 text-center"
+          className="relative max-w-7xl mx-auto px-4 md:px-8 text-center"
           initial="hidden"
           animate="visible"
           variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.14 } } }}
         >
           <motion.span
             variants={fadeSlide("up")}
-            className="inline-block text-xs font-bold text-white/70 uppercase tracking-[0.25em] mb-5 px-4 py-1.5 rounded-full border border-white/30 bg-white/10"
+            className="inline-block text-xs font-semibold text-primary-foreground/80 uppercase tracking-widest mb-4 px-4 py-1.5 rounded-full border border-white/20 bg-white/10"
           >
             Support & Information
           </motion.span>
           <motion.h1
             variants={fadeSlide("up")}
-            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-display font-bold text-white mb-6 leading-[1.0] tracking-tight uppercase"
+            className="text-4xl md:text-5xl font-bold text-primary-foreground mb-4 tracking-tight uppercase"
           >
-            Frequently<br />
-            <span className="text-white/60">Asked Questions</span>
+            Frequently Asked Questions
           </motion.h1>
-          <motion.p variants={fadeSlide("up")} className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto leading-relaxed">
+          <motion.p 
+            variants={fadeSlide("up")} 
+            className="text-lg text-primary-foreground/80 max-w-xl mx-auto leading-relaxed"
+          >
             Everything you need to know about ordering, quality, packaging, and working with Qais Foods.
           </motion.p>
         </motion.div>
