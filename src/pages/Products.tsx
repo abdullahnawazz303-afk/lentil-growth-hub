@@ -2,12 +2,12 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { ArrowRight, Package, Star, Shield, Leaf } from "lucide-react";
-import masoor from "@/assets/product-masoor-hd.jpg";
-import chana from "@/assets/product-chana-hd.jpg";
-import moong from "@/assets/product-moong-hd.jpg";
-import mash from "@/assets/product-mash-hd.jpg";
-import chickpeas from "@/assets/product-chickpeas-hd.jpg";
-import rice from "@/assets/product-rice-hd.jpg";
+import masoor from "@/assets/product-masoor.png";
+import chana from "@/assets/product-chana.png";
+import moong from "@/assets/product-moong.png";
+import mash from "@/assets/product-mash.png";
+import chickpeas from "@/assets/product-chickpeas.png";
+import rice from "@/assets/product-rice.png";
 
 const products = [
   {
@@ -84,7 +84,7 @@ export default function Products() {
     <div className="min-h-screen overflow-x-hidden">
 
       {/* ── Hero Banner ───────────────────────────── */}
-      <section className="relative py-28 md:py-44 bg-primary overflow-hidden">
+      <section className="relative py-14 md:py-20 bg-primary overflow-hidden">
         <div className="absolute inset-0">
           <motion.div
             className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-white/10 blur-3xl"
@@ -107,7 +107,7 @@ export default function Products() {
         >
           <motion.span
             variants={fadeSlide("up")}
-            className="inline-block text-xs font-bold text-gold uppercase tracking-[0.25em] mb-5 px-4 py-1.5 border border-gold/40 bg-gold/10"
+            className="inline-block text-xs font-bold text-white/70 uppercase tracking-[0.25em] mb-5 px-4 py-1.5 rounded-full border border-white/30 bg-white/10"
           >
             Product Catalogue
           </motion.span>
@@ -116,7 +116,7 @@ export default function Products() {
             className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-display font-bold text-white mb-6 leading-[1.0] tracking-tight uppercase"
           >
             Our Premium<br />
-            <span className="text-gold">Products</span>
+            <span className="text-white/60">Products</span>
           </motion.h1>
           <motion.p variants={fadeSlide("up")} className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto leading-relaxed mb-10">
             Factory-cleaned, machine-graded lentils and pulses — available for wholesale in bulk quantities across Pakistan.
@@ -124,7 +124,7 @@ export default function Products() {
           <motion.div variants={fadeSlide("up")}>
             <Link to="/contact">
               <motion.div whileHover={{ scale: 1.06, y: -3 }} whileTap={{ scale: 0.96 }}>
-                <Button size="lg" className="bg-gold text-gold-foreground hover:bg-gold/85 font-bold text-base px-10 shadow-xl border-0 animate-pulse-glow">
+                <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/85 font-bold text-base px-10 shadow-xl border-0 animate-pulse-glow">
                   Request a Quote <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </motion.div>
@@ -134,7 +134,7 @@ export default function Products() {
       </section>
 
       {/* ── Quality highlights strip ───────────────── */}
-      <section className="bg-foreground py-5 md:py-6 border-y border-white/10">
+      <section className="bg-primary/5 py-5 md:py-6 border-y border-border">
         <div className="max-w-5xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {highlights.map((h, i) => (
             <motion.div
@@ -145,15 +145,15 @@ export default function Products() {
               transition={{ delay: 0.1 + i * 0.08, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             >
               <motion.div
-                className="w-10 h-10 bg-primary/60 flex items-center justify-center shrink-0"
-                whileHover={{ scale: 1.15, backgroundColor: "hsl(var(--gold) / 0.25)" }}
+                className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"
+                whileHover={{ scale: 1.15, backgroundColor: "hsl(var(--primary) / 0.2)" }}
                 transition={{ duration: 0.2 }}
               >
-                <h.icon className="h-5 w-5 text-gold" />
+                <h.icon className="h-5 w-5 text-primary" />
               </motion.div>
               <div>
-                <div className="text-sm font-bold text-white">{h.label}</div>
-                <div className="text-xs text-white/50">{h.desc}</div>
+                <div className="text-sm font-bold text-foreground">{h.label}</div>
+                <div className="text-xs text-muted-foreground">{h.desc}</div>
               </div>
             </motion.div>
           ))}
@@ -190,11 +190,11 @@ export default function Products() {
             />
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 border border-border">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {products.map((p, i) => (
               <motion.div
                 key={p.name}
-                className="group relative border-b border-r border-border last:border-r-0 overflow-hidden bg-card"
+                className="group relative rounded-2xl overflow-hidden bg-card border border-border shadow-sm"
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-30px" }}
@@ -213,7 +213,7 @@ export default function Products() {
                   {/* Badge */}
                   {p.badge && (
                     <motion.div
-                      className="absolute top-4 left-4 px-3 py-1 bg-gold text-gold-foreground text-xs font-bold uppercase tracking-widest"
+                      className="absolute top-4 left-4 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest"
                       initial={{ opacity: 0, x: -12 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
@@ -239,20 +239,12 @@ export default function Products() {
                   <p className="text-sm text-muted-foreground leading-relaxed mb-4">{p.desc}</p>
                   <div className="flex flex-wrap gap-2">
                     {p.tags.map((tag) => (
-                      <span key={tag} className="text-xs font-semibold px-2.5 py-1 bg-primary/10 text-primary border border-primary/20 uppercase tracking-wide">
+                      <span key={tag} className="text-xs font-semibold px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 uppercase tracking-wide">
                         {tag}
                       </span>
                     ))}
                   </div>
                 </motion.div>
-
-                {/* Animated bottom border on hover */}
-                <motion.div
-                  className="absolute bottom-0 left-0 h-0.5 bg-gold"
-                  initial={{ scaleX: 0, originX: 0 }}
-                  whileHover={{ scaleX: 1 }}
-                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                />
               </motion.div>
             ))}
           </div>
@@ -260,7 +252,7 @@ export default function Products() {
       </section>
 
       {/* ── CTA ──────────────────────────────────── */}
-      <section className="bg-foreground py-20 md:py-24">
+      <section className="bg-primary/5 py-20 md:py-24">
         <motion.div
           className="max-w-4xl mx-auto px-4 text-center"
           initial="hidden"
@@ -268,26 +260,26 @@ export default function Products() {
           viewport={{ once: true, margin: "-60px" }}
           variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.13 } } }}
         >
-          <motion.span variants={fadeSlide("up")} className="text-xs font-bold text-gold uppercase tracking-[0.25em] mb-4 block">
+          <motion.span variants={fadeSlide("up")} className="text-xs font-bold text-primary uppercase tracking-[0.25em] mb-4 block">
             Bulk Orders Welcome
           </motion.span>
-          <motion.h2 variants={fadeSlide("up")} className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-5 uppercase leading-tight">
+          <motion.h2 variants={fadeSlide("up")} className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-foreground mb-5 uppercase leading-tight">
             Need Wholesale Pricing?
           </motion.h2>
-          <motion.p variants={fadeSlide("up")} className="text-white/60 text-lg mb-10 max-w-xl mx-auto">
+          <motion.p variants={fadeSlide("up")} className="text-muted-foreground text-lg mb-10 max-w-xl mx-auto">
             Get in touch for bulk pricing, custom packaging, and dedicated account management.
           </motion.p>
           <motion.div variants={fadeSlide("up")} className="flex flex-wrap justify-center gap-4">
             <Link to="/contact">
               <motion.div whileHover={{ scale: 1.06, y: -3 }} whileTap={{ scale: 0.96 }}>
-                <Button size="lg" className="bg-gold text-gold-foreground hover:bg-gold/85 font-bold text-base px-10 border-0">
+                <Button size="lg" className="rounded-full bg-primary text-primary-foreground hover:bg-primary/85 font-bold text-base px-10 border-0">
                   Contact Us <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </motion.div>
             </Link>
             <Link to="/login">
               <motion.div whileHover={{ scale: 1.06, y: -3 }} whileTap={{ scale: 0.96 }}>
-                <Button size="lg" variant="outline" className="text-base px-10 text-white border-white/30 bg-white/5 hover:bg-white/10 font-semibold">
+                <Button size="lg" variant="outline" className="rounded-full text-base px-10 text-primary border-primary/40 hover:bg-primary/10 font-semibold">
                   Customer Login
                 </Button>
               </motion.div>

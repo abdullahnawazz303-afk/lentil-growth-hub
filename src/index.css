@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,103 +6,105 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 220 20% 10%;
+    /* Pure white background */
+    --background: 0 0% 100%; 
+    --foreground: 220 10% 20%; /* Standard readable text */
 
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 10%;
+    --card-foreground: 220 10% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 10%;
+    --popover-foreground: 220 10% 20%;
 
-    /* Deep bold forest green */
-    --primary: 142 72% 17%;
+    /* Standard Green */
+    --primary: 151 75% 25%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 94%;
-    --secondary-foreground: 220 20% 10%;
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 220 10% 20%;
 
-    --muted: 210 15% 92%;
-    --muted-foreground: 215 15% 42%;
-
-    --accent: 210 20% 88%;
-    --accent-foreground: 220 20% 10%;
-
-    /* Vivid emerald accent */
-    --gold: 152 85% 38%;
+    /* Map old gold to primary green to be safe */
+    --gold: 151 75% 25%;
     --gold-foreground: 0 0% 100%;
 
-    --destructive: 0 75% 50%;
+    --muted: 210 20% 96%;
+    --muted-foreground: 220 10% 40%;
+
+    --accent: 210 20% 96%;
+    --accent-foreground: 151 75% 25%;
+
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     --warning: 35 90% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --success: 142 72% 17%;
+    --success: 151 75% 25%;
     --success-foreground: 0 0% 100%;
 
-    --border: 214 20% 78%;
-    --input: 214 20% 78%;
-    --ring: 142 72% 17%;
+    --border: 220 15% 90%;
+    --input: 220 15% 90%;
+    --ring: 151 75% 25%;
 
-    --radius: 0.2rem;
+    --radius: 0.35rem; /* Standard rounded rectangle */
 
-    --sidebar-background: 0 0% 95%;
-    --sidebar-foreground: 220 20% 10%;
-    --sidebar-primary: 142 72% 17%;
+    /* Sidebar */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 220 10% 20%;
+    --sidebar-primary: 151 75% 25%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 20% 88%;
-    --sidebar-accent-foreground: 220 20% 10%;
-    --sidebar-border: 214 20% 85%;
-    --sidebar-ring: 142 72% 17%;
+    --sidebar-accent: 210 20% 96%;
+    --sidebar-accent-foreground: 151 75% 25%;
+    --sidebar-border: 220 15% 90%;
+    --sidebar-ring: 151 75% 25%;
 
-    --chart-1: 142 72% 17%;
+    --chart-1: 151 75% 25%;
     --chart-2: 210 50% 45%;
-    --chart-3: 152 85% 38%;
+    --chart-3: 35 90% 50%;
     --chart-4: 200 60% 50%;
     --chart-5: 0 75% 50%;
   }
 
   .dark {
-    --background: 225 21% 7%;
-    --foreground: 210 20% 96%;
-
-    --card: 225 15% 11%;
-    --card-foreground: 210 20% 96%;
-
-    --popover: 225 15% 11%;
-    --popover-foreground: 210 20% 96%;
-
-    --primary: 142 60% 32%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 225 15% 15%;
-    --secondary-foreground: 210 20% 96%;
-
-    --muted: 225 15% 15%;
-    --muted-foreground: 215 15% 65%;
-
-    --accent: 225 15% 18%;
-    --accent-foreground: 210 20% 96%;
-
-    --gold: 152 75% 48%;
-    --gold-foreground: 0 0% 100%;
-
+    --background: 220 15% 10%; 
+    --foreground: 0 0% 98%;
+    
+    --card: 220 15% 12%;
+    --card-foreground: 0 0% 98%;
+    
+    --popover: 220 15% 12%;
+    --popover-foreground: 0 0% 98%;
+    
+    --primary: 151 60% 40%;
+    --primary-foreground: 220 15% 10%;
+    
+    --secondary: 220 15% 16%;
+    --secondary-foreground: 0 0% 98%;
+    
+    --gold: 151 60% 40%;
+    --gold-foreground: 220 15% 10%;
+    
+    --muted: 220 15% 16%;
+    --muted-foreground: 220 10% 65%;
+    
+    --accent: 220 15% 20%;
+    --accent-foreground: 0 0% 98%;
+    
     --destructive: 0 75% 50%;
     --destructive-foreground: 0 0% 100%;
-
-    --border: 225 15% 38%;
-    --input: 225 15% 38%;
-    --ring: 142 60% 32%;
-
-    --sidebar-background: 225 15% 12%;
-    --sidebar-foreground: 210 20% 96%;
-    --sidebar-primary: 142 60% 32%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 225 15% 18%;
-    --sidebar-accent-foreground: 210 20% 98%;
-    --sidebar-border: 225 15% 22%;
-    --sidebar-ring: 142 60% 32%;
+    
+    --border: 220 15% 20%;
+    --input: 220 15% 20%;
+    --ring: 151 60% 40%;
+    
+    --sidebar-background: 220 15% 10%; 
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 151 60% 40%;
+    --sidebar-primary-foreground: 220 15% 10%;
+    --sidebar-accent: 220 15% 20%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 220 15% 20%;
+    --sidebar-ring: 151 60% 40%;
   }
 }
 
@@ -116,124 +118,6 @@
   }
 }
 
-/* ── Custom Animations ───────────────────────────── */
-
-@keyframes line-reveal {
-  from { transform: scaleX(0); transform-origin: left; }
-  to   { transform: scaleX(1); transform-origin: left; }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-8px); }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--gold) / 0.4); }
-  50%       { box-shadow: 0 0 0 12px hsl(var(--gold) / 0); }
-}
-
-@keyframes shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position: 200% center; }
-}
-
-@keyframes slide-up {
-  from { opacity: 0; transform: translateY(24px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes scale-in {
-  from { opacity: 0; transform: scale(0.94); }
-  to   { opacity: 1; transform: scale(1); }
-}
-
-@keyframes border-pulse {
-  0%, 100% { border-color: hsl(var(--gold) / 0.3); }
-  50%       { border-color: hsl(var(--gold) / 0.9); }
-}
-
-/* Animation utility classes */
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-.animate-line-reveal {
-  animation: line-reveal 0.6s ease-out forwards;
-}
-
-.animate-slide-up {
-  animation: slide-up 0.5s ease-out forwards;
-}
-
-.animate-scale-in {
-  animation: scale-in 0.4s ease-out forwards;
-}
-
-.animate-border-pulse {
-  animation: border-pulse 2s ease-in-out infinite;
-}
-
-/* Hover card lift */
-.hover-lift {
-  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-              box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-.hover-lift:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.18);
-}
-
-/* Shimmer text */
-.shimmer-text {
-  background: linear-gradient(90deg,
-    hsl(var(--gold)) 0%,
-    hsl(var(--gold) / 0.6) 40%,
-    hsl(var(--gold)) 60%,
-    hsl(var(--gold) / 0.6) 100%
-  );
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: shimmer 3s linear infinite;
-}
-
-/* Smooth nav underline */
-.nav-link-animated {
-  position: relative;
-}
-.nav-link-animated::after {
-  content: '';
-  position: absolute;
-  bottom: -3px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: hsl(var(--gold));
-  transition: width 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-.nav-link-animated:hover::after,
-.nav-link-animated.active::after {
-  width: 100%;
-}
-
-/* Image zoom wrapper */
-.img-zoom {
-  overflow: hidden;
-}
-.img-zoom img {
-  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-.img-zoom:hover img {
-  transform: scale(1.07);
-}
-
-/* ── ERP / Admin utilities ───────────────────────── */
 @layer utilities {
   .status-overdue {
     @apply text-destructive font-semibold;
@@ -246,7 +130,8 @@
     color: hsl(var(--success));
     font-weight: 600;
   }
-
+  
+  /* Additional glassmorphism and modern utilities */
   .glass-card {
     @apply bg-card border shadow-sm;
   }
@@ -255,16 +140,6 @@
   }
   .heading-serif {
     @apply font-display tracking-tight text-foreground;
-  }
-
-  .text-gold {
-    color: hsl(var(--gold));
-  }
-  .bg-gold {
-    background-color: hsl(var(--gold));
-  }
-  .border-gold {
-    border-color: hsl(var(--gold));
   }
 }
 

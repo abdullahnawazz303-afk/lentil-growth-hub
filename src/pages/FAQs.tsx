@@ -93,7 +93,7 @@ export default function FAQs() {
     <div className="min-h-screen overflow-x-hidden">
 
       {/* ── Hero ──────────────────────────────────── */}
-      <section className="relative py-28 md:py-44 bg-primary overflow-hidden">
+      <section className="relative py-14 md:py-20 bg-primary overflow-hidden">
         <div className="absolute inset-0">
           <motion.div
             className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-white/10 blur-3xl"
@@ -116,7 +116,7 @@ export default function FAQs() {
         >
           <motion.span
             variants={fadeSlide("up")}
-            className="inline-block text-xs font-bold text-gold uppercase tracking-[0.25em] mb-5 px-4 py-1.5 border border-gold/40 bg-gold/10"
+            className="inline-block text-xs font-bold text-white/70 uppercase tracking-[0.25em] mb-5 px-4 py-1.5 rounded-full border border-white/30 bg-white/10"
           >
             Support & Information
           </motion.span>
@@ -125,7 +125,7 @@ export default function FAQs() {
             className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-display font-bold text-white mb-6 leading-[1.0] tracking-tight uppercase"
           >
             Frequently<br />
-            <span className="text-gold">Asked Questions</span>
+            <span className="text-white/60">Asked Questions</span>
           </motion.h1>
           <motion.p variants={fadeSlide("up")} className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto leading-relaxed">
             Everything you need to know about ordering, quality, packaging, and working with Qais Foods.
@@ -148,11 +148,11 @@ export default function FAQs() {
                 {/* Category Header */}
                 <div className="flex items-center gap-4 mb-6">
                   <motion.div
-                    className="w-10 h-10 bg-primary flex items-center justify-center shrink-0"
+                    className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"
                     whileHover={{ scale: 1.12, rotate: 5 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <HelpCircle className="h-5 w-5 text-primary-foreground" />
+                    <HelpCircle className="h-5 w-5 text-primary" />
                   </motion.div>
                   <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground uppercase tracking-wide">
                     {cat.category}
@@ -178,7 +178,7 @@ export default function FAQs() {
                     >
                       <AccordionItem
                         value={`cat-${ci}-item-${fi}`}
-                        className="border border-border bg-card px-6 transition-colors duration-200 data-[state=open]:border-gold data-[state=open]:bg-gold/5"
+                        className="border border-border bg-card rounded-xl px-6 transition-colors duration-200 data-[state=open]:border-primary data-[state=open]:bg-primary/5"
                       >
                         <AccordionTrigger className="text-left font-display font-bold text-lg md:text-xl py-5 hover:text-primary transition-colors uppercase tracking-wide no-underline hover:no-underline">
                           {faq.question}
@@ -197,7 +197,7 @@ export default function FAQs() {
       </section>
 
       {/* ── Still have questions CTA ──────────────── */}
-      <section className="bg-foreground py-20 md:py-24">
+      <section className="bg-primary/5 py-20 md:py-24">
         <motion.div
           className="max-w-3xl mx-auto px-4 text-center"
           initial="hidden"
@@ -207,29 +207,29 @@ export default function FAQs() {
         >
           <motion.div
             variants={fadeSlide("up")}
-            className="w-16 h-16 bg-primary/60 flex items-center justify-center mx-auto mb-6"
+            className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6"
             animate={{ y: [0, -6, 0] }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           >
-            <MessageCircle className="h-8 w-8 text-gold" />
+            <MessageCircle className="h-8 w-8 text-primary" />
           </motion.div>
-          <motion.h2 variants={fadeSlide("up")} className="text-4xl md:text-5xl font-display font-bold text-white mb-4 uppercase">
+          <motion.h2 variants={fadeSlide("up")} className="text-4xl md:text-5xl font-display font-bold text-foreground mb-4 uppercase">
             Still Have Questions?
           </motion.h2>
-          <motion.p variants={fadeSlide("up")} className="text-white/60 text-lg mb-10 max-w-md mx-auto">
+          <motion.p variants={fadeSlide("up")} className="text-muted-foreground text-lg mb-10 max-w-md mx-auto">
             Our team is ready to help. Get in touch and we'll respond within one business day.
           </motion.p>
           <motion.div variants={fadeSlide("up")} className="flex flex-wrap justify-center gap-4">
             <Link to="/contact">
               <motion.div whileHover={{ scale: 1.06, y: -3 }} whileTap={{ scale: 0.96 }}>
-                <Button size="lg" className="bg-gold text-gold-foreground hover:bg-gold/85 font-bold text-base px-10 border-0">
+                <Button size="lg" className="rounded-full bg-primary text-primary-foreground hover:bg-primary/85 font-bold text-base px-10 border-0">
                   Contact Us <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </motion.div>
             </Link>
             <Link to="/products">
               <motion.div whileHover={{ scale: 1.06, y: -3 }} whileTap={{ scale: 0.96 }}>
-                <Button size="lg" variant="outline" className="text-base px-10 text-white border-white/30 bg-white/5 hover:bg-white/10 font-semibold">
+                <Button size="lg" variant="outline" className="rounded-full text-base px-10 text-primary border-primary/40 hover:bg-primary/10 font-semibold">
                   View Products
                 </Button>
               </motion.div>

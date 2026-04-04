@@ -43,7 +43,7 @@ export default function About() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <span className="inline-block text-xs font-bold text-gold uppercase tracking-[0.25em] mb-5 px-4 py-1.5 border border-gold/40 bg-gold/10">
+          <span className="inline-block text-xs font-bold text-primary uppercase tracking-[0.25em] mb-5 px-4 py-1.5 border border-primary/40 bg-primary/10">
             Since 2010
           </span>
           <h1 className="text-5xl md:text-6xl lg:text-8xl font-display font-bold text-white mb-5 tracking-tight uppercase leading-[1.0]">
@@ -56,8 +56,8 @@ export default function About() {
       </section>
 
       {/* Stats */}
-      <section className="bg-foreground py-8 md:py-10 border-b border-white/10">
-        <div className="max-w-5xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
+      <section className="bg-primary/5 py-8 md:py-10 border-b border-border">
+        <div className="max-w-5xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
           {stats.map((s, i) => (
             <motion.div
               key={s.label}
@@ -67,8 +67,8 @@ export default function About() {
               viewport={{ once: true }}
               transition={{ delay: i * 0.1, duration: 0.4 }}
             >
-              <div className="text-3xl md:text-5xl font-display font-bold text-gold">{s.value}</div>
-              <div className="text-xs md:text-sm text-white/50 mt-1 font-medium uppercase tracking-widest">{s.label}</div>
+              <div className="text-3xl md:text-5xl font-display font-bold text-primary">{s.value}</div>
+              <div className="text-xs md:text-sm text-muted-foreground mt-1 font-medium uppercase tracking-widest">{s.label}</div>
             </motion.div>
           ))}
         </div>
@@ -88,7 +88,7 @@ export default function About() {
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-foreground mt-2 uppercase leading-tight">What Drives Us</h2>
             <div className="mt-4 h-1 w-20 bg-primary" />
           </motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-border">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {values.map((v, i) => (
               <motion.div
                 key={v.title}
@@ -98,10 +98,10 @@ export default function About() {
                 custom={i}
                 variants={fadeUp}
               >
-                <Card className="h-full border-0 border-b border-r border-border shadow-none hover:bg-secondary/20 transition-colors">
+                <Card className="h-full rounded-2xl border border-border shadow-sm hover:bg-secondary/20 transition-colors">
                   <CardContent className="p-8 flex gap-5">
-                    <div className="w-14 h-14 bg-primary flex items-center justify-center shrink-0">
-                      <v.icon className="h-7 w-7 text-primary-foreground" />
+                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <v.icon className="h-7 w-7 text-primary" />
                     </div>
                     <div>
                       <h3 className="font-display font-bold text-xl text-foreground mb-2 uppercase tracking-wide">{v.title}</h3>
@@ -130,10 +130,10 @@ export default function About() {
         >
           <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-8">
             <div>
-              <span className="text-xs font-bold text-gold uppercase tracking-[0.2em] mb-3 block">Questions Answered</span>
+              <span className="text-xs font-bold text-white/70 uppercase tracking-[0.2em] mb-3 block">Questions Answered</span>
               <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white uppercase leading-tight">
                 Have Questions?<br />
-                <span className="text-gold">See Our FAQs</span>
+                <span className="text-primary">See Our FAQs</span>
               </h2>
               <p className="text-white/60 mt-5 max-w-md leading-relaxed">
                 Ordering, packaging, sourcing, quality, delivery — everything answered on our FAQ page.
@@ -141,7 +141,7 @@ export default function About() {
             </div>
             <div className="shrink-0">
               <Link to="/faqs">
-                <Button size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-10 h-14 border-0 shadow-xl">
+                <Button size="lg" className="rounded-full bg-white text-primary hover:bg-white/90 font-bold text-base px-10 h-12 border-0 shadow-xl">
                   View FAQs <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
