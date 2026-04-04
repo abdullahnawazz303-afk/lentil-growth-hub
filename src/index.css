@@ -28,9 +28,9 @@
     --accent: 210 20% 88%;
     --accent-foreground: 220 20% 10%;
 
-    /* Gold accent */
-    --gold: 38 92% 50%;
-    --gold-foreground: 220 20% 10%;
+    /* Vivid emerald accent */
+    --gold: 152 85% 38%;
+    --gold-foreground: 0 0% 100%;
 
     --destructive: 0 75% 50%;
     --destructive-foreground: 0 0% 100%;
@@ -58,7 +58,7 @@
 
     --chart-1: 142 72% 17%;
     --chart-2: 210 50% 45%;
-    --chart-3: 38 92% 50%;
+    --chart-3: 152 85% 38%;
     --chart-4: 200 60% 50%;
     --chart-5: 0 75% 50%;
   }
@@ -85,8 +85,8 @@
     --accent: 225 15% 18%;
     --accent-foreground: 210 20% 96%;
 
-    --gold: 38 85% 55%;
-    --gold-foreground: 220 20% 10%;
+    --gold: 152 75% 48%;
+    --gold-foreground: 0 0% 100%;
 
     --destructive: 0 75% 50%;
     --destructive-foreground: 0 0% 100%;
@@ -116,6 +116,124 @@
   }
 }
 
+/* ── Custom Animations ───────────────────────────── */
+
+@keyframes line-reveal {
+  from { transform: scaleX(0); transform-origin: left; }
+  to   { transform: scaleX(1); transform-origin: left; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--gold) / 0.4); }
+  50%       { box-shadow: 0 0 0 12px hsl(var(--gold) / 0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes border-pulse {
+  0%, 100% { border-color: hsl(var(--gold) / 0.3); }
+  50%       { border-color: hsl(var(--gold) / 0.9); }
+}
+
+/* Animation utility classes */
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-line-reveal {
+  animation: line-reveal 0.6s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.4s ease-out forwards;
+}
+
+.animate-border-pulse {
+  animation: border-pulse 2s ease-in-out infinite;
+}
+
+/* Hover card lift */
+.hover-lift {
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.hover-lift:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.18);
+}
+
+/* Shimmer text */
+.shimmer-text {
+  background: linear-gradient(90deg,
+    hsl(var(--gold)) 0%,
+    hsl(var(--gold) / 0.6) 40%,
+    hsl(var(--gold)) 60%,
+    hsl(var(--gold) / 0.6) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 3s linear infinite;
+}
+
+/* Smooth nav underline */
+.nav-link-animated {
+  position: relative;
+}
+.nav-link-animated::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: hsl(var(--gold));
+  transition: width 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.nav-link-animated:hover::after,
+.nav-link-animated.active::after {
+  width: 100%;
+}
+
+/* Image zoom wrapper */
+.img-zoom {
+  overflow: hidden;
+}
+.img-zoom img {
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.img-zoom:hover img {
+  transform: scale(1.07);
+}
+
+/* ── ERP / Admin utilities ───────────────────────── */
 @layer utilities {
   .status-overdue {
     @apply text-destructive font-semibold;

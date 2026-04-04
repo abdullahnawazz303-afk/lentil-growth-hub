@@ -80,74 +80,114 @@ const faqCategories = [
   },
 ];
 
+const fadeSlide = (dir: "up" | "left" = "up", delay = 0) => ({
+  hidden: { opacity: 0, y: dir === "up" ? 36 : 0, x: dir === "left" ? -20 : 0 },
+  visible: {
+    opacity: 1, y: 0, x: 0,
+    transition: { duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] },
+  },
+});
+
 export default function FAQs() {
   return (
     <div className="min-h-screen overflow-x-hidden">
 
-      {/* Hero */}
-      <section className="relative py-28 md:py-40 bg-primary overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-white blur-3xl -translate-y-1/2 translate-x-1/3" />
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-white blur-3xl translate-y-1/2" />
+      {/* ── Hero ──────────────────────────────────── */}
+      <section className="relative py-28 md:py-44 bg-primary overflow-hidden">
+        <div className="absolute inset-0">
+          <motion.div
+            className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-white/10 blur-3xl"
+            animate={{ scale: [1, 1.18, 1], x: [0, 18, 0] }}
+            transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            className="absolute bottom-0 left-0 w-[350px] h-[350px] rounded-full bg-white/5 blur-3xl"
+            animate={{ scale: [1, 1.25, 1] }}
+            transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          />
         </div>
         <div className="absolute inset-0" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.04) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.04) 40px)" }} />
+
         <motion.div
           className="relative max-w-4xl mx-auto px-4 md:px-8 text-center"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          initial="hidden"
+          animate="visible"
+          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.14 } } }}
         >
-          <span className="inline-block text-xs font-bold text-gold uppercase tracking-[0.25em] mb-5 px-4 py-1.5 border border-gold/40 bg-gold/10">
+          <motion.span
+            variants={fadeSlide("up")}
+            className="inline-block text-xs font-bold text-gold uppercase tracking-[0.25em] mb-5 px-4 py-1.5 border border-gold/40 bg-gold/10"
+          >
             Support & Information
-          </span>
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-display font-bold text-white mb-6 leading-[1.0] tracking-tight uppercase">
+          </motion.span>
+          <motion.h1
+            variants={fadeSlide("up")}
+            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-display font-bold text-white mb-6 leading-[1.0] tracking-tight uppercase"
+          >
             Frequently<br />
             <span className="text-gold">Asked Questions</span>
-          </h1>
-          <p className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto leading-relaxed">
+          </motion.h1>
+          <motion.p variants={fadeSlide("up")} className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto leading-relaxed">
             Everything you need to know about ordering, quality, packaging, and working with Qais Foods.
-          </p>
+          </motion.p>
         </motion.div>
       </section>
 
-      {/* FAQ Categories */}
+      {/* ── FAQ Categories ────────────────────────── */}
       <section className="py-16 md:py-24 bg-background">
         <div className="max-w-4xl mx-auto px-4 md:px-8">
-          <div className="space-y-12">
+          <div className="space-y-14">
             {faqCategories.map((cat, ci) => (
               <motion.div
                 key={cat.category}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: ci * 0.1, duration: 0.5 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ delay: ci * 0.08, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               >
                 {/* Category Header */}
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="w-10 h-10 bg-primary flex items-center justify-center shrink-0">
+                  <motion.div
+                    className="w-10 h-10 bg-primary flex items-center justify-center shrink-0"
+                    whileHover={{ scale: 1.12, rotate: 5 }}
+                    transition={{ duration: 0.2 }}
+                  >
                     <HelpCircle className="h-5 w-5 text-primary-foreground" />
-                  </div>
+                  </motion.div>
                   <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground uppercase tracking-wide">
                     {cat.category}
                   </h2>
-                  <div className="flex-1 h-px bg-border" />
+                  <motion.div
+                    className="flex-1 h-px bg-border"
+                    initial={{ scaleX: 0, originX: 0 }}
+                    whileInView={{ scaleX: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                  />
                 </div>
 
                 {/* Accordion */}
                 <Accordion type="single" collapsible className="w-full space-y-2">
                   {cat.faqs.map((faq, fi) => (
-                    <AccordionItem
+                    <motion.div
                       key={fi}
-                      value={`cat-${ci}-item-${fi}`}
-                      className="border border-border bg-card px-6 data-[state=open]:border-primary"
+                      initial={{ opacity: 0, x: -16 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true, margin: "-20px" }}
+                      transition={{ delay: 0.1 + fi * 0.07, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                     >
-                      <AccordionTrigger className="text-left font-display font-bold text-lg md:text-xl py-5 hover:text-primary transition-colors uppercase tracking-wide no-underline hover:no-underline">
-                        {faq.question}
-                      </AccordionTrigger>
-                      <AccordionContent className="text-muted-foreground leading-relaxed text-base pb-5">
-                        {faq.answer}
-                      </AccordionContent>
-                    </AccordionItem>
+                      <AccordionItem
+                        value={`cat-${ci}-item-${fi}`}
+                        className="border border-border bg-card px-6 transition-colors duration-200 data-[state=open]:border-gold data-[state=open]:bg-gold/5"
+                      >
+                        <AccordionTrigger className="text-left font-display font-bold text-lg md:text-xl py-5 hover:text-primary transition-colors uppercase tracking-wide no-underline hover:no-underline">
+                          {faq.question}
+                        </AccordionTrigger>
+                        <AccordionContent className="text-muted-foreground leading-relaxed text-base pb-5">
+                          {faq.answer}
+                        </AccordionContent>
+                      </AccordionItem>
+                    </motion.div>
                   ))}
                 </Accordion>
               </motion.div>
@@ -156,36 +196,45 @@ export default function FAQs() {
         </div>
       </section>
 
-      {/* Still have questions CTA */}
+      {/* ── Still have questions CTA ──────────────── */}
       <section className="bg-foreground py-20 md:py-24">
         <motion.div
           className="max-w-3xl mx-auto px-4 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-60px" }}
+          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.13 } } }}
         >
-          <div className="w-16 h-16 bg-primary/60 flex items-center justify-center mx-auto mb-6">
+          <motion.div
+            variants={fadeSlide("up")}
+            className="w-16 h-16 bg-primary/60 flex items-center justify-center mx-auto mb-6"
+            animate={{ y: [0, -6, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          >
             <MessageCircle className="h-8 w-8 text-gold" />
-          </div>
-          <h2 className="text-4xl md:text-5xl font-display font-bold text-white mb-4 uppercase">
+          </motion.div>
+          <motion.h2 variants={fadeSlide("up")} className="text-4xl md:text-5xl font-display font-bold text-white mb-4 uppercase">
             Still Have Questions?
-          </h2>
-          <p className="text-white/60 text-lg mb-10 max-w-md mx-auto">
+          </motion.h2>
+          <motion.p variants={fadeSlide("up")} className="text-white/60 text-lg mb-10 max-w-md mx-auto">
             Our team is ready to help. Get in touch and we'll respond within one business day.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
+          </motion.p>
+          <motion.div variants={fadeSlide("up")} className="flex flex-wrap justify-center gap-4">
             <Link to="/contact">
-              <Button size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-10 border-0">
-                Contact Us <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <motion.div whileHover={{ scale: 1.06, y: -3 }} whileTap={{ scale: 0.96 }}>
+                <Button size="lg" className="bg-gold text-gold-foreground hover:bg-gold/85 font-bold text-base px-10 border-0">
+                  Contact Us <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </motion.div>
             </Link>
             <Link to="/products">
-              <Button size="lg" variant="outline" className="text-base px-10 text-white border-white/30 bg-white/5 hover:bg-white/10 font-semibold">
-                View Products
-              </Button>
+              <motion.div whileHover={{ scale: 1.06, y: -3 }} whileTap={{ scale: 0.96 }}>
+                <Button size="lg" variant="outline" className="text-base px-10 text-white border-white/30 bg-white/5 hover:bg-white/10 font-semibold">
+                  View Products
+                </Button>
+              </motion.div>
             </Link>
-          </div>
+          </motion.div>
         </motion.div>
       </section>
     </div>

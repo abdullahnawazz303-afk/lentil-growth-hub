@@ -67,64 +67,90 @@ const highlights = [
   { icon: Leaf, label: "Farm Fresh", desc: "Sourced directly from trusted farms" },
 ];
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 40 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.08, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] as const },
-  }),
-};
+const fadeSlide = (dir: "up" | "left" | "right" = "up", delay = 0) => ({
+  hidden: {
+    opacity: 0,
+    y: dir === "up" ? 36 : 0,
+    x: dir === "left" ? -36 : dir === "right" ? 36 : 0,
+  },
+  visible: {
+    opacity: 1, y: 0, x: 0,
+    transition: { duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] },
+  },
+});
 
 export default function Products() {
   return (
     <div className="min-h-screen overflow-x-hidden">
 
-      {/* Hero Banner */}
-      <section className="relative py-28 md:py-40 bg-primary overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-white blur-3xl -translate-y-1/2 translate-x-1/3" />
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-white blur-3xl translate-y-1/2 -translate-x-1/4" />
+      {/* ── Hero Banner ───────────────────────────── */}
+      <section className="relative py-28 md:py-44 bg-primary overflow-hidden">
+        <div className="absolute inset-0">
+          <motion.div
+            className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-white/10 blur-3xl"
+            animate={{ scale: [1, 1.15, 1], x: [0, 20, 0], y: [0, -20, 0] }}
+            transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-white/5 blur-3xl"
+            animate={{ scale: [1, 1.2, 1], x: [0, -15, 0] }}
+            transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          />
         </div>
         <div className="absolute inset-0" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.04) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.04) 40px)" }} />
+
         <motion.div
           className="relative max-w-5xl mx-auto px-4 md:px-8 text-center"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          initial="hidden"
+          animate="visible"
+          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.14 } } }}
         >
-          <span className="inline-block text-xs font-bold text-gold uppercase tracking-[0.25em] mb-5 px-4 py-1.5 border border-gold/40 bg-gold/10">
+          <motion.span
+            variants={fadeSlide("up")}
+            className="inline-block text-xs font-bold text-gold uppercase tracking-[0.25em] mb-5 px-4 py-1.5 border border-gold/40 bg-gold/10"
+          >
             Product Catalogue
-          </span>
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-display font-bold text-white mb-6 leading-[1.0] tracking-tight uppercase">
+          </motion.span>
+          <motion.h1
+            variants={fadeSlide("up")}
+            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-display font-bold text-white mb-6 leading-[1.0] tracking-tight uppercase"
+          >
             Our Premium<br />
             <span className="text-gold">Products</span>
-          </h1>
-          <p className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto leading-relaxed mb-10">
+          </motion.h1>
+          <motion.p variants={fadeSlide("up")} className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto leading-relaxed mb-10">
             Factory-cleaned, machine-graded lentils and pulses — available for wholesale in bulk quantities across Pakistan.
-          </p>
-          <Link to="/contact">
-            <Button size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-10 h-13 shadow-xl border-0">
-              Request a Quote <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
+          </motion.p>
+          <motion.div variants={fadeSlide("up")}>
+            <Link to="/contact">
+              <motion.div whileHover={{ scale: 1.06, y: -3 }} whileTap={{ scale: 0.96 }}>
+                <Button size="lg" className="bg-gold text-gold-foreground hover:bg-gold/85 font-bold text-base px-10 shadow-xl border-0 animate-pulse-glow">
+                  Request a Quote <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </motion.div>
+            </Link>
+          </motion.div>
         </motion.div>
       </section>
 
-      {/* Quality highlights strip */}
+      {/* ── Quality highlights strip ───────────────── */}
       <section className="bg-foreground py-5 md:py-6 border-y border-white/10">
         <div className="max-w-5xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {highlights.map((h, i) => (
             <motion.div
               key={h.label}
               className="flex items-center gap-3"
-              initial={{ opacity: 0, x: -10 }}
+              initial={{ opacity: 0, x: -16 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.1, duration: 0.4 }}
+              transition={{ delay: 0.1 + i * 0.08, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div className="w-10 h-10 rounded-sm bg-primary/60 flex items-center justify-center shrink-0">
+              <motion.div
+                className="w-10 h-10 bg-primary/60 flex items-center justify-center shrink-0"
+                whileHover={{ scale: 1.15, backgroundColor: "hsl(var(--gold) / 0.25)" }}
+                transition={{ duration: 0.2 }}
+              >
                 <h.icon className="h-5 w-5 text-gold" />
-              </div>
+              </motion.div>
               <div>
                 <div className="text-sm font-bold text-white">{h.label}</div>
                 <div className="text-xs text-white/50">{h.desc}</div>
@@ -134,17 +160,17 @@ export default function Products() {
         </div>
       </section>
 
-      {/* Product Grid */}
+      {/* ── Product Grid ──────────────────────────── */}
       <section className="py-20 md:py-28 bg-background">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <motion.div
-            className="mb-14 md:mb-18"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
+            className="mb-14"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-60px" }}
+            variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.12 } } }}
           >
-            <div className="flex items-end justify-between gap-4 flex-wrap">
+            <motion.div variants={fadeSlide("up")} className="flex items-end justify-between gap-4 flex-wrap">
               <div>
                 <span className="text-xs font-bold text-primary uppercase tracking-[0.2em]">What We Offer</span>
                 <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-foreground mt-2 uppercase leading-tight">
@@ -154,45 +180,62 @@ export default function Products() {
               <p className="text-muted-foreground max-w-sm text-sm leading-relaxed">
                 All products available in multiple pack sizes from 500g retail to 50kg bulk sacks.
               </p>
-            </div>
-            <div className="mt-5 h-1 w-24 bg-primary" />
+            </motion.div>
+            <motion.div
+              className="mt-5 h-1 w-24 bg-primary"
+              initial={{ scaleX: 0, originX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            />
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 border border-border">
             {products.map((p, i) => (
               <motion.div
                 key={p.name}
-                className="group relative border-b border-r border-border last:border-r-0 overflow-hidden bg-card hover:bg-secondary/20 transition-colors duration-300"
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                custom={i}
-                variants={fadeUp}
+                className="group relative border-b border-r border-border last:border-r-0 overflow-hidden bg-card"
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-30px" }}
+                transition={{ delay: (i % 3) * 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               >
                 {/* Image */}
-                <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+                <div className="relative aspect-[4/3] overflow-hidden bg-muted img-zoom">
                   <img
                     src={p.image}
                     alt={p.name}
                     loading="lazy"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-foreground/65 via-foreground/10 to-transparent" />
+
+                  {/* Badge */}
                   {p.badge && (
-                    <div className="absolute top-4 left-4 px-3 py-1 bg-gold text-gold-foreground text-xs font-bold uppercase tracking-widest">
+                    <motion.div
+                      className="absolute top-4 left-4 px-3 py-1 bg-gold text-gold-foreground text-xs font-bold uppercase tracking-widest"
+                      initial={{ opacity: 0, x: -12 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.3 + i * 0.06, duration: 0.4 }}
+                    >
                       {p.badge}
-                    </div>
+                    </motion.div>
                   )}
-                  <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
-                    <div>
-                      <h3 className="text-xl md:text-2xl font-display font-bold text-white uppercase leading-tight">{p.name}</h3>
-                      <span className="text-white/60 text-sm font-medium">{p.urdu}</span>
-                    </div>
+
+                  {/* Name overlay */}
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <h3 className="text-xl md:text-2xl font-display font-bold text-white uppercase leading-tight">{p.name}</h3>
+                    <span className="text-white/60 text-sm">{p.urdu}</span>
                   </div>
                 </div>
 
                 {/* Content */}
-                <div className="p-6">
+                <motion.div
+                  className="p-6"
+                  whileHover={{ backgroundColor: "hsl(var(--secondary) / 0.35)" }}
+                  transition={{ duration: 0.25 }}
+                >
                   <p className="text-sm text-muted-foreground leading-relaxed mb-4">{p.desc}</p>
                   <div className="flex flex-wrap gap-2">
                     {p.tags.map((tag) => (
@@ -201,41 +244,55 @@ export default function Products() {
                       </span>
                     ))}
                   </div>
-                </div>
+                </motion.div>
+
+                {/* Animated bottom border on hover */}
+                <motion.div
+                  className="absolute bottom-0 left-0 h-0.5 bg-gold"
+                  initial={{ scaleX: 0, originX: 0 }}
+                  whileHover={{ scaleX: 1 }}
+                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                />
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
+      {/* ── CTA ──────────────────────────────────── */}
       <section className="bg-foreground py-20 md:py-24">
         <motion.div
           className="max-w-4xl mx-auto px-4 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-60px" }}
+          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.13 } } }}
         >
-          <span className="text-xs font-bold text-gold uppercase tracking-[0.25em] mb-4 block">Bulk Orders Welcome</span>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-5 uppercase leading-tight">
+          <motion.span variants={fadeSlide("up")} className="text-xs font-bold text-gold uppercase tracking-[0.25em] mb-4 block">
+            Bulk Orders Welcome
+          </motion.span>
+          <motion.h2 variants={fadeSlide("up")} className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-5 uppercase leading-tight">
             Need Wholesale Pricing?
-          </h2>
-          <p className="text-white/60 text-lg mb-10 max-w-xl mx-auto">
+          </motion.h2>
+          <motion.p variants={fadeSlide("up")} className="text-white/60 text-lg mb-10 max-w-xl mx-auto">
             Get in touch for bulk pricing, custom packaging, and dedicated account management.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
+          </motion.p>
+          <motion.div variants={fadeSlide("up")} className="flex flex-wrap justify-center gap-4">
             <Link to="/contact">
-              <Button size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-10 h-13 border-0">
-                Contact Us <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <motion.div whileHover={{ scale: 1.06, y: -3 }} whileTap={{ scale: 0.96 }}>
+                <Button size="lg" className="bg-gold text-gold-foreground hover:bg-gold/85 font-bold text-base px-10 border-0">
+                  Contact Us <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </motion.div>
             </Link>
             <Link to="/login">
-              <Button size="lg" variant="outline" className="text-base px-10 h-13 text-white border-white/30 bg-white/5 hover:bg-white/10 font-semibold">
-                Customer Login
-              </Button>
+              <motion.div whileHover={{ scale: 1.06, y: -3 }} whileTap={{ scale: 0.96 }}>
+                <Button size="lg" variant="outline" className="text-base px-10 text-white border-white/30 bg-white/5 hover:bg-white/10 font-semibold">
+                  Customer Login
+                </Button>
+              </motion.div>
             </Link>
-          </div>
+          </motion.div>
         </motion.div>
       </section>
     </div>
