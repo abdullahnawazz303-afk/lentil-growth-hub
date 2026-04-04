@@ -1,25 +1,9 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, Truck, Award, Leaf, ArrowRight, ChevronRight } from "lucide-react";
+import { CheckCircle, Truck, Award, Leaf, ArrowRight, ChevronRight, Package } from "lucide-react";
 import qfLogo from "@/assets/qf-logo.png";
 import { motion } from "framer-motion";
 import heroImg from "@/assets/hero_lentils_new.png";
-import masoor from "@/assets/product-masoor.jpg";
-import chana from "@/assets/product-chana.jpg";
-import moong from "@/assets/product-moong.jpg";
-import mash from "@/assets/product-mash.jpg";
-import chickpeas from "@/assets/product-chickpeas.jpg";
-import rice from "@/assets/product-rice.jpg";
-
-const products = [
-  { name: "Dal Masoor", image: masoor, desc: "Premium red lentils, cleaned and graded for exceptional purity." },
-  { name: "Dal Chana", image: chana, desc: "Split chickpea lentils with a rich golden hue and consistent quality." },
-  { name: "Dal Moong", image: moong, desc: "Green gram lentils, nutrient-dense and carefully sorted." },
-  { name: "Dal Mash", image: mash, desc: "Black lentils (Urad Dal), high in protein and flavor." },
-  { name: "Chickpeas", image: chickpeas, desc: "Whole kabuli chana, export-grade quality and uniform sizing." },
-  { name: "Rice", image: rice, desc: "Fine-grain basmati rice, aromatic with extra-long grains." },
-];
 
 const features = [
   { icon: CheckCircle, title: "Quality Graded", desc: "Every batch meticulously sorted into A+, A, B, C grades for consistency." },
@@ -51,8 +35,9 @@ const stagger = {
 export default function Home() {
   return (
     <div className="min-h-screen overflow-x-hidden">
+
       {/* Hero */}
-      <section className="relative min-h-[85vh] flex items-center">
+      <section className="relative min-h-[90vh] flex items-center">
         <div className="absolute inset-0">
           <img
             src={heroImg}
@@ -60,8 +45,9 @@ export default function Home() {
             className="w-full h-full object-cover"
             loading="eager"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-foreground/85 via-foreground/60 to-foreground/30" />
+          <div className="absolute inset-0 bg-gradient-to-r from-foreground/92 via-foreground/70 to-foreground/25" />
         </div>
+
         <div className="relative max-w-7xl mx-auto px-4 md:px-8 w-full">
           <motion.div
             className="max-w-2xl"
@@ -69,36 +55,36 @@ export default function Home() {
             animate="visible"
             variants={stagger}
           >
-            <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm mb-4">
-              <Leaf className="h-3.5 w-3.5 text-primary-foreground" />
-              <span className="text-xs font-medium tracking-wide text-white/90 uppercase">Established Quality Since 2010</span>
+            <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 px-4 py-1.5 border border-gold/50 bg-gold/10 mb-6">
+              <Leaf className="h-3.5 w-3.5 text-gold" />
+              <span className="text-xs font-bold tracking-[0.2em] text-gold uppercase">Established Quality Since 2010</span>
             </motion.div>
-            <motion.div variants={fadeUp} custom={0.5} className="mb-3">
-              <img src={qfLogo} alt="QF Logo" className="w-24 h-24 md:w-32 md:h-32 object-contain" />
+            <motion.div variants={fadeUp} custom={0.5} className="mb-4">
+              <img src={qfLogo} alt="QF Logo" className="w-24 h-24 md:w-28 md:h-28 object-contain" />
             </motion.div>
-            <motion.h1 variants={fadeUp} custom={1} className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-semibold text-white mb-6 leading-[1.1] tracking-tight">
+            <motion.h1 variants={fadeUp} custom={1} className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-display font-bold text-white mb-6 leading-[1.0] tracking-tight uppercase">
               Pakistan's Trusted
               <br />
-              <span className="text-primary italic">Lentil &amp; Pulse</span>
+              <span className="text-gold">Lentil &amp; Pulse</span>
               <br />
               Factory
             </motion.h1>
-            <motion.p variants={fadeUp} custom={2} className="text-base sm:text-lg md:text-xl text-white/75 mb-10 leading-relaxed max-w-lg">
+            <motion.p variants={fadeUp} custom={2} className="text-base sm:text-lg md:text-xl text-white/70 mb-10 leading-relaxed max-w-lg">
               Factory-cleaned, graded, and packaged — delivering unmatched quality to wholesale markets across the nation.
             </motion.p>
             <motion.div variants={fadeUp} custom={3} className="flex flex-wrap gap-4">
-              <Link to="/contact">
-                <Button size="lg" className="text-base px-8 h-12 shadow-lg">
-                  Get a Quote <ArrowRight className="ml-2 h-4 w-4" />
+              <Link to="/products">
+                <Button size="lg" className="text-base px-8 h-13 bg-gold text-gold-foreground hover:bg-gold/90 font-bold border-0 shadow-lg">
+                  View Products <Package className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Link to="/about">
+              <Link to="/contact">
                 <Button
                   size="lg"
                   variant="outline"
-                  className="text-base px-8 h-12 bg-white/5 text-white border-white/25 hover:bg-white/15 backdrop-blur-sm"
+                  className="text-base px-8 h-13 bg-white/5 text-white border-white/30 hover:bg-white/15 backdrop-blur-sm font-semibold"
                 >
-                  Learn More
+                  Get a Quote <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             </motion.div>
@@ -111,26 +97,26 @@ export default function Home() {
           animate={{ y: [0, 8, 0] }}
           transition={{ repeat: Infinity, duration: 2 }}
         >
-          <div className="w-6 h-10 rounded-full border-2 border-white/30 flex justify-center pt-2">
-            <div className="w-1 h-2 rounded-full bg-white/60" />
+          <div className="w-6 h-10 border-2 border-white/30 flex justify-center pt-2">
+            <div className="w-1 h-2 bg-white/60" />
           </div>
         </motion.div>
       </section>
 
       {/* Stats bar */}
-      <section className="bg-primary py-8 md:py-10">
-        <div className="max-w-6xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+      <section className="bg-foreground py-8 md:py-10 border-b border-white/10">
+        <div className="max-w-6xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
           {stats.map((s, i) => (
             <motion.div
               key={s.label}
-              className="text-center"
+              className="text-center px-4"
               initial={{ opacity: 0, scale: 0.8 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1, duration: 0.4 }}
             >
-              <div className="text-3xl md:text-4xl font-display font-bold text-primary-foreground">{s.value}</div>
-              <div className="text-sm text-primary-foreground/70 mt-1 font-medium">{s.label}</div>
+              <div className="text-3xl md:text-5xl font-display font-bold text-gold">{s.value}</div>
+              <div className="text-xs md:text-sm text-white/50 mt-1 font-medium uppercase tracking-widest">{s.label}</div>
             </motion.div>
           ))}
         </div>
@@ -140,115 +126,96 @@ export default function Home() {
       <section className="py-20 md:py-28 bg-background">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <motion.div
-            className="text-center mb-16"
+            className="mb-14"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <span className="text-sm font-semibold text-primary uppercase tracking-widest">Why Qais Foods</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-3 mb-4">Built on Quality &amp; Trust</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              From farm to market, every step of our process is designed to deliver the finest lentils and pulses.
-            </p>
+            <span className="text-xs font-bold text-primary uppercase tracking-[0.2em]">Why Qais Foods</span>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-foreground mt-2 uppercase leading-tight">Built on Quality &amp; Trust</h2>
+            <div className="mt-4 h-1 w-20 bg-primary" />
           </motion.div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 border border-border">
             {features.map((f, i) => (
               <motion.div
                 key={f.title}
+                className="p-8 border-b border-r border-border last:border-r-0 hover:bg-secondary/30 transition-colors"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1, duration: 0.5 }}
               >
-                <Card className="h-full text-center border-none shadow-sm hover:shadow-md transition-shadow bg-card">
-                  <CardContent className="pt-10 pb-8 px-6">
-                    <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5">
-                      <f.icon className="h-8 w-8 text-primary" />
-                    </div>
-                    <h3 className="font-semibold text-foreground mb-2 text-xl">{f.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-                  </CardContent>
-                </Card>
+                <div className="w-14 h-14 bg-primary/10 flex items-center justify-center mb-5">
+                  <f.icon className="h-7 w-7 text-primary" />
+                </div>
+                <h3 className="font-display font-bold text-foreground mb-2 text-xl uppercase tracking-wide">{f.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Products */}
-      <section className="py-20 md:py-28 bg-secondary/30">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            <span className="text-sm font-semibold text-primary uppercase tracking-widest">Product Range</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-3 mb-4">Our Premium Products</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              A carefully curated selection of lentils, pulses, and grains — all graded and available in wholesale quantities.
-            </p>
-          </motion.div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {products.map((p, i) => (
-              <motion.div
-                key={p.name}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08, duration: 0.5 }}
-              >
-                <Card className="overflow-hidden group hover:shadow-xl transition-all duration-300 border-none shadow-sm">
-                  <div className="aspect-[4/3] overflow-hidden bg-muted">
-                    <img
-                      src={p.image}
-                      alt={p.name}
-                      loading="lazy"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  </div>
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold text-xl text-foreground mb-2">{p.name}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{p.desc}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="relative py-20 md:py-28 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-accent-foreground" />
+      {/* Products teaser banner */}
+      <section className="relative overflow-hidden bg-primary py-20 md:py-28">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 right-10 w-72 h-72 rounded-full bg-white/20 blur-3xl" />
-          <div className="absolute bottom-10 left-10 w-96 h-96 rounded-full bg-white/10 blur-3xl" />
+          <div className="absolute top-0 right-0 w-[400px] h-[400px] rounded-full bg-white blur-3xl" />
         </div>
+        <div className="absolute inset-0" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.04) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.04) 40px)" }} />
         <motion.div
-          className="relative max-w-3xl mx-auto text-center px-4"
+          className="relative max-w-5xl mx-auto px-4 md:px-8"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-5">
-            Ready to Partner with Us?
+          <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-8">
+            <div>
+              <span className="text-xs font-bold text-gold uppercase tracking-[0.2em] mb-3 block">Product Catalogue</span>
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white uppercase leading-tight">
+                Explore Our<br />
+                <span className="text-gold">Premium Products</span>
+              </h2>
+              <p className="text-white/60 mt-5 max-w-md leading-relaxed">
+                Dal Masoor, Dal Chana, Dal Moong, Dal Mash, Chickpeas, Basmati Rice — all grades, all pack sizes.
+              </p>
+            </div>
+            <div className="shrink-0">
+              <Link to="/products">
+                <Button size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-10 h-14 border-0 shadow-xl">
+                  View All Products <ChevronRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* CTA */}
+      <section className="bg-foreground py-20 md:py-28">
+        <motion.div
+          className="max-w-3xl mx-auto text-center px-4"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          <span className="text-xs font-bold text-gold uppercase tracking-[0.25em] mb-4 block">Partner With Us</span>
+          <h2 className="text-4xl md:text-5xl font-display font-bold text-white mb-5 uppercase">
+            Ready to Work Together?
           </h2>
-          <p className="text-primary-foreground/80 mb-10 text-lg leading-relaxed max-w-lg mx-auto">
+          <p className="text-white/60 mb-10 text-lg leading-relaxed max-w-lg mx-auto">
             Whether you need bulk orders, wholesale pricing, or a reliable long-term supplier — let's talk.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link to="/contact">
-              <Button size="lg" variant="secondary" className="text-base px-10 h-12 shadow-lg">
+              <Button size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-10 h-13 border-0 shadow-lg">
                 Contact Us <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
             </Link>
             <Link to="/login">
-              <Button size="lg" variant="outline" className="text-base px-10 h-12 bg-white/10 text-white border-white/25 hover:bg-white/20">
+              <Button size="lg" variant="outline" className="text-base px-10 h-13 bg-white/5 text-white border-white/25 hover:bg-white/20 font-semibold">
                 Customer Login
               </Button>
             </Link>

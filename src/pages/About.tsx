@@ -1,13 +1,9 @@
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import aboutImg from "@/assets/about_factory_new.png";
 import { Card, CardContent } from "@/components/ui/card";
-import { Target, Eye, Users, Award } from "lucide-react";
+import { Target, Eye, Users, Award, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 
 const stats = [
   { label: "Years in Business", value: "15+" },
@@ -31,70 +27,48 @@ const fadeUp = {
   }),
 };
 
-const faqs = [
-  {
-    question: "What is your minimum wholesale order quantity?",
-    answer: "Our minimum order quantity for wholesale pricing varies by product, but generally starts at 1,000 kg (1 ton). Contact our sales team for exact minimums based on your chosen lentils."
-  },
-  {
-    question: "Do you offer custom packing sizes?",
-    answer: "Yes, we provide packaging solutions ranging from 0.5 kg retail packs to 50 kg bulk sacks, tailored precisely to your distribution and market needs."
-  },
-  {
-    question: "Where do you source your lentils?",
-    answer: "We source our legumes directly from trusted, established farms across the most fertile regions of Pakistan, as well as importing premium grades internationally to guarantee year-round supply."
-  },
-  {
-    question: "What quality assurance standards do you follow?",
-    answer: "Every batch undergoes rigorous machine cleaning, color sorting, and manual inspection. We grade products meticulously into A+, A, B, and C categories ensuring absolute consistency."
-  },
-  {
-    question: "How do you handle delivery logistics?",
-    answer: "We manage a robust logistics network providing reliable, scheduled deliveries to wholesale markets nationwide, ensuring your stock arrives fresh and on time."
-  }
-];
-
 export default function About() {
   return (
     <div className="min-h-screen">
+
       {/* Hero */}
-      <section className="relative min-h-[50vh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img src={aboutImg} alt="Our factory" className="w-full h-full object-cover" loading="eager" />
-          <div className="absolute inset-0 bg-gradient-to-b from-foreground/70 via-foreground/50 to-foreground/70" />
+          <div className="absolute inset-0 bg-gradient-to-b from-foreground/80 via-foreground/60 to-foreground/85" />
         </div>
         <motion.div
-          className="relative text-center px-4 py-24 md:py-36"
+          className="relative text-center px-4 py-28 md:py-40"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <span className="inline-block text-xs font-semibold text-primary-foreground/80 uppercase tracking-widest mb-4 px-4 py-1.5 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm">
+          <span className="inline-block text-xs font-bold text-gold uppercase tracking-[0.25em] mb-5 px-4 py-1.5 border border-gold/40 bg-gold/10">
             Since 2010
           </span>
-          <h1 className="text-4xl md:text-5xl lg:text-7xl font-display font-semibold text-white mb-5 tracking-tight">
+          <h1 className="text-5xl md:text-6xl lg:text-8xl font-display font-bold text-white mb-5 tracking-tight uppercase leading-[1.0]">
             About Our Factory
           </h1>
-          <p className="text-lg text-white/80 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg text-white/70 max-w-2xl mx-auto leading-relaxed">
             A modern lentil processing and packaging facility in the heart of Pakistan, serving wholesale markets with premium quality products.
           </p>
         </motion.div>
       </section>
 
       {/* Stats */}
-      <section className="bg-primary py-10 md:py-12">
-        <div className="max-w-5xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-6">
+      <section className="bg-foreground py-8 md:py-10 border-b border-white/10">
+        <div className="max-w-5xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
           {stats.map((s, i) => (
             <motion.div
               key={s.label}
-              className="text-center"
+              className="text-center px-4"
               initial={{ opacity: 0, scale: 0.8 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1, duration: 0.4 }}
             >
-              <div className="text-3xl md:text-4xl font-display font-bold text-primary-foreground">{s.value}</div>
-              <div className="text-sm text-primary-foreground/70 mt-1 font-medium">{s.label}</div>
+              <div className="text-3xl md:text-5xl font-display font-bold text-gold">{s.value}</div>
+              <div className="text-xs md:text-sm text-white/50 mt-1 font-medium uppercase tracking-widest">{s.label}</div>
             </motion.div>
           ))}
         </div>
@@ -104,16 +78,17 @@ export default function About() {
       <section className="py-20 md:py-28 bg-background">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <motion.div
-            className="text-center mb-16"
+            className="mb-14"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <span className="text-sm font-semibold text-primary uppercase tracking-widest">Our Core</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-3 mb-4">What Drives Us</h2>
+            <span className="text-xs font-bold text-primary uppercase tracking-[0.2em]">Our Core</span>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-foreground mt-2 uppercase leading-tight">What Drives Us</h2>
+            <div className="mt-4 h-1 w-20 bg-primary" />
           </motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-border">
             {values.map((v, i) => (
               <motion.div
                 key={v.title}
@@ -123,13 +98,13 @@ export default function About() {
                 custom={i}
                 variants={fadeUp}
               >
-                <Card className="h-full border-none shadow-sm hover:shadow-md transition-shadow">
+                <Card className="h-full border-0 border-b border-r border-border shadow-none hover:bg-secondary/20 transition-colors">
                   <CardContent className="p-8 flex gap-5">
-                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
-                      <v.icon className="h-7 w-7 text-primary" />
+                    <div className="w-14 h-14 bg-primary flex items-center justify-center shrink-0">
+                      <v.icon className="h-7 w-7 text-primary-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-xl text-foreground mb-2">{v.title}</h3>
+                      <h3 className="font-display font-bold text-xl text-foreground mb-2 uppercase tracking-wide">{v.title}</h3>
                       <p className="text-sm text-muted-foreground leading-relaxed">{v.desc}</p>
                     </div>
                   </CardContent>
@@ -140,41 +115,39 @@ export default function About() {
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section className="py-20 md:py-28 bg-secondary/30">
-        <div className="max-w-4xl mx-auto px-4 md:px-8">
-          <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            <span className="text-sm font-semibold text-primary uppercase tracking-widest">Questions</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-3 mb-4">Frequently Asked Questions</h2>
-            <p className="text-muted-foreground text-lg">Everything you need to know about working with us.</p>
-          </motion.div>
-          
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <Accordion type="single" collapsible className="w-full bg-card rounded-xl p-6 shadow-sm border">
-              {faqs.map((faq, i) => (
-                <AccordionItem key={i} value={`item-${i}`}>
-                  <AccordionTrigger className="text-left font-display text-lg font-medium py-5 hover:text-primary transition-colors">
-                    {faq.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground leading-relaxed text-base pb-5">
-                    {faq.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </motion.div>
+      {/* FAQs banner — links to /faqs */}
+      <section className="relative overflow-hidden bg-primary py-20 md:py-28">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-white blur-3xl" />
         </div>
+        <div className="absolute inset-0" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.04) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.04) 40px)" }} />
+        <motion.div
+          className="relative max-w-5xl mx-auto px-4 md:px-8"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-8">
+            <div>
+              <span className="text-xs font-bold text-gold uppercase tracking-[0.2em] mb-3 block">Questions Answered</span>
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white uppercase leading-tight">
+                Have Questions?<br />
+                <span className="text-gold">See Our FAQs</span>
+              </h2>
+              <p className="text-white/60 mt-5 max-w-md leading-relaxed">
+                Ordering, packaging, sourcing, quality, delivery — everything answered on our FAQ page.
+              </p>
+            </div>
+            <div className="shrink-0">
+              <Link to="/faqs">
+                <Button size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-10 h-14 border-0 shadow-xl">
+                  View FAQs <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </motion.div>
       </section>
     </div>
   );

@@ -12,6 +12,8 @@ import { useAuthStore } from "@/stores/authStore";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import Products from "./pages/Products";
+import FAQs from "./pages/FAQs";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import RequestAccess from "./pages/RequestAccess";
@@ -89,9 +91,11 @@ const App = () => {
 
             {/* ── Public website ── */}
             <Route element={<PublicLayout />}>
-              <Route path="/"        element={<Home />} />
-              <Route path="/about"   element={<About />} />
-              <Route path="/contact" element={<Contact />} />
+              <Route path="/"         element={<Home />} />
+              <Route path="/about"    element={<About />} />
+              <Route path="/contact"  element={<Contact />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/faqs"     element={<FAQs />} />
             </Route>
 
             {/* ── Auth pages (no layout) ── */}
