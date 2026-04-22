@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Package, ShoppingCart, Users, BookOpen,
   Wallet, Landmark, FileText, BarChart3, Store, CreditCard,
-  Globe, Trash2, UserCheck, TrendingUp, X
+  Globe, Trash2, UserCheck, TrendingUp, X, Image, UserX
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import qfLogo from "@/assets/qf-logo.png";
@@ -11,12 +11,14 @@ import {
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
   SidebarHeader, useSidebar,
 } from "@/components/ui/sidebar";
+import { QfLogo } from "@/components/QfLogo";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const operationsNav = [
   { title: "Dashboard",        url: "/dashboard",          icon: LayoutDashboard },
+  { title: "Manage Items",     url: "/manage-items",       icon: Package },
   { title: "Inventory",        url: "/inventory",          icon: Package },
   { title: "Sales",            url: "/sales",              icon: ShoppingCart },
   { title: "Customers",        url: "/customers",          icon: Users },
@@ -27,8 +29,7 @@ const operationsNav = [
   { title: "Vendor Payables",  url: "/vendor-payables",    icon: Landmark },
   { title: "Advance Bookings", url: "/advance-bookings",   icon: FileText },
   { title: "Waste Management", url: "/waste",              icon: Trash2 },
-  { title: "Rate Card",        url: "/rate-card",          icon: TrendingUp },
-  { title: "Online Orders",    url: "/online-orders",      icon: Globe },
+  { title: "Online Customer Orders",    url: "/online-orders",      icon: Globe },
 ];
 
 const financeNav = [
@@ -37,14 +38,19 @@ const financeNav = [
   { title: "Reports",          url: "/reports",            icon: BarChart3 },
 ];
 
+const websiteNav = [
+  { title: "Hero Slides",   url: "/hero-slides",    icon: Image },
+  { title: "Online Guest Orders",  url: "/guest-orders",   icon: UserX },
+];
+
 export function AppSidebar() {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const location  = useLocation();
 
   // ── Live pending counts for badges
-  const [badges, setBadges] = useState<{ requests: number, bookings: number, orders: number, cheques: number }>({
-    requests: 0, bookings: 0, orders: 0, cheques: 0
+  const [badges, setBadges] = useState<{ requests: number, bookings: number, orders: number, guestOrders: number, cheques: number }>({
+    requests: 0, bookings: 0, orders: 0, guestOrders: 0, cheques: 0
   });
 
   useEffect(() => {
@@ -54,11 +60,13 @@ export function AppSidebar() {
           { count: requests },
           { count: bookings },
           { count: orders },
+          { count: guestOrders },
           { count: cheques }
         ] = await Promise.all([
           supabase.from("customer_requests").select("*", { count: "exact", head: true }).eq("status", "Pending"),
           supabase.from("advance_bookings").select("*", { count: "exact", head: true }).not("status", "in", '("Completed", "Cancelled")'),
           supabase.from("online_orders").select("*", { count: "exact", head: true }).eq("status", "Pending"),
+          supabase.from("guest_orders").select("*", { count: "exact", head: true }).eq("status", "Pending"),
           supabase.from("cheques").select("*", { count: "exact", head: true }).eq("status", "Pending")
         ]);
 
@@ -66,6 +74,7 @@ export function AppSidebar() {
           requests: requests ?? 0,
           bookings: bookings ?? 0,
           orders: orders ?? 0,
+          guestOrders: guestOrders ?? 0,
           cheques: cheques ?? 0
         });
       } catch (err) {
@@ -89,6 +98,7 @@ export function AppSidebar() {
       case "/customer-requests": return badges.requests;
       case "/advance-bookings": return badges.bookings;
       case "/online-orders": return badges.orders;
+      case "/guest-orders": return badges.guestOrders;
       case "/bank-cheques": return badges.cheques;
       default: return 0;
     }
@@ -109,7 +119,7 @@ export function AppSidebar() {
       <SidebarHeader className="p-4 border-b border-sidebar-border relative">
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-3">
-             <img src={qfLogo} alt="QF Logo" className="w-10 h-10 object-contain shrink-0" />
+             <QfLogo className="w-12 h-12 shrink-0" />
              {!collapsed && (
                <div className="flex flex-col">
                  <span className="font-semibold text-base text-sidebar-primary tracking-tight">Qais Food</span>
@@ -173,6 +183,33 @@ export function AppSidebar() {
                     >
                       <item.icon className="h-4 w-4 mr-2 shrink-0" />
                       {!collapsed && <span>{item.title}</span>}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Website */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Website</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {websiteNav.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <Link
+                      to={item.url}
+                      className={cn(isActive(item.url) && "bg-sidebar-accent text-sidebar-primary font-medium")}
+                    >
+                      <item.icon className="h-4 w-4 mr-2 shrink-0" />
+                      {!collapsed && (
+                        <span className="flex items-center justify-between w-full">
+                          {item.title}
+                          {renderBadge(item.url)}
+                        </span>
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

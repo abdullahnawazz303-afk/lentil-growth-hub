@@ -6,12 +6,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { PublicLayout } from "@/components/PublicLayout";
 import { AppLayout } from "@/components/AppLayout";
+import ScrollToTop from "@/components/ScrollToTop";
 import { useAuthStore } from "@/stores/authStore";
 
 // Public pages
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import Shop from "./pages/Shop";
 import Products from "./pages/Products";
 import FAQs from "./pages/FAQs";
 import Login from "./pages/Login";
@@ -19,6 +21,7 @@ import Register from "./pages/Register";
 import RequestAccess from "./pages/RequestAccess";
 import NotFound from "./pages/NotFound";
 import AuthCallback from "./pages/AuthCallback";
+import TrackOrder from "./pages/TrackOrder";
 
 // Customer portal
 import CustomerPortal from "./pages/CustomerPortal";
@@ -39,7 +42,10 @@ import Rokar from "./pages/Rokar";
 import Reports from "./pages/Reports";
 import OnlineOrders from "./pages/OnlineOrders";
 import WasteManagement from "./pages/WasteManagement";
-import RateCard from "./pages/RateCard";
+
+import HeroSlides from "./pages/HeroSlides";
+import GuestOrders from "./pages/GuestOrders";
+import ManageItems from "./pages/ManageItems";
 
 const queryClient = new QueryClient();
 
@@ -87,6 +93,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
 
             {/* ── Public website ── */}
@@ -94,8 +101,10 @@ const App = () => {
               <Route path="/"         element={<Home />} />
               <Route path="/about"    element={<About />} />
               <Route path="/contact"  element={<Contact />} />
-              <Route path="/products" element={<Products />} />
+              <Route path="/shop"     element={<Shop />} />
+              <Route path="/products" element={<Navigate to="/shop" replace />} />
               <Route path="/faqs"     element={<FAQs />} />
+              <Route path="/track-order" element={<TrackOrder />} />
             </Route>
 
             {/* ── Auth pages (no layout) ── */}
@@ -108,22 +117,25 @@ const App = () => {
             <Route path="/portal" element={<CustomerRoute><CustomerPortal /></CustomerRoute>} />
 
             {/* ── Internal ERP (staff only) ── */}
-            <Route path="/dashboard" element={<ProtectedRoute><AppLayout><Dashboard /></AppLayout></ProtectedRoute>} />
-            <Route path="/inventory" element={<ProtectedRoute><AppLayout><Inventory /></AppLayout></ProtectedRoute>} />
-            <Route path="/sales" element={<ProtectedRoute><AppLayout><Sales /></AppLayout></ProtectedRoute>} />
-            <Route path="/customers" element={<ProtectedRoute><AppLayout><Customers /></AppLayout></ProtectedRoute>} />
-            <Route path="/customer-ledger" element={<ProtectedRoute><AppLayout><CustomerLedger /></AppLayout></ProtectedRoute>} />
+            <Route path="/dashboard"        element={<ProtectedRoute><AppLayout><Dashboard /></AppLayout></ProtectedRoute>} />
+            <Route path="/inventory"        element={<ProtectedRoute><AppLayout><Inventory /></AppLayout></ProtectedRoute>} />
+            <Route path="/sales"            element={<ProtectedRoute><AppLayout><Sales /></AppLayout></ProtectedRoute>} />
+            <Route path="/customers"        element={<ProtectedRoute><AppLayout><Customers /></AppLayout></ProtectedRoute>} />
+            <Route path="/customer-ledger"  element={<ProtectedRoute><AppLayout><CustomerLedger /></AppLayout></ProtectedRoute>} />
             <Route path="/customer-requests" element={<ProtectedRoute><AppLayout><CustomerRequests /></AppLayout></ProtectedRoute>} />
-            <Route path="/vendors" element={<ProtectedRoute><AppLayout><Vendors /></AppLayout></ProtectedRoute>} />
-            <Route path="/vendor-ledger" element={<ProtectedRoute><AppLayout><VendorLedger /></AppLayout></ProtectedRoute>} />
-            <Route path="/vendor-payables" element={<ProtectedRoute><AppLayout><VendorPayables /></AppLayout></ProtectedRoute>} />
+            <Route path="/vendors"          element={<ProtectedRoute><AppLayout><Vendors /></AppLayout></ProtectedRoute>} />
+            <Route path="/vendor-ledger"    element={<ProtectedRoute><AppLayout><VendorLedger /></AppLayout></ProtectedRoute>} />
+            <Route path="/vendor-payables"  element={<ProtectedRoute><AppLayout><VendorPayables /></AppLayout></ProtectedRoute>} />
             <Route path="/advance-bookings" element={<ProtectedRoute><AppLayout><AdvanceBookings /></AppLayout></ProtectedRoute>} />
-            <Route path="/bank-cheques" element={<ProtectedRoute><AppLayout><BankCheques /></AppLayout></ProtectedRoute>} />
-            <Route path="/cash-flow" element={<ProtectedRoute><AppLayout><Rokar /></AppLayout></ProtectedRoute>} />
-            <Route path="/online-orders" element={<ProtectedRoute><AppLayout><OnlineOrders /></AppLayout></ProtectedRoute>} />
-            <Route path="/waste" element={<ProtectedRoute><AppLayout><WasteManagement /></AppLayout></ProtectedRoute>} />
-            <Route path="/reports" element={<ProtectedRoute><AppLayout><Reports /></AppLayout></ProtectedRoute>} />
-            <Route path="/rate-card" element={<ProtectedRoute><AppLayout><RateCard /></AppLayout></ProtectedRoute>} />
+            <Route path="/bank-cheques"     element={<ProtectedRoute><AppLayout><BankCheques /></AppLayout></ProtectedRoute>} />
+            <Route path="/cash-flow"        element={<ProtectedRoute><AppLayout><Rokar /></AppLayout></ProtectedRoute>} />
+            <Route path="/online-orders"    element={<ProtectedRoute><AppLayout><OnlineOrders /></AppLayout></ProtectedRoute>} />
+            <Route path="/waste"            element={<ProtectedRoute><AppLayout><WasteManagement /></AppLayout></ProtectedRoute>} />
+            <Route path="/reports"          element={<ProtectedRoute><AppLayout><Reports /></AppLayout></ProtectedRoute>} />
+
+            <Route path="/hero-slides"      element={<ProtectedRoute><AppLayout><HeroSlides /></AppLayout></ProtectedRoute>} />
+            <Route path="/guest-orders"     element={<ProtectedRoute><AppLayout><GuestOrders /></AppLayout></ProtectedRoute>} />
+            <Route path="/manage-items"     element={<ProtectedRoute><AppLayout><ManageItems /></AppLayout></ProtectedRoute>} />
 
             {/* ── Fallback ── */}
             <Route path="/index" element={<Navigate to="/" replace />} />

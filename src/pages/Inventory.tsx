@@ -348,10 +348,6 @@ const Inventory = () => {
         </div>
         <div className="flex gap-2">
 
-          {/* ── Manage Items Button ── */}
-          <Button variant="outline" onClick={() => setManageOpen(true)}>
-            <Settings2 className="h-4 w-4 mr-2" /> Manage Items
-          </Button>
 
           {/* ── Add Purchase Button ── */}
           <Dialog open={open} onOpenChange={setOpen}>

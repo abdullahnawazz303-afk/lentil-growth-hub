@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Leaf, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { toast } from "sonner";
+import { QfLogo } from "@/components/QfLogo";
 
 // Google G icon (inline SVG — no extra dependency needed)
 const GoogleIcon = () => (
@@ -103,9 +104,7 @@ export default function Login() {
 
         <Card className="shadow-xl border-none">
           <CardHeader className="text-center pb-2">
-            <div className="mx-auto w-14 h-14 rounded-xl bg-primary flex items-center justify-center mb-4">
-              <Leaf className="h-7 w-7 text-primary-foreground" />
-            </div>
+            <QfLogo className="mx-auto w-20 h-20 mb-4" />
             <CardTitle className="text-3xl ">Welcome Back</CardTitle>
             <CardDescription className="text-base text-muted-foreground mt-2">
               Sign in to access the management system or your customer portal

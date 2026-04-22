@@ -4,6 +4,7 @@ import { useOnlineOrderStore } from "@/stores/onlineOrderStore";
 import { useCustomerStore } from "@/stores/customerStore";
 import { useRateCardStore } from "@/stores/rateCardStore";
 import { supabase } from "@/integrations/supabase/client";
+import { QfLogo } from "@/components/QfLogo";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -235,9 +236,7 @@ const CustomerPortal = () => {
       {/* Top bar */}
       <div className="border-b bg-card px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-            <Package className="h-4 w-4 text-primary" />
-          </div>
+          <QfLogo className="w-12 h-12 shrink-0" />
           <div>
             <p className="font-semibold text-sm">{customerName || "Customer Portal"}</p>
             <p className="hidden sm:block text-xs text-muted-foreground">{userEmail}</p>

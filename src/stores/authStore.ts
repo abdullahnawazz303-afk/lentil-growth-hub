@@ -116,6 +116,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     sessionStorage.removeItem("admin_notif_panel_closed"); // Reset notification modal state
+    localStorage.removeItem("qais-cart"); // Clear persisted cart on logout
     await supabase.auth.signOut();
     set({
       isLoggedIn: false,

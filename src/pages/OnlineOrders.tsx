@@ -60,6 +60,7 @@ const OnlineOrders = () => {
   const [deliveryOpen, setDeliveryOpen]       = useState(false);
   const [deliveryOrderId, setDeliveryOrderId] = useState<string | null>(null);
   const [itemPrices, setItemPrices]           = useState<Record<number, string>>({});
+  const [itemBatches, setItemBatches]         = useState<Record<number, string>>({});
   const [amountPaid, setAmountPaid]           = useState("0");
   const [deliveryNotes, setDeliveryNotes]     = useState("");
   const [submitting, setSubmitting]           = useState(false);
@@ -89,23 +90,33 @@ const OnlineOrders = () => {
   const order         = selectedOrderId ? orders.find((o) => o.id === selectedOrderId) : null;
   const deliveryOrder = deliveryOrderId ? orders.find((o) => o.id === deliveryOrderId) : null;
 
-  const getPurchasePrice = (itemName: string, grade: string): number | null => {
-    const matching = batches
-      .filter(b => b.itemName === itemName && b.grade === grade && b.remainingQuantity > 0)
-      .sort((a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime());
-    return matching.length > 0 ? matching[0].purchasePrice : null;
+  const getMatchingBatches = (itemName: string, grade: string, requiredQty: number) => {
+    return batches
+      .filter(b => 
+        b.itemName?.trim().toLowerCase() === itemName?.trim().toLowerCase() && 
+        (!grade || b.grade?.trim().toLowerCase() === grade.trim().toLowerCase()) && 
+        Number(b.remainingQuantity) >= requiredQty
+      )
+      .sort((a, b) => Number(b.remainingQuantity) - Number(a.remainingQuantity));
   };
 
   const openDeliveryDialog = (orderId: string) => {
     const o = orders.find(ord => ord.id === orderId);
     if (!o) return;
     const prices: Record<number, string> = {};
+    const batchesState: Record<number, string> = {};
+    
     o.items.forEach((item, idx) => {
-      const cost = getPurchasePrice(item.itemName, item.grade);
-      prices[idx] = cost ? String(cost) : "";
+      const matches = getMatchingBatches(item.itemName, item.grade, Number(item.quantity));
+      if (matches.length > 0) {
+        batchesState[idx] = matches[0].id;
+        prices[idx] = String(matches[0].purchasePrice);
+      }
     });
+
     setDeliveryOrderId(orderId);
     setItemPrices(prices);
+    setItemBatches(batchesState);
     setAmountPaid("0");
     setDeliveryNotes("");
     setSelectedOrderId(null);
@@ -186,18 +197,8 @@ const OnlineOrders = () => {
 
     const saleItems = deliveryOrder.items.map((item, idx) => {
       const price = Number(itemPrices[idx]);
-      const hasGrade = item.grade && item.grade.trim() !== '';
-      const itemNameToMatch = item.itemName.trim().toLowerCase();
-      const gradeToMatch = item.grade ? item.grade.trim().toLowerCase() : '';
-
-      const batch = freshBatches
-        .filter(b =>
-          b.itemName.trim().toLowerCase() === itemNameToMatch &&
-          (!hasGrade || b.grade.trim().toLowerCase() === gradeToMatch) &&
-          b.remainingQuantity >= item.quantity
-        )
-        // Prefer the batch with most remaining stock for safety
-        .sort((a, b) => b.remainingQuantity - a.remainingQuantity)[0];
+      const batchId = itemBatches[idx];
+      const batch = freshBatches.find(b => b.id === batchId);
 
       return {
         batchId: batch?.id ?? "",
@@ -213,7 +214,7 @@ const OnlineOrders = () => {
     if (missing) {
       const gradeInfo = missing.grade ? ` Grade ${missing.grade}` : '';
       toast.error(
-        `Not enough stock for ${missing.itemName}${gradeInfo}. Please add inventory first.`
+        `Not enough stock for ${missing.itemName}${gradeInfo} (Req: ${missing.quantity}kg). Please add inventory first.`
       );
       setSubmitting(false);
       return;
@@ -257,7 +258,7 @@ const OnlineOrders = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            Online Orders
+            Online Customer Orders
             {pendingCount > 0 && (
               <Badge variant="destructive" className="text-xs">{pendingCount} pending</Badge>
             )}
@@ -496,11 +497,15 @@ const OnlineOrders = () => {
                 </div>
               </div>
 
-              <div className="border rounded-lg divide-y">
+              <div className="border rounded-lg divide-y bg-background">
                 {deliveryOrder.items.map((item, idx) => {
-                  const cost = getPurchasePrice(item.itemName, item.grade);
+                  const matches = getMatchingBatches(item.itemName, item.grade, Number(item.quantity));
+                  const selectedBatchId = itemBatches[idx];
+                  const selectedBatch = matches.find(b => b.id === selectedBatchId);
+                  const cost = selectedBatch ? selectedBatch.purchasePrice : null;
+
                   return (
-                    <div key={idx} className="p-3 space-y-2">
+                    <div key={idx} className="p-3 space-y-3">
                       <div className="flex justify-between items-start">
                         <div>
                           <p className="text-sm font-medium">{item.itemName}</p>
@@ -509,18 +514,9 @@ const OnlineOrders = () => {
                             {(item as any).packing && (item as any).packing !== "Loose"
                               && ` (${(item as any).packing})`}
                           </p>
-                          {cost ? (
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              Purchase cost: <span className="font-medium text-foreground">{formatPKR(cost)}/kg</span>
-                            </p>
-                          ) : (
-                            <p className="text-xs text-orange-500 mt-0.5">
-                              ⚠ No inventory found for this item+grade
-                            </p>
-                          )}
                         </div>
                         <div className="w-28">
-                          <Label className="text-xs">Sale price/kg</Label>
+                          <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">Sale price/kg</Label>
                           <Input
                             type="number" min={1} placeholder="PKR"
                             className="h-8 text-sm mt-1"
@@ -529,11 +525,47 @@ const OnlineOrders = () => {
                           />
                         </div>
                       </div>
-                      {Number(itemPrices[idx]) > 0 && (
-                        <div className="text-xs text-right text-muted-foreground">
-                          Subtotal: {formatPKR(item.quantity * Number(itemPrices[idx]))}
-                          {cost && (
-                            <span className={`ml-2 font-medium ${
+
+                      {/* Explicit Batch Selection */}
+                      <div className="bg-muted/40 p-2 rounded-md space-y-2">
+                        <Label className="text-xs font-semibold">Select Inventory Batch</Label>
+                        <Select 
+                          value={selectedBatchId || "none"} 
+                          onValueChange={(val) => {
+                            setItemBatches(prev => ({ ...prev, [idx]: val }));
+                            // Automatically update the baseline cost to the new batch's purchase price
+                            const newlySelected = matches.find(m => m.id === val);
+                            if (newlySelected) {
+                              setItemPrices(prev => ({ ...prev, [idx]: String(newlySelected.purchasePrice) }));
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="h-8 text-xs bg-background">
+                            <SelectValue placeholder="Select Batch" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {matches.length === 0 ? (
+                              <SelectItem value="none" disabled>No suitable batches found</SelectItem>
+                            ) : (
+                              matches.map(m => (
+                                <SelectItem key={m.id} value={m.id}>
+                                  Batch {m.batchRef} — {m.remainingQuantity}kg Avail (Cost: {formatPKR(m.purchasePrice)})
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+
+                        {/* Profit preview tied to selection */}
+                        <div className="flex justify-between items-center text-xs">
+                          {cost ? (
+                            <span className="text-muted-foreground">Unit Cost: <span className="font-medium text-foreground">{formatPKR(cost)}</span></span>
+                          ) : (
+                            <span className="text-orange-500 font-medium">⚠ No batch selected</span>
+                          )}
+
+                          {Number(itemPrices[idx]) > 0 && cost && (
+                            <span className={`font-medium ${
                               Number(itemPrices[idx]) > cost ? "text-green-600" : "text-red-500"
                             }`}>
                               {Number(itemPrices[idx]) > cost
@@ -542,7 +574,7 @@ const OnlineOrders = () => {
                             </span>
                           )}
                         </div>
-                      )}
+                      </div>
                     </div>
                   );
                 })}

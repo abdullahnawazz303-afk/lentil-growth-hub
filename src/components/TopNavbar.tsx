@@ -11,6 +11,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
+import { QfLogo } from "@/components/QfLogo";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -69,7 +70,7 @@ export function TopNavbar() {
     <header className="h-16 border-b flex items-center px-4 gap-4 bg-card shrink-0">
       <SidebarTrigger />
 
-      <img src={qfLogo} alt="QF" className="w-9 h-9 object-contain" />
+      <QfLogo className="w-11 h-11 shrink-0" />
       <span className="font-semibold text-lg text-primary">Qais Food</span>
 
       <div className="flex-1" />

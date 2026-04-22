@@ -103,7 +103,7 @@ const CustomerRequests = () => {
       .update({
         status:      "Approved",
         customer_id: newCustomer.id,
-        reviewed_by: userId ?? null,
+        reviewed_by: userId || null,
         reviewed_at: new Date().toISOString(),
       })
       .eq("id", selected.id);
@@ -141,7 +141,7 @@ const CustomerRequests = () => {
       .update({
         status:        "Rejected",
         reject_reason: rejectReason.trim(),
-        reviewed_by:   userId ?? null,
+        reviewed_by:   userId || null,
         reviewed_at:   new Date().toISOString(),
       })
       .eq("id", selected.id);
