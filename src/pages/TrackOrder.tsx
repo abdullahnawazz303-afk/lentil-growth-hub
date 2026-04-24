@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Search, Package, CheckCircle, XCircle, Clock, AlertTriangle, Leaf, ChevronDown, ChevronUp, X } from "lucide-react";
 import { toast } from "sonner";
 
-interface GuestOrderItem {
+interface UnifiedOrderItem {
   id: string;
   item_name: string;
   urdu_name: string | null;
@@ -14,7 +14,7 @@ interface GuestOrderItem {
   quantity_kg: number;
 }
 
-interface GuestOrder {
+interface UnifiedOrder {
   id: string;
   order_ref: string;
   guest_name: string;
@@ -23,7 +23,8 @@ interface GuestOrder {
   notes: string | null;
   total_amount: number;
   created_at: string;
-  guest_order_items: GuestOrderItem[];
+  order_items: UnifiedOrderItem[];
+  type: "guest" | "online";
 }
 
 const STATUS_CONFIG = {
@@ -38,7 +39,7 @@ export default function TrackOrder() {
   const [searchParams] = useSearchParams();
   const [phone, setPhone] = useState(searchParams.get("phone") || "");
   const [ref, setRef] = useState(searchParams.get("ref") || "");
-  const [orders, setOrders] = useState<GuestOrder[]>([]);
+  const [orders, setOrders] = useState<UnifiedOrder[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -59,47 +60,109 @@ export default function TrackOrder() {
     setLoading(true);
     setSearched(false);
 
-    let query = supabase
+    let guestQuery = supabase
       .from("guest_orders")
       .select("*, guest_order_items(*)")
-      .ilike("guest_phone", `%${cleanPhone}%`)
-      .order("created_at", { ascending: false });
+      .ilike("guest_phone", `%${cleanPhone}%`);
 
     if (ref.trim()) {
-      query = supabase
-        .from("guest_orders")
-        .select("*, guest_order_items(*)")
-        .ilike("guest_phone", `%${cleanPhone}%`)
-        .ilike("order_ref", `%${ref.trim()}%`)
-        .order("created_at", { ascending: false });
+      guestQuery = guestQuery.ilike("order_ref", `%${ref.trim()}%`);
     }
 
-    const { data, error } = await query;
+    const { data: guestData, error: guestError } = await guestQuery;
+
+    // Search customers to find online_orders
+    const { data: customers } = await supabase
+      .from("customers")
+      .select("id, name")
+      .ilike("phone", `%${cleanPhone}%`);
+
+    let onlineData: UnifiedOrder[] = [];
+
+    if (customers && customers.length > 0) {
+      const customerIds = customers.map(c => c.id);
+      
+      let onlineQuery = supabase
+        .from("online_orders")
+        .select("*, online_order_items(*)")
+        .in("customer_id", customerIds);
+
+      if (ref.trim()) {
+        onlineQuery = onlineQuery.ilike("order_ref", `%${ref.trim()}%`);
+      }
+
+      const { data: oData } = await onlineQuery;
+
+      if (oData) {
+        onlineData = oData.map(o => ({
+          id: o.id,
+          order_ref: o.order_ref,
+          guest_name: customers.find(c => c.id === o.customer_id)?.name || "Customer",
+          guest_phone: cleanPhone,
+          status: o.status as any,
+          notes: o.notes,
+          total_amount: o.total_amount,
+          created_at: o.created_at,
+          type: "online",
+          order_items: o.online_order_items.map((i: any) => ({
+            id: i.id,
+            item_name: i.item_name,
+            urdu_name: null,
+            grade: i.grade,
+            packing: i.packing,
+            quantity_kg: i.quantity_kg,
+          }))
+        }));
+      }
+    }
+
     setLoading(false);
     setSearched(true);
 
-    if (error) {
+    if (guestError) {
       toast.error("Search failed. Please try again.");
       return;
     }
 
-    setOrders((data || []) as GuestOrder[]);
-    if (data && data.length > 0 && data.length === 1) {
-      setExpandedId(data[0].id);
+    const parsedGuestData: UnifiedOrder[] = (guestData || []).map(g => ({
+      ...g,
+      guest_name: g.guest_name,
+      guest_phone: g.guest_phone,
+      order_items: g.guest_order_items,
+      type: "guest"
+    }));
+
+    const combinedOrders = [...parsedGuestData, ...onlineData].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+
+    setOrders(combinedOrders);
+    if (combinedOrders.length === 1) {
+      setExpandedId(combinedOrders[0].id);
     }
   };
 
-  const handleCancel = async (order: GuestOrder) => {
+  const handleCancel = async (order: UnifiedOrder) => {
     if (order.status !== "Pending") return;
     if (!confirm(`Cancel order ${order.order_ref}? This cannot be undone.`)) return;
 
     setCancelling(order.id);
 
-    const { error } = await supabase
-      .from("guest_orders")
-      .update({ status: "Cancelled", notes: (order.notes ? order.notes + "\n" : "") + "Cancelled by customer via Track Order page." })
-      .eq("id", order.id)
-      .eq("guest_phone", order.guest_phone);
+    let error;
+    if (order.type === "online") {
+      const { error: err } = await supabase
+        .from("online_orders")
+        .update({ status: "Cancelled", notes: (order.notes ? order.notes + "\n" : "") + "Cancelled by customer via Track Order page." })
+        .eq("id", order.id);
+      error = err;
+    } else {
+      const { error: err } = await supabase
+        .from("guest_orders")
+        .update({ status: "Cancelled", notes: (order.notes ? order.notes + "\n" : "") + "Cancelled by customer via Track Order page." })
+        .eq("id", order.id)
+        .eq("guest_phone", order.guest_phone);
+      error = err;
+    }
 
     setCancelling(null);
 
@@ -117,12 +180,12 @@ export default function TrackOrder() {
     // Notify admin via WhatsApp
     const { notifyAdminWhatsApp } = await import("@/lib/whatsapp");
     notifyAdminWhatsApp({
-      type: "guest",
+      type: order.type === "online" ? "customer" : "guest",
       orderRef: order.order_ref,
       name: order.guest_name,
       phone: order.guest_phone,
       action: "cancelled",
-      items: order.guest_order_items.map((i) => ({
+      items: order.order_items.map((i) => ({
         itemName: i.item_name,
         quantity: i.quantity_kg,
       })),
@@ -230,7 +293,7 @@ export default function TrackOrder() {
                             <p className="text-xs text-muted-foreground mt-0.5">
                               {new Date(order.created_at).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}
                               {" · "}
-                              {order.guest_order_items.length} item{order.guest_order_items.length !== 1 ? "s" : ""}
+                              {order.order_items.length} item{order.order_items.length !== 1 ? "s" : ""}
                             </p>
                           </div>
                           {isExpanded ? (
@@ -243,11 +306,10 @@ export default function TrackOrder() {
                         {/* Expanded details */}
                         {isExpanded && (
                           <div className="border-t px-5 pb-5 space-y-4">
-                            {/* Items */}
                             <div className="pt-4 space-y-2">
                               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Order Items</p>
                               <div className="space-y-1.5">
-                                {order.guest_order_items.map((item) => (
+                                {order.order_items.map((item) => (
                                   <div key={item.id} className="flex items-center justify-between text-sm py-2 px-3 rounded-lg bg-muted/30">
                                     <div>
                                       <span className="font-medium text-foreground">{item.item_name}</span>

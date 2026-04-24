@@ -65,61 +65,97 @@ export function GuestCheckoutModal({ onClose, onSuccess }: GuestCheckoutModalPro
         0
       );
 
-      const orderId = crypto.randomUUID();
+      // 1. Check if this phone number belongs to an existing customer
+      const { data: existingCustomer } = await supabase
+        .from("customers")
+        .select("id, name")
+        .eq("phone", phone.trim())
+        .maybeSingle();
 
-      const { data: inserted, error: orderError } = await supabase
-        .from("guest_orders")
-        .insert({
-          id: orderId,
-          guest_name: name.trim(),
-          guest_phone: phone.trim(),
-          guest_email: email.trim() || null,
-          guest_address: address.trim() || null,
-          guest_location_url: locationUrl,
-          guest_lat: lat,
-          guest_lng: lng,
-          total_amount: totalKgs,
-          status: "Pending",
-        })
-        .select("order_ref")
-        .single();
+      let ref = "";
+      let isRegistered = false;
 
-      if (orderError) {
-        toast.error("Failed to place order. Try again.");
-        console.error(orderError);
-        setSubmitting(false);
-        return;
+      if (existingCustomer) {
+        isRegistered = true;
+        // CREATE ONLINE ORDER
+        const { data: inserted, error: orderError } = await supabase
+          .from("online_orders")
+          .insert({
+            customer_id: existingCustomer.id,
+            total_amount: 0,
+            status: "Pending",
+            notes: `Public Checkout by ${name.trim()} - Location: ${locationUrl || 'N/A'}`
+          })
+          .select("id, order_ref")
+          .single();
+
+        if (orderError) throw orderError;
+        
+        ref = inserted.order_ref || inserted.id.slice(0, 12).toUpperCase();
+
+        // Insert online_order_items
+        const orderItems = items.flatMap((item) =>
+          item.entries.map((entry) => ({
+            order_id: inserted.id,
+            item_name: item.itemName,
+            grade: entry.grade,
+            packing: entry.packing,
+            quantity_kg: Number(entry.kgs),
+          }))
+        );
+
+        const { error: itemsError } = await supabase.from("online_order_items").insert(orderItems);
+        if (itemsError) throw itemsError;
+
+      } else {
+        // CREATE GUEST ORDER
+        const orderId = crypto.randomUUID();
+
+        const { data: inserted, error: orderError } = await supabase
+          .from("guest_orders")
+          .insert({
+            id: orderId,
+            guest_name: name.trim(),
+            guest_phone: phone.trim(),
+            guest_email: email.trim() || null,
+            guest_address: address.trim() || null,
+            guest_location_url: locationUrl,
+            guest_lat: lat,
+            guest_lng: lng,
+            total_amount: totalKgs,
+            status: "Pending",
+          })
+          .select("order_ref")
+          .single();
+
+        if (orderError) throw orderError;
+
+        // Insert guest order items
+        const orderItems = items.flatMap((item) =>
+          item.entries.map((entry) => ({
+            order_id: orderId,
+            item_name: item.itemName,
+            urdu_name: item.itemName,
+            grade: entry.grade,
+            packing: entry.packing,
+            quantity_kg: Number(entry.kgs),
+          }))
+        );
+
+        const { error: itemsError } = await supabase.from("guest_order_items").insert(orderItems);
+        if (itemsError) throw itemsError;
+
+        ref = inserted?.order_ref || orderId.slice(0, 12).toUpperCase();
       }
 
-      // Insert guest order items
-      const orderItems = items.flatMap((item) =>
-        item.entries.map((entry) => ({
-          order_id: orderId,
-          item_name: item.itemName,
-          urdu_name: item.itemName,
-          grade: entry.grade,
-          packing: entry.packing,
-          quantity_kg: Number(entry.kgs),
-        }))
-      );
-
-      const { error: itemsError } = await supabase.from("guest_order_items").insert(orderItems);
-      if (itemsError) {
-        console.error(itemsError);
-        toast.error("Order partially failed. Please contact support.");
-        setSubmitting(false);
-        return;
-      }
-
-      const ref = inserted?.order_ref || orderId.slice(0, 12).toUpperCase();
       setOrderRef(ref);
       setDone(true);
 
       // Notify admin via WhatsApp
       notifyAdminWhatsApp({
-        type: "guest",
+        type: isRegistered ? "customer" : "guest",
         orderRef: ref,
-        name: name.trim(),
+        name: isRegistered ? existingCustomer.name : name.trim(),
         phone: phone.trim(),
         action: "placed",
         items: items.flatMap((item) =>
@@ -133,7 +169,8 @@ export function GuestCheckoutModal({ onClose, onSuccess }: GuestCheckoutModalPro
       setTimeout(() => {
         onSuccess();
       }, 8000); // Give time to copy reference
-    } catch {
+    } catch (err) {
+      console.error(err);
       toast.error("Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
@@ -193,7 +230,7 @@ export function GuestCheckoutModal({ onClose, onSuccess }: GuestCheckoutModalPro
               {/* Header */}
               <div className="flex items-center justify-between px-5 py-4 border-b">
                 <div>
-                  <h2 className="text-lg font-bold">Guest Checkout</h2>
+                  <h2 className="text-lg font-bold">Checkout Details</h2>
                   <p className="text-xs text-muted-foreground">Fill in your details to place the order</p>
                 </div>
                 <button

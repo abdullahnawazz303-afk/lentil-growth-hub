@@ -288,11 +288,11 @@ export function CartDrawer({ onClose }: CartDrawerProps) {
                 </div>
               )}
 
-              {/* Auth note for guests */}
+              {/* Note for unauthenticated users */}
               {!isLoggedIn && (
-                <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-800">
                   <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
-                  <span>You're not logged in. You can place an order as a guest — we'll ask for your contact details.</span>
+                  <span>We'll ask for your delivery details on the next step. If you already have an account, your order will automatically be linked.</span>
                 </div>
               )}
 
@@ -329,21 +329,15 @@ export function CartDrawer({ onClose }: CartDrawerProps) {
                     Staff accounts cannot place customer orders from the shop.
                   </div>
                 ) : (
-                  // ── Not logged in: guest or login options
+                  // ── Not logged in: unified checkout options
                   <>
                     <button
                       onClick={() => setShowGuest(true)}
                       className="w-full h-12 rounded-full bg-primary text-white font-bold flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-lg"
                     >
                       <ShoppingBag className="h-5 w-5" />
-                      Checkout as Guest
+                      Proceed to Checkout
                     </button>
-                    <a
-                      href="/login"
-                      className="block w-full h-11 rounded-full border-2 border-primary text-primary font-bold flex items-center justify-center text-sm hover:bg-primary/8 transition-colors"
-                    >
-                      Login to Order as Customer
-                    </a>
                   </>
                 )}
                 <button
