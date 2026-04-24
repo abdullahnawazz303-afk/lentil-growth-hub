@@ -9,20 +9,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Plus, CreditCard, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Plus, CreditCard, Loader2, Pencil, Trash2, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { formatPKR, formatDate } from "@/lib/formatters";
 import type { Customer } from "@/types";
 
 const Customers = () => {
-  const { customers, addCustomer, editCustomer, deleteCustomer, fetchCustomers, getOutstanding, loading } = useCustomerStore();
+  const { customers, addCustomer, editCustomer, deleteCustomer, fetchCustomers, getOutstanding, reprovisionPortal, loading } = useCustomerStore();
   const { sales, fetchSales, addPayment } = useSalesStore();
 
   const [open, setOpen]             = useState(false);
   const [search, setSearch]         = useState("");
   const [page, setPage]             = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [provisioning, setProvisioning] = useState<string | null>(null); // customerId being re-provisioned
   const pageSize = 10;
 
   const [editOpen, setEditOpen]                   = useState(false);
@@ -49,9 +50,10 @@ const Customers = () => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     setSubmitting(true);
-    const id = await addCustomer({
+    const emailVal = (fd.get("email") as string || "").trim();
+    const { id, portalCreated } = await addCustomer({
       name:           fd.get("name") as string,
-      email:          fd.get("email") as string || "",
+      email:          emailVal,
       contactPerson:  fd.get("contactPerson") as string || "",
       phone:          fd.get("phone") as string,
       city:           fd.get("city") as string || "",
@@ -62,8 +64,30 @@ const Customers = () => {
       isActive: true,
     });
     setSubmitting(false);
-    if (id) { setOpen(false); toast.success("Customer added"); }
-    else toast.error("Failed to add customer");
+    if (id) {
+      setOpen(false);
+      if (emailVal && portalCreated) {
+        toast.success("Customer added! Portal created — default password: qaisfoods", { duration: 7000 });
+      } else if (emailVal && !portalCreated) {
+        toast.success("Customer added.");
+        toast.warning("Portal creation failed. Use Re-provision from the customer row.", { duration: 6000 });
+      } else {
+        toast.success("Customer added. No email provided — portal not created.");
+      }
+    } else {
+      toast.error("Failed to add customer");
+    }
+  };
+
+  const handleReprovision = async (customerId: string) => {
+    setProvisioning(customerId);
+    const result = await reprovisionPortal(customerId);
+    setProvisioning(null);
+    if (result.ok) {
+      toast.success("Portal re-provisioned. Password reset to: qaisfoods", { duration: 6000 });
+    } else {
+      toast.error(result.error || "Re-provision failed");
+    }
   };
 
   const openEditDialog = (c: Customer) => { setEditingCustomer(c); setEditOpen(true); };
@@ -152,8 +176,9 @@ const Customers = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>Name *</Label><Input name="name" required maxLength={100} /></div>
                 <div className="space-y-2">
-                  <Label>Email (for Google Login)</Label>
-                  <Input name="email" type="email" placeholder="customer@gmail.com" />
+                  <Label>Email (Login Email) *</Label>
+                  <Input name="email" type="email" placeholder="customer@gmail.com" required />
+                  <p className="text-xs text-muted-foreground">Portal will be created with password: <strong>qaisfoods</strong></p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -229,7 +254,7 @@ const Customers = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-1">
+                        <div className="flex gap-1 flex-wrap">
                           {/* Edit */}
                           <Button size="sm" variant="ghost"
                             onClick={() => openEditDialog(c)} title="Edit Customer">
@@ -242,6 +267,18 @@ const Customers = () => {
                             className="text-muted-foreground hover:text-destructive">
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
+                          {/* Re-provision portal */}
+                          {c.email && (
+                            <Button size="sm" variant="outline"
+                              onClick={() => handleReprovision(c.id)}
+                              title="Reset/Re-create login portal"
+                              disabled={provisioning === c.id}
+                              className="text-xs">
+                              {provisioning === c.id
+                                ? <Loader2 className="h-3 w-3 animate-spin" />
+                                : <><KeyRound className="h-3 w-3 mr-1" /> Portal</>}
+                            </Button>
+                          )}
                           {/* Pay */}
                           {outstanding > 0 && (
                             <Button size="sm" variant="outline"

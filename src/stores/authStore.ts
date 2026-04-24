@@ -17,7 +17,7 @@ interface AuthState {
   restoreSession: () => Promise<void>;
 }
 
-// Helper: fetch role and customer_id from public.users table
+// ── Helper: fetch role and customer_id from public.users table
 async function fetchUserProfile(userId: string): Promise<{ role: UserRole; customerId: string | null }> {
   const { data, error } = await supabase
     .from('users')
@@ -26,6 +26,7 @@ async function fetchUserProfile(userId: string): Promise<{ role: UserRole; custo
     .maybeSingle();
 
   if (error || !data) {
+    // No profile found → unregistered user
     return { role: 'viewer', customerId: null };
   }
 
@@ -33,33 +34,6 @@ async function fetchUserProfile(userId: string): Promise<{ role: UserRole; custo
     role: (data.role as UserRole) ?? 'viewer',
     customerId: data.customer_id ?? null,
   };
-}
-
-// Helper: Attempt to auto-link an auth account to a customer record if disconnected
-async function attemptAutoLink(userId: string, email: string | null, currentRole: UserRole, currentCustomerId: string | null): Promise<{ role: UserRole; customerId: string | null }> {
-  if (currentCustomerId || !email) {
-    return { role: currentRole, customerId: currentCustomerId };
-  }
-
-  const { data: customerMatch } = await supabase
-    .from('customers')
-    .select('id')
-    .eq('email', email)
-    .eq('is_active', true)
-    .maybeSingle();
-
-  if (customerMatch) {
-    const newRole = currentRole === 'viewer' ? 'customer' : currentRole;
-    await supabase.from('users').upsert({
-      id: userId,
-      customer_id: customerMatch.id,
-      role: newRole,
-      account_type: newRole,
-    });
-    return { role: newRole, customerId: customerMatch.id };
-  }
-
-  return { role: currentRole, customerId: currentCustomerId };
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -70,6 +44,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   customerId: null,
   loading: false,
 
+  // ── Google OAuth redirect — do NOT create accounts here.
+  // AuthCallback.tsx handles the post-redirect validation gate.
   loginWithGoogle: async () => {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -79,6 +55,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     });
   },
 
+  // ── Called by AuthCallback after Google OAuth redirect lands.
+  // Enforces: only pre-registered users (in public.users) get through.
+  // For Google OAuth, we ALSO check customers.email as a secondary path.
   finalizeGoogleLogin: async () => {
     const { data } = await supabase.auth.getSession();
     if (!data.session) {
@@ -86,35 +65,64 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
 
     const user = data.session.user;
+    const email = user.email ?? null;
+
+    // Step 1: Check if user has a profile in public.users
     let { role, customerId } = await fetchUserProfile(user.id);
 
-    // Attempt to auto-link if the user was deleted and re-added
-    ({ role, customerId } = await attemptAutoLink(user.id, user.email ?? null, role, customerId));
+    // Step 2: If they have no profile (viewer) but have an email,
+    // check if their email matches a pre-registered customer.
+    // This handles the case where admin set the email on customers table
+    // but the auth account was created externally (e.g. Google for the first time).
+    if (role === 'viewer' && email) {
+      const { data: customerMatch } = await supabase
+        .from('customers')
+        .select('id, name')
+        .eq('is_active', true)
+        .ilike('email', email)
+        .maybeSingle();
 
-    // Block anyone who is completely unregistered (viewer)
+      if (customerMatch) {
+        // Link this Google account to the existing customer record
+        const { error: linkErr } = await supabase.rpc('link_google_user_to_customer', {
+          p_auth_user_id: user.id,
+          p_email:        email,
+          p_name:         user.user_metadata?.full_name ?? customerMatch.name ?? 'Customer',
+          p_customer_id:  customerMatch.id,
+        });
+
+        if (!linkErr) {
+          role = 'customer';
+          customerId = customerMatch.id;
+        }
+      }
+    }
+
+    // Step 3: Hard gate — if still viewer, sign them out completely
     if (role === 'viewer') {
       await supabase.auth.signOut();
       return {
         ok: false,
         blocked: true,
-        message: 'Your Google account is not registered. Please contact the factory.',
+        message: 'Your Google account is not registered with QAIS Foods. Please contact the factory to get access.',
       };
     }
 
-    // Block if customer profile was deleted
+    // Step 4: Block customers whose profile was deleted
     if (role === 'customer' && !customerId) {
       await supabase.auth.signOut();
       return {
         ok: false,
         blocked: true,
-        message: 'Your customer profile is no longer active or was deleted.',
+        message: 'Your customer profile is no longer active. Please contact the factory.',
       };
     }
 
+    // Step 5: Success — set store state
     set({
       isLoggedIn: true,
       userRole: role,
-      userEmail: user.email ?? null,
+      userEmail: email,
       userId: user.id,
       customerId,
       loading: false,
@@ -123,29 +131,34 @@ export const useAuthStore = create<AuthState>((set) => ({
     return { ok: true, blocked: false, message: '' };
   },
 
+  // ── Email/password login — the primary login method for all users.
   login: async (email: string, password: string) => {
     set({ loading: true });
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error || !data.user) {
       set({ loading: false });
-      return { ok: false, message: error?.message || "Incorrect email or password." };
+      return { ok: false, message: error?.message || 'Incorrect email or password.' };
     }
 
-    // Read role from public.users table — reliable for all account types
-    let { role, customerId } = await fetchUserProfile(data.user.id);
+    const { role, customerId } = await fetchUserProfile(data.user.id);
 
-    // Attempt to auto-link if the user was deleted and re-added
-    ({ role, customerId } = await attemptAutoLink(data.user.id, data.user.email ?? null, role, customerId));
+    // Block completely unregistered accounts
+    if (role === 'viewer') {
+      await supabase.auth.signOut();
+      set({ loading: false });
+      return {
+        ok: false,
+        message: 'This account is not registered in the system. Please contact QAIS Foods.',
+      };
+    }
 
+    // Block customers whose profile was deleted
     if (role === 'customer' && !customerId) {
       await supabase.auth.signOut();
       set({ loading: false });
-      return { ok: false, message: "Your customer profile is no longer active or was deleted." };
+      return { ok: false, message: 'Your customer profile is no longer active or was deleted.' };
     }
 
     set({
@@ -160,9 +173,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     return { ok: true };
   },
 
+  // ── Logout — clears session and local state completely
   logout: async () => {
-    sessionStorage.removeItem("admin_notif_panel_closed"); // Reset notification modal state
-    localStorage.removeItem("qais-cart"); // Clear persisted cart on logout
+    sessionStorage.removeItem('admin_notif_panel_closed');
+    localStorage.removeItem('qais-cart');
     await supabase.auth.signOut();
     set({
       isLoggedIn: false,
@@ -174,6 +188,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     });
   },
 
+  // ── Restore session on app load
   restoreSession: async () => {
     set({ loading: true });
 
@@ -185,15 +200,18 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
 
     const user = data.session.user;
+    const { role, customerId } = await fetchUserProfile(user.id);
 
-    // Read role from public.users table — same as login
-    let { role, customerId } = await fetchUserProfile(user.id);
-
-    // Attempt to auto-link if the user was deleted and re-added
-    ({ role, customerId } = await attemptAutoLink(user.id, user.email ?? null, role, customerId));
-
-    // If they are a viewer, they shouldn't be considered "logged in" for the app
+    // If viewer (unregistered), kill the session entirely so they can't bypass the login gate
     if (role === 'viewer') {
+      await supabase.auth.signOut();
+      set({ isLoggedIn: false, userRole: null, loading: false });
+      return;
+    }
+
+    // If customer but profile is gone, kill session
+    if (role === 'customer' && !customerId) {
+      await supabase.auth.signOut();
       set({ isLoggedIn: false, userRole: null, loading: false });
       return;
     }
