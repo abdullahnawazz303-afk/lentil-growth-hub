@@ -35,6 +35,33 @@ async function fetchUserProfile(userId: string): Promise<{ role: UserRole; custo
   };
 }
 
+// Helper: Attempt to auto-link an auth account to a customer record if disconnected
+async function attemptAutoLink(userId: string, email: string | null, currentRole: UserRole, currentCustomerId: string | null): Promise<{ role: UserRole; customerId: string | null }> {
+  if (currentCustomerId || !email) {
+    return { role: currentRole, customerId: currentCustomerId };
+  }
+
+  const { data: customerMatch } = await supabase
+    .from('customers')
+    .select('id')
+    .eq('email', email)
+    .eq('is_active', true)
+    .maybeSingle();
+
+  if (customerMatch) {
+    const newRole = currentRole === 'viewer' ? 'customer' : currentRole;
+    await supabase.from('users').upsert({
+      id: userId,
+      customer_id: customerMatch.id,
+      role: newRole,
+      account_type: newRole,
+    });
+    return { role: newRole, customerId: customerMatch.id };
+  }
+
+  return { role: currentRole, customerId: currentCustomerId };
+}
+
 export const useAuthStore = create<AuthState>((set) => ({
   isLoggedIn: false,
   userRole: null,
@@ -59,7 +86,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
 
     const user = data.session.user;
-    const { role, customerId } = await fetchUserProfile(user.id);
+    let { role, customerId } = await fetchUserProfile(user.id);
+
+    // Attempt to auto-link if the user was deleted and re-added
+    ({ role, customerId } = await attemptAutoLink(user.id, user.email ?? null, role, customerId));
 
     // Block anyone who is completely unregistered (viewer)
     if (role === 'viewer') {
@@ -107,7 +137,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
 
     // Read role from public.users table — reliable for all account types
-    const { role, customerId } = await fetchUserProfile(data.user.id);
+    let { role, customerId } = await fetchUserProfile(data.user.id);
+
+    // Attempt to auto-link if the user was deleted and re-added
+    ({ role, customerId } = await attemptAutoLink(data.user.id, data.user.email ?? null, role, customerId));
 
     if (role === 'customer' && !customerId) {
       await supabase.auth.signOut();
@@ -154,7 +187,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     const user = data.session.user;
 
     // Read role from public.users table — same as login
-    const { role, customerId } = await fetchUserProfile(user.id);
+    let { role, customerId } = await fetchUserProfile(user.id);
+
+    // Attempt to auto-link if the user was deleted and re-added
+    ({ role, customerId } = await attemptAutoLink(user.id, user.email ?? null, role, customerId));
 
     set({
       isLoggedIn: true,

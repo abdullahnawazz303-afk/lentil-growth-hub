@@ -84,23 +84,44 @@ const Register = () => {
       email: email.trim().toLowerCase(), password,
       options: { data: { name: customerRow.name, role: "customer", account_type: "customer", customer_id: customerRow.id } },
     });
+    let userId = authData.user?.id;
+
     if (signUpErr) {
-      toast.error(signUpErr.message.includes("already registered")
-        ? "This email is already registered. Please login instead."
-        : signUpErr.message ?? "Registration failed. Please try again.");
-      setLoading(false); return;
+      if (signUpErr.message.includes("already registered")) {
+        // Attempt to log them in seamlessly with the password they provided
+        const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
+          email: email.trim().toLowerCase(),
+          password,
+        });
+        
+        if (signInErr || !signInData.user) {
+          toast.error("This email is already registered, but the password provided was incorrect. Please try logging in.");
+          setLoading(false); return;
+        }
+        
+        userId = signInData.user.id;
+        // Optionally notify them that we recovered their account
+        toast.success("Account recovered. Linking to your approved profile...");
+      } else {
+        toast.error(signUpErr.message ?? "Registration failed. Please try again.");
+        setLoading(false); return;
+      }
     }
-    if (!authData.user) { toast.error("Registration failed. Please try again."); setLoading(false); return; }
+
+    if (!userId) { toast.error("Registration failed. Please try again."); setLoading(false); return; }
     
     // Safely upsert the user record in public.users to ensure it exists
     await supabase.from("users").upsert({ 
-      id: authData.user.id,
+      id: userId,
       customer_id: customerRow.id, 
       role: "customer", 
       account_type: "customer",
       name: customerRow.name,
       email: email.trim().toLowerCase()
     });
+
+    // Save the email to the customers table to enable auto-linking in the future
+    await supabase.from("customers").update({ email: email.trim().toLowerCase() }).eq("id", customerRow.id);
 
     setLoading(false); setCustomerName(customerRow.name); setSuccess(true);
   };
