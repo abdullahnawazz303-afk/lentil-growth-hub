@@ -14,16 +14,16 @@ const faqCategories = [
     category: "Ordering & Minimums",
     faqs: [
       {
-        question: "What is your minimum wholesale order quantity?",
-        answer: "Our minimum order quantity for wholesale pricing varies by product, but generally starts at 1,000 kg (1 ton). Contact our sales team for exact minimums based on your chosen product.",
+        question: "Is there a weight limit for orders?",
+        answer: "Any weight can be selected during the order process, but final approval depends on stock and logistics. If an order is rejected, you will receive a formal notification via WhatsApp.",
+      },
+      {
+        question: "Where is your factory located?",
+        answer: "Our main factory and processing facility is located in the Shahdara, Lahore area, strategically positioned to serve markets across Pakistan.",
       },
       {
         question: "Can I order multiple products in one shipment?",
-        answer: "Absolutely. You can combine different lentil varieties, pulses, and rice in a single order. Our logistics team will coordinate to ensure efficient delivery of all items together.",
-      },
-      {
-        question: "Do you offer sample orders before bulk purchasing?",
-        answer: "Yes, we provide sample packs for quality evaluation before placing large wholesale orders. Contact our sales team to arrange a product sample.",
+        answer: "Absolutely. You can combine different lentil varieties, pulses, and rice in a single order. Our logistics team in Lahore will coordinate to ensure efficient delivery.",
       },
     ],
   },

@@ -18,7 +18,7 @@ const features = [
 
 const stats = [
   { value: "15+", label: "Years Experience" },
-  { value: "500+", label: "Wholesale Partners" },
+  { value: "50+", label: "Wholesale Partners" },
   { value: "100+", label: "Tons Monthly" },
   { value: "6+", label: "Product Lines" },
 ];
