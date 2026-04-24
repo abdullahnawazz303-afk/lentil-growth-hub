@@ -277,10 +277,11 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
       .delete()
       .eq('customer_id', customerId);
 
-    // 2. Unlink any customer requests
+    // 2. Delete associated customer requests
+    // This allows the phone number to be reused for a new request if needed.
     await supabase
       .from('customer_requests')
-      .update({ customer_id: null })
+      .delete()
       .eq('customer_id', customerId);
 
     // Safe to delete — opening balance ledger entry will cascade

@@ -65,12 +65,26 @@ const RequestAccess = () => {
       if (existingRequest.status === "Pending") {
         toast.error("A request with this phone number is already pending review.");
       } else if (existingRequest.status === "Approved") {
-        toast.error("This phone number is already approved. Go to Register to create your account.");
+        // If it says Approved but we found no customer earlier, it's an orphaned request
+        // from a previously deleted customer. We should allow them to re-submit.
+        if (!existingCustomer) {
+          // Silent cleanup of the orphaned request to allow the new one
+          await supabase.from("customer_requests").delete().eq("id", existingRequest.id);
+        } else {
+          toast.error("This phone number is already approved. Go to Register to create your account.");
+          setLoading(false);
+          return;
+        }
       } else {
         toast.error("A previous request with this phone was rejected. Contact the factory directly.");
       }
-      setLoading(false);
-      return;
+      
+      // If we cleared an orphaned request, we continue to submission. 
+      // Otherwise, we stop (the 'return' statements above handled that).
+      if (existingRequest.status !== "Approved" || existingCustomer) {
+        setLoading(false);
+        return;
+      }
     }
 
     // ── Submit request
