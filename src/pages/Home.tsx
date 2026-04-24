@@ -4,6 +4,10 @@ import { CheckCircle, Truck, Award, Leaf, ArrowRight, ChevronRight, Package } fr
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { HeroSlider } from "@/components/HeroSlider";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useRateCardStore } from "@/stores/rateCardStore";
+import { ProductCard, type ShopItem } from "@/components/ProductCard";
 
 const features = [
   { icon: CheckCircle, title: "Quality Graded", desc: "Every batch meticulously sorted into A+, A, B, C grades for consistency." },
@@ -18,6 +22,8 @@ const stats = [
   { value: "100+", label: "Tons Monthly" },
   { value: "6+", label: "Product Lines" },
 ];
+
+const FEATURED_NAMES = ["چاول", "سفید چنا", "لال لوبیا", "دلیہ"];
 
 const fadeSlide = (dir: "up" | "left" | "right" = "up") => ({
   hidden: {
@@ -49,6 +55,27 @@ function AnimatedStat({ value, label, delay }: { value: string; label: string; d
 }
 
 export default function Home() {
+  const [featuredItems, setFeaturedItems] = useState<ShopItem[]>([]);
+  const { rates, fetchRates } = useRateCardStore();
+
+  useEffect(() => {
+    fetchRates();
+    const fetchFeatured = async () => {
+      const { data } = await supabase
+        .from("item_names")
+        .select("*")
+        .in("name", FEATURED_NAMES)
+        .eq("is_active", true);
+      
+      if (data) {
+        // Sort to match FEATURED_NAMES order
+        const sorted = FEATURED_NAMES.map(name => data.find(i => i.name === name)).filter(Boolean) as ShopItem[];
+        setFeaturedItems(sorted);
+      }
+    };
+    fetchFeatured();
+  }, []);
+
   return (
     <div className="min-h-screen overflow-x-hidden">
 
@@ -142,40 +169,23 @@ export default function Home() {
             </motion.div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { title: "Chawal", desc: "Premium 386 & Basmati Rice", icon: "🌾", bg: "bg-amber-100 dark:bg-amber-900/30", color: "text-amber-700 dark:text-amber-400" },
-              { title: "Safed Chana", desc: "Premium White Chickpeas", icon: "🥣", bg: "bg-stone-200 dark:bg-stone-800/40", color: "text-stone-700 dark:text-stone-300" },
-              { title: "Lal Lobiya", desc: "Red Kidney Beans", icon: "🫘", bg: "bg-red-100 dark:bg-red-900/30", color: "text-red-700 dark:text-red-400" },
-              { title: "Dalya", desc: "Healthy Wheat Porridge", icon: "🌾", bg: "bg-orange-100 dark:bg-orange-900/30", color: "text-orange-700 dark:text-orange-400" },
-            ].map((cat, i) => (
-              <Link to="/shop" key={cat.title} className="block group h-full">
-                <motion.div
-                  className="relative h-full p-8 rounded-3xl border border-border overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-primary/50 bg-card"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-40px" }}
-                  transition={{ delay: i * 0.1, duration: 0.5, ease: "easeOut" }}
-                  whileHover={{ y: -5 }}
-                >
-                  <div className={`absolute top-0 right-0 w-40 h-40 -mr-12 -mt-12 rounded-full opacity-40 transition-transform duration-700 group-hover:scale-[1.8] ${cat.bg}`} />
-                  
-                  <div className="relative z-10 flex flex-col h-full justify-between">
-                    <div>
-                      <div className={`text-5xl mb-5 ${cat.color} drop-shadow-sm transition-transform duration-300 group-hover:scale-110 origin-left`}>{cat.icon}</div>
-                      <h3 className="font-display font-bold text-2xl uppercase tracking-wide mb-2 group-hover:text-primary transition-colors">{cat.title}</h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{cat.desc}</p>
-                    </div>
-                    
-                    <div className="mt-10 pt-4 border-t border-border/60 flex items-center justify-between">
-                      <span className="text-sm font-bold text-primary tracking-wide uppercase">Add to Cart</span>
-                      <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-sm group-hover:shadow-md">
-                        <ChevronRight className="h-5 w-5" />
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              </Link>
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {featuredItems.map((item) => {
+              const itemRates = rates.filter(r => r.item_name === item.name).map(r => r.price_per_kg);
+              const lowestPrice = itemRates.length > 0 ? Math.min(...itemRates) : null;
+              
+              return (
+                <Link to="/shop" key={item.id} className="block group">
+                  <ProductCard
+                    item={item}
+                    lowestPrice={lowestPrice}
+                    disableAction={true} // We want the whole card to link to shop
+                  />
+                </Link>
+              );
+            })}
+            {featuredItems.length === 0 && Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="aspect-square bg-muted rounded-2xl animate-pulse" />
             ))}
           </div>
 
