@@ -61,16 +61,23 @@ export default function Home() {
   useEffect(() => {
     fetchRates();
     const fetchFeatured = async () => {
+      // Fetch by English names or Urdu substrings to be more robust
       const { data } = await supabase
         .from("item_names")
         .select("*")
-        .in("name", FEATURED_NAMES)
-        .eq("is_active", true);
+        .or("name.ilike.%چاول%,name.ilike.%سفید چنا%,name.ilike.%لوبیا%,name.ilike.%دلیہ%")
+        .eq("is_active", true)
+        .limit(10);
       
       if (data) {
-        // Sort to match FEATURED_NAMES order
-        const sorted = FEATURED_NAMES.map(name => data.find(i => i.name === name)).filter(Boolean) as ShopItem[];
-        setFeaturedItems(sorted);
+        // Pick the best match for each category
+        const chawal = data.find(i => i.name.includes("چاول"));
+        const chana  = data.find(i => i.name.includes("سفید چنا"));
+        const lobiya = data.find(i => i.name.includes("لوبیا"));
+        const dalya  = data.find(i => i.name.includes("دلیہ")) || data[0]; // Fallback if dalya really doesn't exist
+        
+        const sorted = [chawal, chana, lobiya, dalya].filter(Boolean) as ShopItem[];
+        setFeaturedItems(sorted.slice(0, 4));
       }
     };
     fetchFeatured();
