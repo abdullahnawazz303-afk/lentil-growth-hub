@@ -60,85 +60,28 @@ export default function TrackOrder() {
     setLoading(true);
     setSearched(false);
 
-    let guestQuery = supabase
-      .from("guest_orders")
-      .select("*, guest_order_items(*)")
-      .ilike("guest_phone", `%${cleanPhone}%`);
+    try {
+      const { data, error } = await supabase.rpc("track_public_orders", {
+        p_phone: cleanPhone,
+        p_ref: ref.trim() || null,
+      });
 
-    if (ref.trim()) {
-      guestQuery = guestQuery.ilike("order_ref", `%${ref.trim()}%`);
-    }
+      if (error) throw error;
 
-    const { data: guestData, error: guestError } = await guestQuery;
+      const combinedOrders = (data || []).sort(
+        (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
 
-    // Search customers to find online_orders
-    const { data: customers } = await supabase
-      .from("customers")
-      .select("id, name")
-      .ilike("phone", `%${cleanPhone}%`);
-
-    let onlineData: UnifiedOrder[] = [];
-
-    if (customers && customers.length > 0) {
-      const customerIds = customers.map(c => c.id);
-      
-      let onlineQuery = supabase
-        .from("online_orders")
-        .select("*, online_order_items(*)")
-        .in("customer_id", customerIds);
-
-      if (ref.trim()) {
-        onlineQuery = onlineQuery.ilike("order_ref", `%${ref.trim()}%`);
+      setOrders(combinedOrders);
+      if (combinedOrders.length === 1) {
+        setExpandedId(combinedOrders[0].id);
       }
-
-      const { data: oData } = await onlineQuery;
-
-      if (oData) {
-        onlineData = oData.map(o => ({
-          id: o.id,
-          order_ref: o.order_ref,
-          guest_name: customers.find(c => c.id === o.customer_id)?.name || "Customer",
-          guest_phone: cleanPhone,
-          status: o.status as any,
-          notes: o.notes,
-          total_amount: o.total_amount,
-          created_at: o.created_at,
-          type: "online",
-          order_items: o.online_order_items.map((i: any) => ({
-            id: i.id,
-            item_name: i.item_name,
-            urdu_name: null,
-            grade: i.grade,
-            packing: i.packing,
-            quantity_kg: i.quantity_kg,
-          }))
-        }));
-      }
-    }
-
-    setLoading(false);
-    setSearched(true);
-
-    if (guestError) {
+      setSearched(true);
+    } catch (err) {
+      console.error(err);
       toast.error("Search failed. Please try again.");
-      return;
-    }
-
-    const parsedGuestData: UnifiedOrder[] = (guestData || []).map(g => ({
-      ...g,
-      guest_name: g.guest_name,
-      guest_phone: g.guest_phone,
-      order_items: g.guest_order_items,
-      type: "guest"
-    }));
-
-    const combinedOrders = [...parsedGuestData, ...onlineData].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-
-    setOrders(combinedOrders);
-    if (combinedOrders.length === 1) {
-      setExpandedId(combinedOrders[0].id);
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -65,54 +65,32 @@ export function GuestCheckoutModal({ onClose, onSuccess }: GuestCheckoutModalPro
         0
       );
 
-      // 1. Check if this phone number belongs to an existing customer
-      const { data: existingCustomer } = await supabase
-        .from("customers")
-        .select("id, name")
-        .eq("phone", phone.trim())
-        .maybeSingle();
+      const payload = {
+        name: name.trim(),
+        phone: phone.trim(),
+        email: email.trim() || null,
+        address: address.trim() || null,
+        locationUrl,
+        lat,
+        lng,
+        items: items.flatMap((item) =>
+          item.entries.map((entry) => ({
+            item_name: item.itemName,
+            english_name: item.englishName,
+            grade: entry.grade,
+            packing: entry.packing,
+            quantity_kg: Number(entry.kgs),
+          }))
+        ),
+      };
 
-      let ref = "";
-      let isRegistered = !!existingCustomer;
+      const { data, error } = await supabase.rpc("submit_public_order", { payload });
 
-      // CREATE GUEST ORDER (Always insert to guest_orders for unauthenticated users to avoid RLS blocks)
-      const orderId = crypto.randomUUID();
+      if (error) throw error;
+      if (!data || !data.success) throw new Error("Failed to place order");
 
-      const { data: inserted, error: orderError } = await supabase
-        .from("guest_orders")
-        .insert({
-          id: orderId,
-          guest_name: name.trim(),
-          guest_phone: phone.trim(),
-          guest_email: email.trim() || null,
-          guest_address: address.trim() || null,
-          guest_location_url: locationUrl,
-          guest_lat: lat,
-          guest_lng: lng,
-          total_amount: totalKgs,
-          status: "Pending",
-        })
-        .select("order_ref")
-        .single();
-
-      if (orderError) throw orderError;
-
-      // Insert guest order items
-      const orderItems = items.flatMap((item) =>
-        item.entries.map((entry) => ({
-          order_id: orderId,
-          item_name: item.itemName,
-          urdu_name: item.itemName,
-          grade: entry.grade,
-          packing: entry.packing,
-          quantity_kg: Number(entry.kgs),
-        }))
-      );
-
-      const { error: itemsError } = await supabase.from("guest_order_items").insert(orderItems);
-      if (itemsError) throw itemsError;
-
-      ref = inserted?.order_ref || orderId.slice(0, 12).toUpperCase();
+      const ref = data.order_ref;
+      const isRegistered = data.type === 'customer';
 
       setOrderRef(ref);
       setDone(true);
@@ -121,7 +99,7 @@ export function GuestCheckoutModal({ onClose, onSuccess }: GuestCheckoutModalPro
       notifyAdminWhatsApp({
         type: isRegistered ? "customer" : "guest",
         orderRef: ref,
-        name: isRegistered ? existingCustomer.name : name.trim(),
+        name: name.trim(),
         phone: phone.trim(),
         action: "placed",
         items: items.flatMap((item) =>
