@@ -71,6 +71,16 @@ export const useAuthStore = create<AuthState>((set) => ({
       };
     }
 
+    // Block if customer profile was deleted
+    if (role === 'customer' && !customerId) {
+      await supabase.auth.signOut();
+      return {
+        ok: false,
+        blocked: true,
+        message: 'Your customer profile is no longer active or was deleted.',
+      };
+    }
+
     set({
       isLoggedIn: true,
       userRole: role,
@@ -98,6 +108,12 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     // Read role from public.users table — reliable for all account types
     const { role, customerId } = await fetchUserProfile(data.user.id);
+
+    if (role === 'customer' && !customerId) {
+      await supabase.auth.signOut();
+      set({ loading: false });
+      return { ok: false, message: "Your customer profile is no longer active or was deleted." };
+    }
 
     set({
       isLoggedIn: true,
