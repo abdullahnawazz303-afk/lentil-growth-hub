@@ -100,6 +100,11 @@ const OnlineOrders = () => {
       .sort((a, b) => Number(b.remainingQuantity) - Number(a.remainingQuantity));
   };
 
+  const getPurchasePrice = (itemName: string, grade: string) => {
+    const matches = getMatchingBatches(itemName, grade, 0);
+    return matches.length > 0 ? matches[0].purchasePrice : null;
+  };
+
   const openDeliveryDialog = (orderId: string) => {
     const o = orders.find(ord => ord.id === orderId);
     if (!o) return;

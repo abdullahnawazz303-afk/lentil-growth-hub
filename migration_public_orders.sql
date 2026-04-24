@@ -42,8 +42,11 @@ BEGIN
     v_total_amount := v_total_amount + (v_item->>'quantity_kg')::numeric;
   END LOOP;
 
-  -- Check if phone belongs to customer
-  SELECT id INTO v_customer_id FROM customers WHERE phone = v_phone LIMIT 1;
+  -- Check if phone belongs to customer (ignoring spaces, dashes, and +92 prefix)
+  SELECT id INTO v_customer_id 
+  FROM customers 
+  WHERE RIGHT(replace(replace(phone, ' ', ''), '-', ''), 10) = RIGHT(replace(replace(v_phone, ' ', ''), '-', ''), 10)
+  LIMIT 1;
 
   IF v_customer_id IS NOT NULL THEN
     -- Insert into online_orders

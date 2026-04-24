@@ -61,6 +61,7 @@ ALTER TABLE customer_requests ENABLE ROW LEVEL SECURITY;
 
 -- Drop old policies to start clean
 DROP POLICY IF EXISTS "Public can submit requests"           ON customer_requests;
+DROP POLICY IF EXISTS "Public can read requests"             ON customer_requests;
 DROP POLICY IF EXISTS "Authenticated staff can read requests" ON customer_requests;
 DROP POLICY IF EXISTS "Authenticated staff can update requests" ON customer_requests;
 DROP POLICY IF EXISTS "Authenticated staff can delete requests" ON customer_requests;
