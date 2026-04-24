@@ -269,10 +269,12 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
 
     // ── Pre-deletion cleanup ──
 
-    // 1. Unlink from users table
+    // 1. Delete associated user profile(s) from public.users
+    // This effectively "unregisters" them from the app.
+    // Their Supabase Auth account remains, but they will be blocked as 'viewer' on next login.
     await supabase
       .from('users')
-      .update({ customer_id: null })
+      .delete()
       .eq('customer_id', customerId);
 
     // 2. Unlink any customer requests

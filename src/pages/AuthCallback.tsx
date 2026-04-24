@@ -36,10 +36,14 @@ export default function AuthCallback() {
           setStatus("Welcome! Redirecting to your portal…");
           toast.success("Signed in with Google successfully!");
           navigate("/portal", { replace: true });
-        } else {
+        } else if (["admin", "manager", "cashier"].includes(role || "")) {
           setStatus("Welcome back! Redirecting to dashboard…");
           toast.success("Signed in with Google successfully!");
           navigate("/dashboard", { replace: true });
+        } else {
+          // If they somehow got through as 'viewer', send them back to login
+          toast.error("Your account is not fully registered. Please contact the factory.");
+          navigate("/login", { replace: true });
         }
       } else {
         toast.error(result.message, { duration: 6000 });
