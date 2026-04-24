@@ -61,16 +61,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     const user = data.session.user;
     const { role, customerId } = await fetchUserProfile(user.id);
 
-    // Block anyone who is not a customer (e.g. admin signed in with Google)
-    if (role !== 'customer') {
+    // Block anyone who is completely unregistered (viewer)
+    if (role === 'viewer') {
       await supabase.auth.signOut();
       return {
         ok: false,
         blocked: true,
-        message:
-          role === 'viewer'
-            ? 'Your Google account is not registered as a customer. Please contact the factory.'
-            : 'Staff accounts must use email & password login.',
+        message: 'Your Google account is not registered. Please contact the factory.',
       };
     }
 

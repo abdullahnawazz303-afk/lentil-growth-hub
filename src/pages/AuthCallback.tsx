@@ -31,9 +31,16 @@ export default function AuthCallback() {
       if (cancelled) return;
 
       if (result.ok) {
-        setStatus("Welcome! Redirecting to your portal…");
-        toast.success("Signed in with Google successfully!");
-        navigate("/portal", { replace: true });
+        const role = useAuthStore.getState().userRole;
+        if (role === "customer") {
+          setStatus("Welcome! Redirecting to your portal…");
+          toast.success("Signed in with Google successfully!");
+          navigate("/portal", { replace: true });
+        } else {
+          setStatus("Welcome back! Redirecting to dashboard…");
+          toast.success("Signed in with Google successfully!");
+          navigate("/dashboard", { replace: true });
+        }
       } else {
         toast.error(result.message, { duration: 6000 });
         navigate("/login", { replace: true });

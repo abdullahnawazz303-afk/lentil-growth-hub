@@ -72,13 +72,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function CustomerRoute({ children }: { children: React.ReactNode }) {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const userRole   = useAuthStore((s) => s.userRole);
   const loading    = useAuthStore((s) => s.loading);
 
   if (loading)     return <LoadingScreen />;
   if (!isLoggedIn) return <Navigate to="/login" replace />;
-  if (userRole !== "customer") return <Navigate to="/dashboard" replace />;
 
+  // We allow all logged-in users (including staff) to access the portal 
+  // so they can test/view the portal directly without being redirected.
   return <>{children}</>;
 }
 
