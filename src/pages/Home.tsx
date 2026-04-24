@@ -113,49 +113,72 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Products teaser banner ────────────────── */}
-      <section className="relative overflow-hidden bg-primary py-20 md:py-28">
-        <div className="absolute inset-0 opacity-10">
-          <motion.div
-            className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-white blur-3xl"
-            animate={{ scale: [1, 1.12, 1], opacity: [0.1, 0.18, 0.1] }}
-            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-          />
-        </div>
-        <div className="absolute inset-0" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.04) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.04) 40px)" }} />
-
-        <div className="relative max-w-5xl mx-auto px-4 md:px-8">
-          <motion.div
-            className="flex flex-col md:flex-row items-center md:items-end justify-between gap-8"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-60px" }}
-            variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.15 } } }}
-          >
-            <motion.div variants={fadeSlide("left")}>
-              <span className="text-xs font-bold text-white/70 uppercase tracking-[0.2em] mb-3 block">Product Catalogue</span>
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white uppercase leading-tight">
-                Explore Our<br />
-                <span className="text-primary-foreground opacity-80">Premium Products</span>
+      {/* ── Featured Categories ───────────────────── */}
+      <section className="py-20 md:py-28 bg-muted/30">
+        <div className="max-w-7xl mx-auto px-4 md:px-8">
+          
+          <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-4">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-60px" }}
+              variants={fadeSlide("up")}
+            >
+              <span className="text-xs font-bold text-primary uppercase tracking-[0.2em] mb-2 block">Our Catalogue</span>
+              <h2 className="text-3xl md:text-5xl font-display font-bold text-foreground uppercase">
+                Featured Categories
               </h2>
-              <motion.p
-                className="text-white/60 mt-5 max-w-md leading-relaxed"
-                variants={fadeSlide("up")}
-              >
-                Dal Masoor, Dal Chana, Chawal 386, Lobiya — all grades, all pack sizes.
-              </motion.p>
             </motion.div>
-
-            <motion.div variants={fadeSlide("right")} className="shrink-0">
-              <Link to="/shop">
-                <motion.div whileHover={{ scale: 1.06, y: -3 }} whileTap={{ scale: 0.96 }}>
-                  <Button size="lg" className="rounded-full bg-white text-primary hover:bg-white/90 font-bold text-base px-10 h-12 border-0 shadow-xl">
-                    View All Products <ChevronRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+            >
+              <Link to="/shop" className="group flex items-center text-primary font-semibold hover:text-primary/80 transition-colors">
+                View full shop <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </motion.div>
-          </motion.div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { title: "Chawal", desc: "Premium 386 & Basmati Rice", icon: "🌾", bg: "bg-amber-100 dark:bg-amber-900/30", color: "text-amber-700 dark:text-amber-400" },
+              { title: "Safed Chana", desc: "Premium White Chickpeas", icon: "🥣", bg: "bg-stone-200 dark:bg-stone-800/40", color: "text-stone-700 dark:text-stone-300" },
+              { title: "Lal Lobiya", desc: "Red Kidney Beans", icon: "🫘", bg: "bg-red-100 dark:bg-red-900/30", color: "text-red-700 dark:text-red-400" },
+              { title: "Dalya", desc: "Healthy Wheat Porridge", icon: "🌾", bg: "bg-orange-100 dark:bg-orange-900/30", color: "text-orange-700 dark:text-orange-400" },
+            ].map((cat, i) => (
+              <Link to="/shop" key={cat.title} className="block group h-full">
+                <motion.div
+                  className="relative h-full p-8 rounded-3xl border border-border overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-primary/50 bg-card"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-40px" }}
+                  transition={{ delay: i * 0.1, duration: 0.5, ease: "easeOut" }}
+                  whileHover={{ y: -5 }}
+                >
+                  <div className={`absolute top-0 right-0 w-40 h-40 -mr-12 -mt-12 rounded-full opacity-40 transition-transform duration-700 group-hover:scale-[1.8] ${cat.bg}`} />
+                  
+                  <div className="relative z-10 flex flex-col h-full justify-between">
+                    <div>
+                      <div className={`text-5xl mb-5 ${cat.color} drop-shadow-sm transition-transform duration-300 group-hover:scale-110 origin-left`}>{cat.icon}</div>
+                      <h3 className="font-display font-bold text-2xl uppercase tracking-wide mb-2 group-hover:text-primary transition-colors">{cat.title}</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{cat.desc}</p>
+                    </div>
+                    
+                    <div className="mt-10 pt-4 border-t border-border/60 flex items-center justify-between">
+                      <span className="text-sm font-bold text-primary tracking-wide uppercase">Add to Cart</span>
+                      <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-sm group-hover:shadow-md">
+                        <ChevronRight className="h-5 w-5" />
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </Link>
+            ))}
+          </div>
+
         </div>
       </section>
 
