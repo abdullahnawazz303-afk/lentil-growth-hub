@@ -254,6 +254,33 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
       };
     }
 
+    // Check for online orders
+    const { count: ordersCount } = await supabase
+      .from('online_orders')
+      .select('id', { count: 'exact', head: true })
+      .eq('customer_id', customerId);
+
+    if (ordersCount && ordersCount > 0) {
+      return {
+        success: false,
+        reason: `This customer has ${ordersCount} online order record${ordersCount > 1 ? 's' : ''}. Cannot delete a customer with order history.`,
+      };
+    }
+
+    // ── Pre-deletion cleanup ──
+
+    // 1. Unlink from users table
+    await supabase
+      .from('users')
+      .update({ customer_id: null })
+      .eq('customer_id', customerId);
+
+    // 2. Unlink any customer requests
+    await supabase
+      .from('customer_requests')
+      .update({ customer_id: null })
+      .eq('customer_id', customerId);
+
     // Safe to delete — opening balance ledger entry will cascade
     const { error } = await supabase
       .from('customers')
