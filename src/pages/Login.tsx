@@ -71,11 +71,11 @@ export default function Login() {
     if (eErr || pErr) return;
 
     setLoading(true);
-    const ok = await login(email.trim().toLowerCase(), password);
+    const result = await login(email.trim().toLowerCase(), password);
     setLoading(false);
 
-    if (!ok) {
-      toast.error("Incorrect email or password. Please try again.");
+    if (!result.ok) {
+      toast.error(result.message || "Incorrect email or password. Please try again.");
       return;
     }
 

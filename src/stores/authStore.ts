@@ -10,7 +10,7 @@ interface AuthState {
   userId: string | null;
   customerId: string | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{ ok: boolean; message?: string }>;
   loginWithGoogle: () => Promise<void>;
   finalizeGoogleLogin: () => Promise<{ ok: boolean; blocked: boolean; message: string }>;
   logout: () => void;
@@ -93,7 +93,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     if (error || !data.user) {
       set({ loading: false });
-      return false;
+      return { ok: false, message: error?.message || "Incorrect email or password." };
     }
 
     // Read role from public.users table — reliable for all account types
@@ -108,7 +108,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       loading: false,
     });
 
-    return true;
+    return { ok: true };
   },
 
   logout: async () => {

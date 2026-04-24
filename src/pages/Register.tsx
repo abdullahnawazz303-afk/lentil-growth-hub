@@ -91,7 +91,17 @@ const Register = () => {
       setLoading(false); return;
     }
     if (!authData.user) { toast.error("Registration failed. Please try again."); setLoading(false); return; }
-    await supabase.from("users").update({ customer_id: customerRow.id, role: "customer", account_type: "customer" }).eq("id", authData.user.id);
+    
+    // Safely upsert the user record in public.users to ensure it exists
+    await supabase.from("users").upsert({ 
+      id: authData.user.id,
+      customer_id: customerRow.id, 
+      role: "customer", 
+      account_type: "customer",
+      name: customerRow.name,
+      email: email.trim().toLowerCase()
+    });
+
     setLoading(false); setCustomerName(customerRow.name); setSuccess(true);
   };
 
