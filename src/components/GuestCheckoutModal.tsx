@@ -73,80 +73,46 @@ export function GuestCheckoutModal({ onClose, onSuccess }: GuestCheckoutModalPro
         .maybeSingle();
 
       let ref = "";
-      let isRegistered = false;
+      let isRegistered = !!existingCustomer;
 
-      if (existingCustomer) {
-        isRegistered = true;
-        // CREATE ONLINE ORDER
-        const { data: inserted, error: orderError } = await supabase
-          .from("online_orders")
-          .insert({
-            customer_id: existingCustomer.id,
-            total_amount: 0,
-            status: "Pending",
-            notes: `Public Checkout by ${name.trim()} - Location: ${locationUrl || 'N/A'}`
-          })
-          .select("id, order_ref")
-          .single();
+      // CREATE GUEST ORDER (Always insert to guest_orders for unauthenticated users to avoid RLS blocks)
+      const orderId = crypto.randomUUID();
 
-        if (orderError) throw orderError;
-        
-        ref = inserted.order_ref || inserted.id.slice(0, 12).toUpperCase();
+      const { data: inserted, error: orderError } = await supabase
+        .from("guest_orders")
+        .insert({
+          id: orderId,
+          guest_name: name.trim(),
+          guest_phone: phone.trim(),
+          guest_email: email.trim() || null,
+          guest_address: address.trim() || null,
+          guest_location_url: locationUrl,
+          guest_lat: lat,
+          guest_lng: lng,
+          total_amount: totalKgs,
+          status: "Pending",
+        })
+        .select("order_ref")
+        .single();
 
-        // Insert online_order_items
-        const orderItems = items.flatMap((item) =>
-          item.entries.map((entry) => ({
-            order_id: inserted.id,
-            item_name: item.itemName,
-            grade: entry.grade,
-            packing: entry.packing,
-            quantity_kg: Number(entry.kgs),
-          }))
-        );
+      if (orderError) throw orderError;
 
-        const { error: itemsError } = await supabase.from("online_order_items").insert(orderItems);
-        if (itemsError) throw itemsError;
+      // Insert guest order items
+      const orderItems = items.flatMap((item) =>
+        item.entries.map((entry) => ({
+          order_id: orderId,
+          item_name: item.itemName,
+          urdu_name: item.itemName,
+          grade: entry.grade,
+          packing: entry.packing,
+          quantity_kg: Number(entry.kgs),
+        }))
+      );
 
-      } else {
-        // CREATE GUEST ORDER
-        const orderId = crypto.randomUUID();
+      const { error: itemsError } = await supabase.from("guest_order_items").insert(orderItems);
+      if (itemsError) throw itemsError;
 
-        const { data: inserted, error: orderError } = await supabase
-          .from("guest_orders")
-          .insert({
-            id: orderId,
-            guest_name: name.trim(),
-            guest_phone: phone.trim(),
-            guest_email: email.trim() || null,
-            guest_address: address.trim() || null,
-            guest_location_url: locationUrl,
-            guest_lat: lat,
-            guest_lng: lng,
-            total_amount: totalKgs,
-            status: "Pending",
-          })
-          .select("order_ref")
-          .single();
-
-        if (orderError) throw orderError;
-
-        // Insert guest order items
-        const orderItems = items.flatMap((item) =>
-          item.entries.map((entry) => ({
-            order_id: orderId,
-            item_name: item.itemName,
-            urdu_name: item.itemName,
-            grade: entry.grade,
-            packing: entry.packing,
-            quantity_kg: Number(entry.kgs),
-          }))
-        );
-
-        const { error: itemsError } = await supabase.from("guest_order_items").insert(orderItems);
-        if (itemsError) throw itemsError;
-
-        ref = inserted?.order_ref || orderId.slice(0, 12).toUpperCase();
-      }
+      ref = inserted?.order_ref || orderId.slice(0, 12).toUpperCase();
 
       setOrderRef(ref);
       setDone(true);
