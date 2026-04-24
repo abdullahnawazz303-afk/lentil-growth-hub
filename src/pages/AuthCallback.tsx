@@ -38,15 +38,17 @@ export default function AuthCallback() {
           navigate("/portal", { replace: true });
         } else if (["admin", "manager", "cashier"].includes(role || "")) {
           setStatus("Welcome back! Redirecting to dashboard…");
-          toast.success("Signed in with Google successfully!");
+          toast.success("Signed in with staff privileges!");
           navigate("/dashboard", { replace: true });
         } else {
-          // If they somehow got through as 'viewer', send them back to login
-          toast.error("Your account is not fully registered. Please contact the factory.");
+          // This case should be caught by finalizeGoogleLogin, but as a fallback:
+          setStatus("Access denied. Redirecting…");
+          toast.error("Your account is not registered. Please contact the factory.");
           navigate("/login", { replace: true });
         }
       } else {
-        toast.error(result.message, { duration: 6000 });
+        setStatus("Verification failed.");
+        toast.error(result.message || "Login failed. Please try again.", { duration: 6000 });
         navigate("/login", { replace: true });
       }
     }

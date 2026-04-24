@@ -192,6 +192,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     // Attempt to auto-link if the user was deleted and re-added
     ({ role, customerId } = await attemptAutoLink(user.id, user.email ?? null, role, customerId));
 
+    // If they are a viewer, they shouldn't be considered "logged in" for the app
+    if (role === 'viewer') {
+      set({ isLoggedIn: false, userRole: null, loading: false });
+      return;
+    }
+
     set({
       isLoggedIn: true,
       userRole: role,
