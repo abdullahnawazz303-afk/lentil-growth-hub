@@ -3,6 +3,7 @@ import { X, Plus, Trash2, ShoppingBag, Package } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCartStore, type CartEntry } from "@/stores/cartStore";
 import { toast } from "sonner";
+import { useRateCardStore } from "@/stores/rateCardStore";
 
 interface AddToCartModalProps {
   item: {
@@ -22,6 +23,8 @@ const emptyEntry = (): CartEntry => ({ grade: "A", packing: "1 kg", kgs: 0 });
 export function AddToCartModal({ item, onClose }: AddToCartModalProps) {
   const { addItem, getItem } = useCartStore();
   const existing = getItem(item.itemId);
+  const { rates } = useRateCardStore();
+  const itemRates = rates.filter(r => r.item_name === item.itemName);
 
   const [entries, setEntries] = useState<CartEntry[]>(
     existing?.entries.length ? existing.entries.map((e) => ({ ...e })) : [emptyEntry()]
@@ -91,6 +94,22 @@ export function AddToCartModal({ item, onClose }: AddToCartModalProps) {
               <X className="h-4 w-4" />
             </button>
           </div>
+
+          {/* Current Market Rates */}
+          {itemRates.length > 0 && (
+            <div className="bg-primary/5 px-5 py-3 border-b flex flex-wrap gap-2 items-center">
+              <span className="text-xs font-semibold text-muted-foreground mr-1">Current Rates:</span>
+              {GRADE_OPTIONS.map(g => {
+                const rate = itemRates.find(r => r.grade === g);
+                if (!rate) return null;
+                return (
+                  <span key={g} className="text-xs bg-white border px-2 py-1 rounded-md shadow-sm">
+                    Grade <strong className="text-primary">{g}</strong>: Rs. {rate.price_per_kg}
+                  </span>
+                )
+              })}
+            </div>
+          )}
 
           {/* Entries */}
           <div className="p-5 space-y-3">
