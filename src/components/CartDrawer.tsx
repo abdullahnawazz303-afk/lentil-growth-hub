@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { X, Trash2, Edit2, ShoppingBag, Package, MapPin, CheckCircle, ExternalLink } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCartStore } from "@/stores/cartStore";
@@ -14,6 +15,7 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ onClose }: CartDrawerProps) {
+  const navigate = useNavigate();
   const { items, removeItem, clearCart } = useCartStore();
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const userId     = useAuthStore((s) => s.userId);
@@ -209,7 +211,10 @@ export function CartDrawer({ onClose }: CartDrawerProps) {
                 <p className="text-muted-foreground font-medium">Your cart is empty</p>
                 <p className="text-sm text-muted-foreground/70">Browse the shop and add products</p>
                 <button
-                  onClick={onClose}
+                  onClick={() => {
+                    onClose();
+                    navigate("/shop");
+                  }}
                   className="mt-2 px-6 py-2 rounded-full bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors"
                 >
                   Browse Shop
