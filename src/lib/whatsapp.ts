@@ -1,4 +1,4 @@
-const ADMIN_PHONE = import.meta.env.VITE_ADMIN_WHATSAPP || "923065887827";
+const ADMIN_PHONE = import.meta.env.VITE_ADMIN_WHATSAPP || "923244600645";
 
 interface OrderNotifParams {
   type: "guest" | "customer";
