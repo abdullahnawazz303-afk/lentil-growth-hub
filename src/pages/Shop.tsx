@@ -104,10 +104,10 @@ export default function Shop() {
       </section>
 
       {/* Search + Filters */}
-      <section className="sticky top-[80px] z-30 bg-background/95 backdrop-blur-md border-b shadow-sm py-3">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
+      <section className="sticky top-[80px] z-30 bg-background/95 backdrop-blur-md border-b shadow-sm py-2">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 flex flex-col md:flex-row items-center gap-4">
           {/* Search bar */}
-          <div className="relative mb-3">
+          <div className="relative w-full md:w-80 flex-shrink-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               value={search}
@@ -126,7 +126,7 @@ export default function Shop() {
           </div>
 
           {/* Category pills */}
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <div className="flex-1 min-w-0 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat.key}
@@ -146,10 +146,10 @@ export default function Shop() {
       </section>
 
       {/* Product grid */}
-      <section className="py-10 md:py-14">
+      <section className="py-6 md:py-8">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           {/* Results count */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-muted-foreground">
               {loading ? "Loading..." : `${filtered.length} product${filtered.length !== 1 ? "s" : ""}`}
             </p>
