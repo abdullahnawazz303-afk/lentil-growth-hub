@@ -95,7 +95,7 @@ export default function About() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <span className="inline-block text-xs font-bold text-primary uppercase tracking-[0.25em] mb-5 px-4 py-1.5 border border-primary/40 bg-primary/10">
+          <span className="inline-block text-xs font-black text-white uppercase tracking-[0.25em] mb-5 px-6 py-2 rounded-full bg-primary shadow-xl">
             Since 2010
           </span>
           <h1 className="text-5xl md:text-6xl lg:text-8xl font-display font-bold text-white mb-5 tracking-tight uppercase leading-[1.0]">
