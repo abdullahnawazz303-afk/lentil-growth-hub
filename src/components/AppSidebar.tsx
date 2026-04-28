@@ -118,14 +118,12 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="overflow-hidden">
       <SidebarHeader className="p-4 border-b border-sidebar-border relative">
         <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-3">
-             <QfLogo className="w-12 h-12 shrink-0" />
-             {!collapsed && (
-               <div className="flex flex-col">
-                 <span className="font-semibold text-base text-sidebar-primary tracking-tight">Qais Food</span>
-                 <span className="text-[11px] font-medium text-sidebar-foreground/60">Pulses &amp; Rice</span>
-               </div>
-             )}
+          <div className="flex items-center">
+            {collapsed ? (
+              <QfLogo className="scale-[0.5] origin-left -ml-2" />
+            ) : (
+              <QfLogo className="scale-[0.65] origin-left" />
+            )}
           </div>
           {isMobile && (
             <Button 

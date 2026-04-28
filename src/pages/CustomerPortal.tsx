@@ -235,9 +235,9 @@ const CustomerPortal = () => {
 
       {/* Top bar */}
       <div className="border-b bg-card px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <QfLogo className="w-12 h-12 shrink-0" />
-          <div>
+        <div className="flex items-center gap-2">
+          <QfLogo className="scale-[0.65] origin-left" />
+          <div className="ml-2">
             <p className="font-semibold text-sm">{customerName || "Customer Portal"}</p>
             <p className="hidden sm:block text-xs text-muted-foreground">{userEmail}</p>
           </div>

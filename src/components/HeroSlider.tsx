@@ -17,8 +17,8 @@ interface HeroSlide {
 const FALLBACK_SLIDES: HeroSlide[] = [
   {
     id: "fallback-1",
-    title: "Pakistan's Trusted Lentil & Pulse Factory",
-    subtitle: "Factory-cleaned, machine-graded — delivering unmatched quality to wholesale markets across the nation.",
+    title: "Pakistan's Trusted Lentil Factory",
+    subtitle: "Factory-cleaned, machine-graded — delivering unmatched quality to wholesale markets.",
     image_url: "/hero_1.png",
     link_url: "/shop",
   },
@@ -81,101 +81,112 @@ export function HeroSlider() {
   const slide = slides[current];
 
   const variants = {
-    enter: (dir: number) => ({ x: dir > 0 ? "100%" : "-100%", opacity: 0 }),
+    enter: (dir: number) => ({ x: dir > 0 ? 100 : -100, opacity: 0 }),
     center: { x: 0, opacity: 1 },
-    exit: (dir: number) => ({ x: dir > 0 ? "-100%" : "100%", opacity: 0 }),
+    exit: (dir: number) => ({ x: dir > 0 ? -100 : 100, opacity: 0 }),
   };
 
   return (
-    <section className="relative w-full overflow-hidden" style={{ height: "92vh", minHeight: 520 }}>
-      {/* Slides */}
-      <AnimatePresence custom={direction} initial={false}>
-        <motion.div
-          key={slide.id}
-          custom={direction}
-          variants={variants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={{ duration: 0.7, ease: [0.32, 0, 0.67, 0] }}
-          className="absolute inset-0"
-        >
-          {/* Background Image */}
-          <div
-            className="absolute inset-0 bg-center bg-cover"
-            style={{ backgroundImage: `url(${slide.image_url})` }}
-          />
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/60" />
-
-          {/* Content */}
-          <div className="relative h-full flex flex-col items-center justify-center text-center px-4 max-w-4xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <div className="flex justify-center mb-5">
-                <QfLogo className="w-24 h-24 md:w-32 md:h-32 drop-shadow-2xl text-white" />
-              </div>
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-4 drop-shadow-lg" style={{ fontFamily: "Georgia, serif" }}>
+    <section className="relative w-full overflow-hidden bg-[#F9F9F9] pt-24 pb-12 lg:pt-32 lg:pb-20 min-h-[600px] lg:min-h-[85vh] flex items-center">
+      
+      {/* Decorative Blob Backgrounds */}
+      <div className="absolute top-0 right-0 w-full max-w-[60%] h-full z-0 overflow-hidden pointer-events-none opacity-20">
+        <div className="absolute top-[-10%] right-[-10%] w-[800px] h-[800px] bg-primary blob-shape-2 mix-blend-multiply filter blur-3xl"></div>
+      </div>
+      
+      <div className="max-w-7xl mx-auto px-4 md:px-8 w-full relative z-10">
+        <AnimatePresence custom={direction} mode="wait">
+          <motion.div
+            key={slide.id}
+            custom={direction}
+            variants={variants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center"
+          >
+            {/* Left Content (Typography) */}
+            <div className="order-2 lg:order-1 text-center lg:text-left flex flex-col items-center lg:items-start pt-8 lg:pt-0">
+              <span className="inline-block py-1.5 px-4 rounded-full bg-primary/10 text-primary font-bold text-xs tracking-widest uppercase mb-6 shadow-sm">
+                Premium Quality
+              </span>
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-black text-foreground leading-[1.1] mb-6 uppercase">
                 {slide.title}
               </h1>
               {slide.subtitle && (
-                <p className="text-lg md:text-xl text-white/85 mb-8 max-w-2xl mx-auto leading-relaxed">
+                <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-xl leading-relaxed">
                   {slide.subtitle}
                 </p>
               )}
-              <div className="flex flex-wrap gap-4 justify-center">
+              <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
                 <Link
                   to="/shop"
-                  className="inline-flex items-center gap-2 px-8 py-3 rounded-full bg-primary text-white font-bold text-base hover:bg-primary/90 transition-all shadow-xl hover:scale-105"
+                  className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-primary text-white font-bold text-base hover:bg-primary/90 transition-all shadow-xl hover:-translate-y-1"
                 >
                   <ShoppingBag className="h-5 w-5" />
                   Shop Now
                 </Link>
                 <Link
                   to="/contact"
-                  className="inline-flex items-center gap-2 px-8 py-3 rounded-full border-2 border-white/70 text-white font-bold text-base hover:bg-white/15 transition-all backdrop-blur-sm hover:scale-105"
+                  className="inline-flex items-center gap-2 px-8 py-4 rounded-full border-[3px] border-border text-foreground font-bold text-base hover:border-primary hover:text-primary transition-all hover:-translate-y-1 bg-white"
                 >
-                  Get a Quote
+                  Contact Us
                 </Link>
               </div>
-            </motion.div>
-          </div>
-        </motion.div>
-      </AnimatePresence>
+            </div>
 
-      {/* Navigation arrows */}
-      <button
-        onClick={() => { prev(); resetTimer(); }}
-        className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/15 border border-white/30 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-all"
-        aria-label="Previous slide"
-      >
-        <ChevronLeft className="h-6 w-6" />
-      </button>
-      <button
-        onClick={() => { next(); resetTimer(); }}
-        className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/15 border border-white/30 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-all"
-        aria-label="Next slide"
-      >
-        <ChevronRight className="h-6 w-6" />
-      </button>
+            {/* Right Content (Image & Blob) */}
+            <div className="order-1 lg:order-2 relative flex justify-center items-center">
+              {/* Colored Blob Shape Behind Image */}
+              <div className="absolute w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] lg:w-[500px] lg:h-[500px] bg-primary blob-shape z-0 opacity-90 shadow-2xl"></div>
+              
+              {/* Product/Hero Image */}
+              <motion.img
+                src={slide.image_url}
+                alt={slide.title}
+                className="relative z-10 w-[80%] max-w-[500px] h-auto object-cover rounded-3xl drop-shadow-2xl"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.7, ease: "easeOut" }}
+              />
 
-      {/* Dot indicators */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-        {slides.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => { goTo(i, i > current ? 1 : -1); resetTimer(); }}
-            className={`transition-all rounded-full ${
-              i === current
-                ? "w-8 h-2.5 bg-white"
-                : "w-2.5 h-2.5 bg-white/40 hover:bg-white/70"
-            }`}
-            aria-label={`Go to slide ${i + 1}`}
-          />
-        ))}
+              {/* Navigation Arrows (Positioned near the image on desktop) */}
+              <div className="absolute -bottom-6 right-0 lg:right-auto lg:-bottom-12 lg:-left-12 z-20 flex gap-3">
+                <button
+                  onClick={() => { prev(); resetTimer(); }}
+                  className="w-12 h-12 rounded-full bg-white text-primary shadow-xl hover:bg-primary hover:text-white transition-all flex items-center justify-center border border-primary/10"
+                  aria-label="Previous slide"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={() => { next(); resetTimer(); }}
+                  className="w-12 h-12 rounded-full bg-white text-primary shadow-xl hover:bg-primary hover:text-white transition-all flex items-center justify-center border border-primary/10"
+                  aria-label="Next slide"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Decorative Bottom Curve (Matches Navbar style but reversed or used as transition) */}
+      <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0] z-20 transform rotate-180">
+        <svg 
+          data-name="Layer 1" 
+          xmlns="http://www.w3.org/2000/svg" 
+          viewBox="0 0 1200 120" 
+          preserveAspectRatio="none" 
+          className="relative block w-full h-[30px] md:h-[60px]"
+        >
+          <path 
+            d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" 
+            className="fill-background"
+          ></path>
+        </svg>
       </div>
     </section>
   );

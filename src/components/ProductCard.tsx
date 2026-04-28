@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ShoppingBag, Package } from "lucide-react";
+import { ShoppingBag, Package, Eye } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export interface ShopItem {
   id: string;
@@ -24,111 +25,92 @@ const CATEGORIES = [
 export function ProductCard({
   item,
   lowestPrice,
-  onAddToCart,
   inCart,
-  disableAction = false,
 }: {
   item: ShopItem;
   lowestPrice: number | null;
-  onAddToCart?: (item: ShopItem) => void;
   inCart?: boolean;
-  disableAction?: boolean;
 }) {
   const [imgError, setImgError] = useState(false);
   const categoryLabel = CATEGORIES.find((c) => c.key === item.category)?.label || "Others";
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-20px" }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className="group bg-white rounded-2xl border border-border shadow-sm overflow-hidden hover:shadow-lg transition-shadow duration-300 h-full"
-    >
-      {/* Image area */}
-      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-primary/5 to-primary/12">
-        {item.image_url && !imgError ? (
-          <img
-            src={item.image_url}
-            alt={item.english_name || item.name || "Product"}
-            loading="lazy"
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            onError={() => setImgError(true)}
-          />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-2">
-            <Package className="h-14 w-14 text-primary/25" />
-            <span className="text-xs text-primary/40 font-medium">No image yet</span>
+    <Link to={`/product/${item.id || item.name}`} className="block h-full outline-none">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-20px" }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="group bg-white rounded-2xl border border-transparent shadow-sm hover:shadow-2xl hover:border-primary/20 overflow-hidden transition-all duration-500 h-full flex flex-col relative"
+      >
+        {/* Image area */}
+        <div className="relative aspect-[4/3] sm:aspect-square overflow-hidden bg-muted/30">
+          {item.image_url && !imgError ? (
+            <img
+              src={item.image_url}
+              alt={item.english_name || item.name || "Product"}
+              loading="lazy"
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+              <Package className="h-12 w-12 text-primary/20" />
+            </div>
+          )}
+
+          {/* Quick View Overlay */}
+          <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4 pointer-events-none">
+            <div className="bg-white/95 backdrop-blur-md px-4 py-2 rounded-full shadow-lg flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+              <Eye className="h-4 w-4 text-primary" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-foreground">Quick View</span>
+            </div>
           </div>
-        )}
+        </div>
 
-        {/* Cart state badge */}
-        {inCart && (
-          <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-primary text-white text-xs font-bold shadow-md">
-            In Cart ✓
+        {/* Info Content */}
+        <div className="p-4 flex-1 flex flex-col justify-between">
+          <div>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1 block">
+              {categoryLabel}
+            </span>
+            <h3 className="text-base font-bold text-foreground leading-tight mb-1 line-clamp-1 group-hover:text-primary transition-colors">
+              {item.english_name || item.name || "Unknown Product"}
+            </h3>
+            <p
+              className="text-xs text-muted-foreground mb-2 line-clamp-1"
+              dir="rtl"
+              style={{ fontFamily: "Noto Nastaliq Urdu, 'Jameel Noori Nastaleeq', serif" }}
+            >
+              {item.name}
+            </p>
           </div>
-        )}
 
-        {/* Add to cart button */}
-        {!disableAction && onAddToCart && (
-          <motion.button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onAddToCart(item);
-            }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.92 }}
-            className={`absolute bottom-3 right-3 w-11 h-11 rounded-full shadow-lg flex items-center justify-center transition-colors ${
-              inCart
-                ? "bg-primary text-white"
-                : "bg-white text-primary border border-primary/30 hover:bg-primary hover:text-white"
-            }`}
-            aria-label="Add to cart"
-          >
-            <ShoppingBag className="h-5 w-5" />
-          </motion.button>
-        )}
-        
-        {disableAction && (
-          <div className="absolute bottom-3 right-3 w-11 h-11 rounded-full bg-white/80 backdrop-blur-sm text-primary flex items-center justify-center shadow-md">
-            <ShoppingBag className="h-5 w-5" />
+          {/* Pricing & Action */}
+          <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/40">
+            <div>
+              {lowestPrice ? (
+                <div className="flex items-center gap-1">
+                  <span className="text-lg font-black text-foreground">Rs {lowestPrice}</span>
+                </div>
+              ) : (
+                <span className="text-sm font-bold text-muted-foreground">Price varies</span>
+              )}
+            </div>
+
+            <div
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                inCart
+                  ? "bg-primary text-white scale-100"
+                  : "bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white group-hover:rotate-12"
+              }`}
+              aria-label="View Product"
+            >
+              <ShoppingBag className="h-4 w-4" />
+            </div>
           </div>
-        )}
-      </div>
-
-      {/* Info */}
-      <div className="p-4">
-        {/* Category */}
-        <span className="text-[11px] font-bold text-primary uppercase tracking-widest block mb-1">
-          {categoryLabel}
-        </span>
-
-        {/* English name */}
-        <h3 className="text-base font-bold text-foreground leading-tight mb-0.5">
-          {item.english_name || item.name || "Unknown Product"}
-        </h3>
-
-        {/* Urdu name */}
-        <p
-          className="text-sm text-muted-foreground mb-3"
-          dir="rtl"
-          style={{ fontFamily: "Noto Nastaliq Urdu, 'Jameel Noori Nastaleeq', serif" }}
-        >
-          {item.name}
-        </p>
-
-        {/* Pricing */}
-        {lowestPrice ? (
-          <div className="flex items-end gap-1">
-            <span className="text-xs text-muted-foreground mb-0.5">Starting at</span>
-            <span className="text-lg font-bold text-primary leading-none">Rs. {lowestPrice}</span>
-            <span className="text-xs text-muted-foreground mb-0.5">/ kg</span>
-          </div>
-        ) : (
-          <div className="text-sm font-medium text-muted-foreground pb-0.5">Price varies by grade</div>
-        )}
-      </div>
-    </motion.div>
+        </div>
+      </motion.div>
+    </Link>
   );
 }

@@ -14,14 +14,13 @@ import Home from "./pages/Home";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Shop from "./pages/Shop";
-import Products from "./pages/Products";
-import FAQs from "./pages/FAQs";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import RequestAccess from "./pages/RequestAccess";
 import NotFound from "./pages/NotFound";
 import AuthCallback from "./pages/AuthCallback";
 import TrackOrder from "./pages/TrackOrder";
+import ProductDetails from "./pages/ProductDetails";
 
 // Customer portal
 import CustomerPortal from "./pages/CustomerPortal";
@@ -102,8 +101,8 @@ const App = () => {
               <Route path="/about"    element={<About />} />
               <Route path="/contact"  element={<Contact />} />
               <Route path="/shop"     element={<Shop />} />
+              <Route path="/product/:id" element={<ProductDetails />} />
               <Route path="/products" element={<Navigate to="/shop" replace />} />
-              <Route path="/faqs"     element={<FAQs />} />
               <Route path="/track-order" element={<TrackOrder />} />
             </Route>
 

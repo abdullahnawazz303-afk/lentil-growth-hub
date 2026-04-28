@@ -70,8 +70,7 @@ export function TopNavbar() {
     <header className="h-16 border-b flex items-center px-4 gap-4 bg-card shrink-0">
       <SidebarTrigger />
 
-      <QfLogo className="w-11 h-11 shrink-0" />
-      <span className="font-semibold text-lg text-primary">Qais Food</span>
+      <QfLogo className="ml-2 scale-[0.65] md:scale-75 origin-left" />
 
       <div className="flex-1" />
 

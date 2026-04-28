@@ -2,13 +2,19 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import aboutImg from "@/assets/about_factory_new.png";
 import { Card, CardContent } from "@/components/ui/card";
-import { Target, Eye, Users, Award, ArrowRight } from "lucide-react";
+import { Target, Eye, Users, Award, ArrowRight, HelpCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const stats = [
   { label: "Years in Business", value: "15+" },
   { label: "Products", value: "6+" },
-  { label: "Happy Clients", value: "500+" },
+  { label: "Happy Clients", value: "50+" },
   { label: "Monthly Capacity", value: "100+ Tons" },
 ];
 
@@ -17,6 +23,52 @@ const values = [
   { icon: Eye, title: "Our Vision", desc: "To become Pakistan's most trusted lentil packaging factory, known for quality grading, reliable supply, and modern operations." },
   { icon: Users, title: "Our Team", desc: "A dedicated team of quality inspectors, packaging specialists, and logistics experts who ensure every bag meets our premium standards." },
   { icon: Award, title: "Quality Promise", desc: "Every batch is cleaned, sorted by grade (A+, A, B, C), and packaged under strict quality control before reaching our customers." },
+];
+
+const faqCategories = [
+  {
+    category: "Ordering & Minimums",
+    faqs: [
+      {
+        question: "Is there a weight limit for orders?",
+        answer: "Any weight can be selected during the order process, but final approval depends on stock and logistics. If an order is rejected, you will receive a formal notification via WhatsApp.",
+      },
+      {
+        question: "Where is your factory located?",
+        answer: "Our main factory and processing facility is located in the Shahdara, Lahore area, strategically positioned to serve markets across Pakistan.",
+      },
+      {
+        question: "Can I order multiple products in one shipment?",
+        answer: "Absolutely. You can combine different lentil varieties, pulses, and rice in a single order. Our logistics team in Lahore will coordinate to ensure efficient delivery.",
+      },
+    ],
+  },
+  {
+    category: "Packaging & Customisation",
+    faqs: [
+      {
+        question: "Do you offer custom packing sizes?",
+        answer: "Yes, we provide packaging solutions ranging from 0.5 kg retail packs to 50 kg bulk sacks, tailored precisely to your distribution and market needs.",
+      },
+      {
+        question: "Can you print custom labels or branding on packaging?",
+        answer: "We offer white-label and custom-branded packaging for qualifying wholesale accounts. Minimum quantities apply for custom printing. Please contact us to discuss your branding requirements.",
+      },
+    ],
+  },
+  {
+    category: "Quality & Sourcing",
+    faqs: [
+      {
+        question: "Where do you source your lentils and pulses?",
+        answer: "We source our legumes directly from trusted, established farms across the most fertile regions of Pakistan, as well as importing premium grades internationally to guarantee year-round supply.",
+      },
+      {
+        question: "What quality assurance standards do you follow?",
+        answer: "Every batch undergoes rigorous machine cleaning, color sorting, and manual inspection. We grade products meticulously into A+, A, B, and C categories ensuring absolute consistency.",
+      },
+    ],
+  },
 ];
 
 const fadeUp = {
@@ -115,39 +167,64 @@ export default function About() {
         </div>
       </section>
 
-      {/* FAQs banner — links to /faqs */}
-      <section className="relative overflow-hidden bg-primary py-20 md:py-28">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-white blur-3xl" />
-        </div>
-        <div className="absolute inset-0" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.04) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.04) 40px)" }} />
-        <motion.div
-          className="relative max-w-5xl mx-auto px-4 md:px-8"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-8">
-            <div>
-              <span className="text-xs font-bold text-white/70 uppercase tracking-[0.2em] mb-3 block">Questions Answered</span>
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white uppercase leading-tight">
-                Have Questions?<br />
-                <span className="text-primary">See Our FAQs</span>
-              </h2>
-              <p className="text-white/60 mt-5 max-w-md leading-relaxed">
-                Ordering, packaging, sourcing, quality, delivery — everything answered on our FAQ page.
-              </p>
-            </div>
-            <div className="shrink-0">
-              <Link to="/faqs">
-                <Button size="lg" className="rounded-full bg-white text-primary hover:bg-white/90 font-bold text-base px-10 h-12 border-0 shadow-xl">
-                  View FAQs <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-            </div>
+      {/* FAQs Section */}
+      <section className="py-20 md:py-28 bg-primary/5">
+        <div className="max-w-4xl mx-auto px-4 md:px-8">
+          <motion.div
+            className="mb-14 text-center"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <span className="text-xs font-bold text-primary uppercase tracking-[0.2em]">Help Center</span>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-foreground mt-2 uppercase leading-tight">Frequently Asked Questions</h2>
+            <p className="text-muted-foreground mt-4 max-w-xl mx-auto">Common questions about our wholesale operations, delivery, and quality control.</p>
+          </motion.div>
+
+          <div className="space-y-10">
+            {faqCategories.map((cat, ci) => (
+              <motion.div
+                key={cat.category}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: ci * 0.1, duration: 0.5 }}
+              >
+                <div className="flex items-center gap-4 mb-6">
+                  <HelpCircle className="h-5 w-5 text-primary" />
+                  <h3 className="text-xl font-display font-bold text-foreground uppercase tracking-wide">{cat.category}</h3>
+                </div>
+
+                <Accordion type="single" collapsible className="w-full space-y-3">
+                  {cat.faqs.map((faq, fi) => (
+                    <AccordionItem
+                      key={fi}
+                      value={`cat-${ci}-item-${fi}`}
+                      className="border border-border bg-white rounded-2xl px-6 transition-all data-[state=open]:border-primary/40 data-[state=open]:shadow-md"
+                    >
+                      <AccordionTrigger className="text-left font-bold text-base md:text-lg py-5 hover:text-primary no-underline hover:no-underline transition-colors">
+                        {faq.question}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-muted-foreground leading-relaxed text-sm md:text-base pb-5">
+                        {faq.answer}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </motion.div>
+            ))}
           </div>
-        </motion.div>
+
+          <div className="mt-16 text-center">
+            <p className="text-sm text-muted-foreground mb-6">Still have a question that isn't answered here?</p>
+            <Link to="/contact">
+              <Button size="lg" className="rounded-full bg-primary text-white hover:bg-primary/90 font-bold px-10 shadow-lg">
+                Contact Our Support <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </div>
       </section>
     </div>
   );
